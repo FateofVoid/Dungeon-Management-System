@@ -9,6 +9,7 @@ on:
       - scripts/apply-global-foundation.cjs
       - scripts/fix-global-foundation-patcher.cjs
       - scripts/fix-global-foundation-targets.cjs
+      - scripts/fix-global-foundation-raw-template.cjs
       - scripts/apply-global-foundation-followup.cjs
       - test/dms-foundation.test.cjs
       - .github/workflows/apply-global-foundation.yml
@@ -32,6 +33,8 @@ jobs:
           node-version: 20
       - name: Repair generator quoting
         run: node scripts/fix-global-foundation-patcher.cjs
+      - name: Preserve generated escape sequences
+        run: node scripts/fix-global-foundation-raw-template.cjs
       - name: Normalize generator targets
         run: node scripts/fix-global-foundation-targets.cjs
       - name: Apply foundation patch
