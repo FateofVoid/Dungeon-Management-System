@@ -118,11 +118,7 @@ replaceOnce(
   '    if (conquest && !Object.values(dms.rooms).some(room => room.definition === "conquest-command" && room.state === "Active")) throw new Error("Conquest requires an active Tier 8 Conquest Command room.");\n',
   'active conquest effect'
 );
-replaceOnce(
-  '    const hall = Object.values(dms.rooms).find(room => room.definition === "attribute-training-hall"); if (!hall) throw new Error("Attribute Training Hall is required."); energy = clamp(Math.floor(energy), 1, 10000); spend(dms, { energy });\n',
-  '    const hall = Object.values(dms.rooms).find(room => room.definition === "attribute-training-hall" && room.state === "Active"); if (!hall) throw new Error("An active Attribute Training Hall is required."); energy = clamp(Math.floor(energy), 1, 10000); spend(dms, { energy }, "attribute-training");\n',
-  'active attribute training'
-);
+
 
 replaceOnce(
   '        dms.dungeon.resources[definition.resource].amount += amount; report.dungeonResources[definition.resource] = (report.dungeonResources[definition.resource] || 0) + amount;\n',
@@ -156,7 +152,7 @@ replaceOnce(
   'deterministic quest IDs'
 );
 
-const persistenceHelpers = `
+const persistenceHelpers = String.raw`
   function saveCardByTitle(titleText) { return Array.isArray(global.storyCards) ? global.storyCards.find(card => card.title === titleText) : null; }
   function savePayload(card) {
     if (!card?.entry) return null;
@@ -177,7 +173,7 @@ const persistenceHelpers = `
   function writeSaveCards(dms) {
     if (!Array.isArray(global.storyCards)) return false;
     const payloads = { core: compactCoreSave(dms), progression: compactProgressionSave(dms), operations: compactOperationsSave(dms), world: compactWorldSave(dms) };
-    for (const [key, payload] of Object.entries(payloads)) { const card = ensureCard(SAVE_CARD_TITLES[key], `DMS_SAVE_${key.toUpperCase()}`); card.type = "System — DMS Save"; card.description = `Compact DMS mechanical save; revision ${dms.persistence.revision}. Ordinary Story Cards remain authoritative for lore.`; card.entry = JSON.stringify(payload); }
+    for (const [key, payload] of Object.entries(payloads)) { const card = ensureCard(SAVE_CARD_TITLES[key], \`DMS_SAVE_\${key.toUpperCase()}\`); card.type = "System — DMS Save"; card.description = \`Compact DMS mechanical save; revision \${dms.persistence.revision}. Ordinary Story Cards remain authoritative for lore.\`; card.entry = JSON.stringify(payload); }
     dms.persistence.lastSavedRevision = dms.persistence.revision; dms.persistence.cacheRevision = dms.persistence.revision; return true;
   }
   function readSaveCards() {
@@ -188,7 +184,7 @@ const persistenceHelpers = `
     for (const value of Object.values(values)) if (value && Number(value.rev) !== rev) return null;
     return { revision: rev, ...values };
   }
-  function cardField(card, label) { return clean(String(card?.entry || "").match(new RegExp(`^${label}:\\s*(.+)$`, "im"))?.[1]); }
+  function cardField(card, label) { return clean(String(card?.entry || "").match(new RegExp("^" + label + ":\\s*(.+)$", "im"))?.[1]); }
   function hydrateIdentityFromCards(dms) {
     const dungeon = saveCardByTitle("DMS — Dungeon");
     const dungeonLine = String(dungeon?.entry || "").match(/^Dungeon:\s*(.+?)\s*\|\s*Tier/im); if (dungeonLine) dms.dungeon.name = clean(dungeonLine[1]);
@@ -196,7 +192,7 @@ const persistenceHelpers = `
     const throne = saveCardByTitle("DMS — Thronebound"), first = String(throne?.entry || "").split("\n")[0].split(/\s+[—-]\s+/); if (first.length >= 2) { dms.thronebound.name = clean(first[0]); dms.thronebound.race = clean(first.slice(1).join(" — ")); }
     const worldIdentity = saveCardByTitle("DMS — Identity"); if (worldIdentity) { dms.population.workerDescription = cardField(worldIdentity, "Workers") || dms.population.workerDescription; dms.population.soldierDescription = cardField(worldIdentity, "Soldiers") || dms.population.soldierDescription; dms.world.homeworld = cardField(worldIdentity, "Homeworld") || dms.world.homeworld; dms.world.secondaryLocation = cardField(worldIdentity, "Secondary") || dms.world.secondaryLocation; }
     const resources = saveCardByTitle("DMS — Dungeon Resources");
-    for (const role of RESOURCE_ROLES) { const block = String(resources?.entry || "").match(new RegExp(`\\[${title(role)}\\] ([^:]+): ([^\\n]*)\\nCollection: ([^\\n]*)\\nUse: ([^\\n]*)`, "i")); if (block) dms.dungeon.resources[role] = { ...dms.dungeon.resources[role], role, name: clean(block[1]), description: clean(block[2]), collection: clean(block[3]), use: clean(block[4]) }; }
+    for (const role of RESOURCE_ROLES) { const block = String(resources?.entry || "").match(new RegExp(\`\\[\${title(role)}\\] ([^:]+): ([^\\n]*)\\nCollection: ([^\\n]*)\\nUse: ([^\\n]*)\`, "i")); if (block) dms.dungeon.resources[role] = { ...dms.dungeon.resources[role], role, name: clean(block[1]), description: clean(block[2]), collection: clean(block[3]), use: clean(block[4]) }; }
     return dms;
   }
   function loadSaveCards(candidate, snapshot = readSaveCards()) {
@@ -211,12 +207,12 @@ const persistenceHelpers = `
     dms.rooms = {}; for (const [id, saved] of Object.entries(operations.rooms || {})) { const definition = ROOM_DEFINITIONS[saved.definition]; if (!definition) continue; dms.rooms[id] = { id, definition: saved.definition, name: definition.name, tier: Math.max(1, Number(saved.tier) || definition.unlockTier || 1), expansion: Math.max(1, Number(saved.expansion) || 1), state: saved.state || "Active", assignedWorkers: 0, jobPopulation: 0, targetedVeins: Array.isArray(saved.targetedVeins) ? saved.targetedVeins : [], assignedAdministrator: saved.assignedAdministrator || "", lore: roomLore(dms, definition, Math.max(1, Number(saved.tier) || definition.unlockTier || 1)) }; }
     dms.tasks = Array.isArray(operations.tasks) ? operations.tasks : []; dms.population.soldiers.cohorts = Array.isArray(operations.soldiers) ? operations.soldiers : []; dms.shops.research = operations.research || {};
     dms.world.lustria = { ...dms.world.lustria, ...(world.lustria || {}) };
-    for (const [id, saved] of Object.entries(progression.quests || {})) { if (dms.quests.records[id]) Object.assign(dms.quests.records[id], saved); else { const card = Array.isArray(global.storyCards) ? global.storyCards.find(item => clean(item.keys).split(",").includes(`DMS_QUEST_${id.toUpperCase().replace(/\\W/g, "_")}`)) : null; dms.quests.records[id] = { category: saved.category || "Personal", tier: saved.tier ?? dms.dungeon.tier, title: clean(String(card?.title || "").replace(/^DMS Quest — /, "")) || id, status: saved.status || "locked", objective: cardField(card, "Objective"), rewards: (() => { try { return JSON.parse(cardField(card, "Rewards") || "{}"); } catch { return {}; } })(), prerequisites: saved.prerequisites || [], rewarded: !!saved.rewarded }; } }
-    dms.administrators = {}; for (const [id, saved] of Object.entries(progression.admins || {})) { const card = Array.isArray(global.storyCards) ? global.storyCards.find(item => clean(item.keys).split(",").includes(`DMS_ADMIN_${id.toUpperCase().replace(/\\W/g, "_")}`)) : null; const line = String(card?.entry || "").split("\n")[0].split(/\s+[—-]\s+/), admin = characterBase(clean(line[0]) || id, clean(line.slice(1).join(" — ")) || dms.population.workerDescription, saved.role || "Manager"); admin.id = id; admin.role = saved.role || "Manager"; admin.rank = saved.rank || "F"; admin.effectiveness = Number(saved.effectiveness) || ADMINISTRATOR_RANK_MULTIPLIERS[admin.rank] || 1; admin.attributeSpecialization = saved.specialization || "support"; admin.attributes = { [admin.attributeSpecialization]: attributeSet(ATTRIBUTE_TEMPLATES[admin.attributeSpecialization]) }; admin.level = Math.max(1, Number(saved.level) || 1); admin.experience = Math.max(0, Number(saved.xp) || 0); admin.bond = saved.bond || { value: 0, completedEvents: [] }; admin.assignedRooms = saved.assignedRooms || []; admin.class.tier = Math.max(0, Number(saved.classTier) || 0); admin.status = "Active"; dms.administrators[id] = admin; }
+    for (const [id, saved] of Object.entries(progression.quests || {})) { if (dms.quests.records[id]) Object.assign(dms.quests.records[id], saved); else { const card = Array.isArray(global.storyCards) ? global.storyCards.find(item => clean(item.keys).split(",").includes(\`DMS_QUEST_\${id.toUpperCase().replace(/\\W/g, "_")}\`)) : null; dms.quests.records[id] = { category: saved.category || "Personal", tier: saved.tier ?? dms.dungeon.tier, title: clean(String(card?.title || "").replace(/^DMS Quest — /, "")) || id, status: saved.status || "locked", objective: cardField(card, "Objective"), rewards: (() => { try { return JSON.parse(cardField(card, "Rewards") || "{}"); } catch { return {}; } })(), prerequisites: saved.prerequisites || [], rewarded: !!saved.rewarded }; } }
+    dms.administrators = {}; for (const [id, saved] of Object.entries(progression.admins || {})) { const card = Array.isArray(global.storyCards) ? global.storyCards.find(item => clean(item.keys).split(",").includes(\`DMS_ADMIN_\${id.toUpperCase().replace(/\\W/g, "_")}\`)) : null; const line = String(card?.entry || "").split("\n")[0].split(/\s+[—-]\s+/), admin = characterBase(clean(line[0]) || id, clean(line.slice(1).join(" — ")) || dms.population.workerDescription, saved.role || "Manager"); admin.id = id; admin.role = saved.role || "Manager"; admin.rank = saved.rank || "F"; admin.effectiveness = Number(saved.effectiveness) || ADMINISTRATOR_RANK_MULTIPLIERS[admin.rank] || 1; admin.attributeSpecialization = saved.specialization || "support"; admin.attributes = { [admin.attributeSpecialization]: attributeSet(ATTRIBUTE_TEMPLATES[admin.attributeSpecialization]) }; admin.level = Math.max(1, Number(saved.level) || 1); admin.experience = Math.max(0, Number(saved.xp) || 0); admin.bond = saved.bond || { value: 0, completedEvents: [] }; admin.assignedRooms = saved.assignedRooms || []; admin.class.tier = Math.max(0, Number(saved.classTier) || 0); admin.status = "Active"; dms.administrators[id] = admin; }
     dms.persistence = { saveSchema: SAVE_SCHEMA, revision: snapshot.revision, cacheRevision: snapshot.revision, lastSavedRevision: snapshot.revision };
     dms.initialized = identityReady(dms); applyDerivedState(dms); updateQuests(dms); dms.persistence.revision = snapshot.revision; dms.persistence.cacheRevision = snapshot.revision; return dms;
   }
-`;
+`.replace(/\\`/g, "`").replace(/\\\$\{/g, "${");
 replaceOnce('  function ensureCard(titleText, keys = "") {\n', persistenceHelpers + '\n  function ensureCard(titleText, keys = "") {\n', 'persistence helpers');
 
 replaceOnce(

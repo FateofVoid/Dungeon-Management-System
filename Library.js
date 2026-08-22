@@ -11191,7 +11191,10 @@ function AutoCards(inHook, inText, inStop) {
 (function installDungeonManagement(global) {
   "use strict";
 
-  const SCHEMA = 3;
+  const SCHEMA = 4;
+  const SAVE_SCHEMA = 1;
+  const SAVE_CARD_PREFIX = "DMS Save — ";
+  const SAVE_CARD_TITLES = Object.freeze({ core: `${SAVE_CARD_PREFIX}Core`, progression: `${SAVE_CARD_PREFIX}Progression`, operations: `${SAVE_CARD_PREFIX}Operations`, world: `${SAVE_CARD_PREFIX}World` });
   const RESOURCE_ROLES = Object.freeze(["construction", "sustenance", "development", "energy"]);
   const LOCATIONS = Object.freeze(["Dungeon", "Lustria", "Homeworld", "Secondary"]);
   const MODES = Object.freeze(["Idle", "Travel", "Survey", "Construction", "Administration", "Production", "Training", "Recruitment", "Defense", "Exploration", "Exploitation", "System"]);
@@ -11306,7 +11309,9 @@ function AutoCards(inHook, inText, inStop) {
         "reach-lustria": { category: "Guild", tier: 2, title: "Survey Lustria", status: "locked", objective: "Travel to Lustria and discover a resource-bearing sector.", rewards: { experience: 200, energy: 40 } }
       } },
       classPreviews: {}, shops: { custom: {}, research: {} }, tasks: [],
-      generation: { roomSequence: 0, administratorSequence: 0, sectorSequence: 0, previewSequence: 0 }, log: []
+      generation: { roomSequence: 0, administratorSequence: 0, sectorSequence: 0, previewSequence: 0 },
+      persistence: { saveSchema: SAVE_SCHEMA, revision: 0, cacheRevision: 0, lastSavedRevision: 0 },
+      resourceTransactions: [], log: []
     };
   }
 
@@ -11322,7 +11327,7 @@ function AutoCards(inHook, inText, inStop) {
       activity: { ...base.activity, ...(value.activity || {}), location: { ...base.activity.location, ...((value.activity || {}).location || {}) } },
       world: { ...base.world, ...(value.world || {}), lustria: { ...base.world.lustria, ...((value.world || {}).lustria || {}) } },
       quests: { ...base.quests, ...(value.quests || {}), records: { ...base.quests.records, ...((value.quests || {}).records || {}) } },
-      generation: { ...base.generation, ...(value.generation || {}) }, classPreviews: value.classPreviews || {}, shops: { ...base.shops, ...(value.shops || {}) }, tasks: Array.isArray(value.tasks) ? value.tasks : [],
+      generation: { ...base.generation, ...(value.generation || {}) }, persistence: { ...base.persistence, ...(value.persistence || {}) }, resourceTransactions: Array.isArray(value.resourceTransactions) ? value.resourceTransactions.slice(-50) : [], classPreviews: value.classPreviews || {}, shops: { ...base.shops, ...(value.shops || {}) }, tasks: Array.isArray(value.tasks) ? value.tasks : [],
       administrators: value.administrators && typeof value.administrators === "object" ? value.administrators : {},
       rooms: value.rooms && typeof value.rooms === "object" ? value.rooms : {}, log: Array.isArray(value.log) ? value.log.slice(-100) : []
     };
@@ -11337,12 +11342,25 @@ function AutoCards(inHook, inText, inStop) {
     dms.population.soldiers.cohorts = Array.isArray(dms.population.soldiers.cohorts) ? dms.population.soldiers.cohorts : [];
     for (const category of ["combat", "support"]) for (const [name, current] of Object.entries(dms.thronebound.attributes[category] || {})) if (typeof current !== "object") dms.thronebound.attributes[category][name] = { aptitude: "C", value: Number(current) || 0, preference: 3 };
     dms.thronebound.experience = Number(dms.thronebound.experience) || 0;
+    dms.persistence.saveSchema = SAVE_SCHEMA;
+    dms.persistence.revision = Math.max(0, Number(dms.persistence.revision) || 0);
+    dms.persistence.cacheRevision = Math.max(0, Number(dms.persistence.cacheRevision) || dms.persistence.revision);
+    const maxSuffix = (values, pattern) => values.reduce((max, value) => Math.max(max, Number(String(value).match(pattern)?.[1]) || 0), 0);
+    dms.generation.roomSequence = Math.max(Number(dms.generation.roomSequence) || 0, maxSuffix(Object.keys(dms.rooms), /^room-(\d+)$/));
+    dms.generation.administratorSequence = Math.max(Number(dms.generation.administratorSequence) || 0, maxSuffix(Object.keys(dms.administrators), /^administrator-(\d+)$/));
+    dms.generation.sectorSequence = Math.max(Number(dms.generation.sectorSequence) || 0, maxSuffix(Object.keys(dms.world.lustria.sectors || {}), /^sector-(\d+)$/));
     applyDerivedState(dms);
     updateQuests(dms);
     return dms;
   }
 
-  function record(dms, message) { dms.log.push({ cycle: dms.activity.cycle, location: dms.activity.location.major, message: clean(message) }); dms.log = dms.log.slice(-100); }
+  function markStateChanged(dms) {
+    dms.persistence ||= { saveSchema: SAVE_SCHEMA, revision: 0, cacheRevision: 0, lastSavedRevision: 0 };
+    dms.persistence.revision = Math.max(Number(dms.persistence.revision) || 0, Number(dms.persistence.cacheRevision) || 0) + 1;
+    dms.persistence.cacheRevision = dms.persistence.revision;
+    return dms.persistence.revision;
+  }
+  function record(dms, message) { dms.log.push({ cycle: dms.activity.cycle, location: dms.activity.location.major, message: clean(message) }); dms.log = dms.log.slice(-100); markStateChanged(dms); }
   function resourceReady(resource) { return resource && !/^Undefined\b/i.test(resource.name) && clean(resource.description) && clean(resource.collection) && clean(resource.use); }
   function identityReady(dms) {
     return dms.dungeon.theme !== "Unformed" && dms.dungeon.style !== "Undefined" && dms.population.workerDescription !== "Undefined dungeon workers" && dms.population.soldierDescription !== "Undefined dungeon soldiers" && RESOURCE_ROLES.every(role => resourceReady(dms.dungeon.resources[role]));
@@ -11415,9 +11433,35 @@ function AutoCards(inHook, inText, inStop) {
     return { tier: next, rules: tierRules(next), unlockedRooms: Object.entries(ROOM_DEFINITIONS).filter(([, definition]) => definition.unlockTier === next).map(([key, definition]) => ({ key, name: definition.name })) };
   }
 
-  function spend(dms, costs) {
-    for (const [role, amount] of Object.entries(costs)) if ((dms.dungeon.resources[role]?.amount || 0) < amount) throw new Error(`Requires ${amount} ${dms.dungeon.resources[role]?.name || role}.`);
-    for (const [role, amount] of Object.entries(costs)) dms.dungeon.resources[role].amount -= amount;
+  function transactResources(dms, deltas, context = "transaction") {
+    const normalized = {};
+    for (const [rawRole, rawAmount] of Object.entries(deltas || {})) {
+      const role = clean(rawRole).toLowerCase();
+      if (!RESOURCE_ROLES.includes(role)) throw new Error(`Unknown dungeon resource role: ${rawRole}.`);
+      const delta = Number(rawAmount) || 0;
+      const current = Number(dms.dungeon.resources[role]?.amount) || 0;
+      if (current + delta < -1e-9) throw new Error(`Requires ${Math.abs(delta)} ${dms.dungeon.resources[role]?.name || role}.`);
+      normalized[role] = delta;
+    }
+    const changes = {};
+    for (const [role, delta] of Object.entries(normalized)) {
+      if (!delta) continue;
+      const resource = dms.dungeon.resources[role], before = Number(resource.amount) || 0;
+      resource.amount = Number((before + delta).toFixed(4));
+      changes[role] = { before, delta, after: resource.amount };
+    }
+    if (Object.keys(changes).length) {
+      dms.resourceTransactions ||= [];
+      dms.resourceTransactions.push({ revision: markStateChanged(dms), cycle: dms.activity.cycle, context: clean(context), changes });
+      dms.resourceTransactions = dms.resourceTransactions.slice(-50);
+    }
+    return changes;
+  }
+  function spend(dms, costs, context = "spend") { return transactResources(dms, Object.fromEntries(Object.entries(costs || {}).map(([role, amount]) => [role, -Math.abs(Number(amount) || 0)])), context); }
+  function rewardResources(dms, rewards, context = "reward") { return transactResources(dms, Object.fromEntries(Object.entries(rewards || {}).filter(([role]) => RESOURCE_ROLES.includes(role)).map(([role, amount]) => [role, Math.max(0, Number(amount) || 0)])), context); }
+  function resourceStorage(dms) {
+    const multiplier = 1 + Object.values(dms.rooms).filter(room => room.state === "Active").reduce((sum, room) => sum + (ROOM_DEFINITIONS[room.definition]?.storageMultiplier || 0) * room.tier, 0);
+    return { enabled: dms.dungeon.tier >= 4, multiplier: Number(multiplier.toFixed(2)), amounts: Object.fromEntries(RESOURCE_ROLES.map(role => [role, Number(dms.dungeon.resources[role].amount) || 0])) };
   }
   function assignmentCount(assignment) { return Number(assignment && typeof assignment === "object" ? assignment.count : assignment || 0); }
   function assignedWorkers(dms) { return Object.values(dms.population.workers.assignments).reduce((sum, assignment) => sum + assignmentCount(assignment), 0); }
@@ -11567,7 +11611,7 @@ function AutoCards(inHook, inText, inStop) {
   function defineUniqueAttribute(dms, name, description, value = 1) {
     if (!clean(name) || !clean(description)) throw new Error("A Unique Attribute requires a name and theme-derived description.");
     if (Object.keys(dms.thronebound.attributes.unique).length >= 3 && !dms.thronebound.attributes.unique[name]) throw new Error("The Thronebound can track up to three theme-defined Unique Attributes.");
-    dms.thronebound.attributes.unique[clean(name)] = { value: clamp(value, 0, 100000), description: clean(description) }; return dms.thronebound.attributes.unique[name];
+    dms.thronebound.attributes.unique[clean(name)] = { value: clamp(value, 0, 100000), description: clean(description) }; record(dms, `Defined Unique Attribute ${clean(name)}.`); return dms.thronebound.attributes.unique[clean(name)];
   }
 
   function setLocation(dms, major, secondary = "", detail = "") {
@@ -11579,14 +11623,14 @@ function AutoCards(inHook, inText, inStop) {
     const canonicalMode = MODES.find(value => value.toLowerCase() === clean(mode).toLowerCase()); if (!canonicalMode) throw new Error(`Unknown Activity Mode. Use ${MODES.join(", ")}.`);
     const canonicalPace = Object.keys(PACES).find(value => value.toLowerCase() === clean(pace || "Timeless").toLowerCase()); if (!canonicalPace) throw new Error(`Unknown Pace. Use ${Object.keys(PACES).join(", ")}.`);
     if (!ACTIVITY_PACES[canonicalMode].includes(canonicalPace)) throw new Error(`${canonicalMode} permits Pace: ${ACTIVITY_PACES[canonicalMode].join(", ")}.`);
-    dms.activity.mode = canonicalMode; dms.activity.targets = unique(targets); dms.activity.pace = canonicalPace; return dms.activity;
+    dms.activity.mode = canonicalMode; dms.activity.targets = unique(targets); dms.activity.pace = canonicalPace; record(dms, `Activity changed to ${canonicalMode} / ${canonicalPace}.`); return dms.activity;
   }
   function systemAvailable(dms) { return dms.activity.mode === "System" && dms.activity.location.major === "Dungeon" && /^Throne Room$/i.test(dms.activity.location.secondary); }
 
   function scoutSector(dms, requestedName) {
     if (dms.activity.location.major !== "Lustria") throw new Error("Lustrian sectors can only be scouted while located in Lustria.");
     if (!["Survey", "Exploration"].includes(dms.activity.mode)) throw new Error("Use Survey or Exploration Activity Mode to scout Lustria.");
-    const scoutPower = Object.values(dms.rooms).reduce((sum, room) => sum + (ROOM_DEFINITIONS[room.definition]?.scoutPower || 0) * room.tier, 0);
+    const scoutPower = Object.values(dms.rooms).filter(room => room.state === "Active").reduce((sum, room) => sum + (ROOM_DEFINITIONS[room.definition]?.scoutPower || 0) * room.tier, 0);
     if (!scoutPower) throw new Error("A Scout Lodge is required.");
     const sequence = ++dms.generation.sectorSequence, seed = `${dms.dungeon.name}|${requestedName}|${sequence}`, threat = 5 + stableNumber(`${seed}|threat`) % 80;
     const id = `sector-${sequence}`, sector = { id, name: clean(requestedName) || `Uncharted Lustrian Sector ${sequence}`, threat, status: dms.dungeon.power >= threat ? "Accessible" : "Contested", veins: [] };
@@ -11600,7 +11644,7 @@ function AutoCards(inHook, inText, inStop) {
   }
   function targetVein(dms, roomId, veinId) {
     const room = dms.rooms[clean(roomId)], vein = dms.world.lustria.veins[clean(veinId)];
-    if (!room || room.definition !== "vein-extractor") throw new Error("Targeting requires a Vein Extraction Facility.");
+    if (!room || room.definition !== "vein-extractor" || room.state !== "Active") throw new Error("Targeting requires an active Vein Extraction Facility.");
     if (!vein || vein.status === "Depleted") throw new Error("Unknown or depleted Lustrian resource vein.");
     const sector = dms.world.lustria.sectors[vein.sectorId]; if (sector.status !== "Accessible" && dms.dungeon.power < sector.threat) throw new Error(`Dungeon Combat Power ${dms.dungeon.power} is below sector threat ${sector.threat}.`);
     const limit = Math.min(room.tier, tierRules(dms.dungeon.tier).veinTargetLimit + room.tier - 1);
@@ -11611,7 +11655,7 @@ function AutoCards(inHook, inText, inStop) {
     const sector = dms.world.lustria.sectors[clean(sectorId)]; if (!sector) throw new Error("Unknown Lustrian sector.");
     applyDerivedState(dms);
     if (dms.dungeon.power < sector.threat) throw new Error(`Dungeon Combat Power ${dms.dungeon.power} is below sector threat ${sector.threat}.`);
-    if (conquest && !Object.values(dms.rooms).some(room => room.definition === "conquest-command")) throw new Error("Conquest requires the Tier 8 Conquest Command room.");
+    if (conquest && !Object.values(dms.rooms).some(room => room.definition === "conquest-command" && room.state === "Active")) throw new Error("Conquest requires an active Tier 8 Conquest Command room.");
     sector.status = conquest ? "Controlled" : "Secured";
     if (conquest && !dms.world.lustria.controlledSectors.includes(sector.id)) dms.world.lustria.controlledSectors.push(sector.id);
     record(dms, `${sector.name} was ${conquest ? "brought under dungeon control" : "secured for exploration and collection"}.`); return sector;
@@ -11632,7 +11676,7 @@ function AutoCards(inHook, inText, inStop) {
       if (definition.resource) {
         const operators = definition.uniqueWorker ? (assigned > 0 ? 1 : 0) : assigned;
         const amount = Number((operators * definition.baseProduction * room.tier * multiplier * administratorEffect).toFixed(2));
-        dms.dungeon.resources[definition.resource].amount += amount; report.dungeonResources[definition.resource] = (report.dungeonResources[definition.resource] || 0) + amount;
+        rewardResources(dms, { [definition.resource]: amount }, `production:${room.id}`); report.dungeonResources[definition.resource] = (report.dungeonResources[definition.resource] || 0) + amount;
       }
       if (definition.extraction && assigned > 0) for (const veinId of room.targetedVeins) {
         const vein = dms.world.lustria.veins[veinId]; if (!vein || vein.remaining <= 0) continue;
@@ -11641,7 +11685,7 @@ function AutoCards(inHook, inText, inStop) {
       }
     }
     report.upkeep = Number((dms.population.workers.current * 0.1 + dms.population.soldiers.current * 0.25).toFixed(2));
-    dms.dungeon.resources.sustenance.amount = Math.max(0, dms.dungeon.resources.sustenance.amount - report.upkeep);
+    const payableUpkeep = Math.min(report.upkeep, dms.dungeon.resources.sustenance.amount); if (payableUpkeep) spend(dms, { sustenance: payableUpkeep }, "cycle-upkeep"); report.unpaidUpkeep = Number((report.upkeep - payableUpkeep).toFixed(2));
     dms.activity.cycle += 1; applyDerivedState(dms); record(dms, `Resolved management Cycle ${dms.activity.cycle}.`); return report;
   }
   function advanceActivity(dms, contribution = 1) {
@@ -11652,20 +11696,21 @@ function AutoCards(inHook, inText, inStop) {
   function applyActivityTurn(dms, inputText, actionCount = 0) {
     const key = `${actionCount}|${clean(inputText)}|${dms.activity.mode}`; if (dms.activity.lastTurnKey === key) return { repeated: true, reports: [] }; dms.activity.lastTurnKey = key;
     const benefit = { mode: dms.activity.mode, reports: [], note: "" }, words = clean(inputText);
+    if (dms.activity.mode === "System" && systemAvailable(dms)) { const natural = words.match(/^system\s*[:,]\s*(status|cycle|quest\s+status|room\s+list)$/i); if (natural) { benefit.system = execute(dms, `/dms ${natural[1]}`); benefit.note = benefit.system; return benefit; } }
     if (dms.activity.mode === "Construction" && /\b(?:build|construct|shape|repair|assist|help|work)\b/i.test(words)) {
       const task = dms.tasks.find(candidate => ["build-room", "upgrade-room", "expand-room"].includes(candidate.type));
-      if (task) { const craft = dms.thronebound.attributes.support.Craft?.value || 1, logistics = dms.thronebound.attributes.support.Logistics?.value || 1, reduction = Math.max(1, Math.floor((craft + logistics) / 20)); task.remaining = Math.max(1, task.remaining - reduction); benefit.task = task.id; benefit.note = `Direct construction assistance reduced ${task.id} by ${reduction} Cycle(s).`; }
+      if (task) { const craft = dms.thronebound.attributes.support.Craft?.value || 1, logistics = dms.thronebound.attributes.support.Logistics?.value || 1, reduction = Math.max(1, Math.floor((craft + logistics) / 20)); const before = task.remaining; task.remaining = Math.max(1, task.remaining - reduction); if (task.remaining !== before) record(dms, `Direct construction assistance reduced ${task.id} by ${before - task.remaining} Cycle(s).`); benefit.task = task.id; benefit.note = `Direct construction assistance reduced ${task.id} by ${reduction} Cycle(s).`; }
     }
     benefit.reports = advanceActivity(dms, 1);
     if (["Survey", "Exploration"].includes(dms.activity.mode) && dms.activity.location.major === "Lustria" && /\b(?:look|search|scout|survey)\b/i.test(words) && Object.values(dms.rooms).some(room => room.definition === "scout-lodge")) { const sector = scoutSector(dms, dms.activity.targets[0] || dms.activity.location.secondary || ""); benefit.sector = sector; benefit.note = `Discovered ${sector.name}.`; }
     else if (dms.activity.mode === "Training" && /\b(?:train|practice|exercise|study)\b/i.test(words) && dms.activity.targets[0]) { try { benefit.training = trainSkill(dms, "thronebound", dms.activity.targets[0], 5); } catch { try { benefit.training = trainAttribute(dms, dms.activity.targets[0], 5); } catch {} } }
-    else if (dms.activity.mode === "Production" && /\b(?:help|work|assist|produce|collect)\b/i.test(words)) { dms.dungeon.resources.energy.amount += 1; benefit.note = "The Thronebound's direct assistance added 1 dungeon energy."; }
+    else if (dms.activity.mode === "Production" && /\b(?:help|work|assist|produce|collect)\b/i.test(words)) { rewardResources(dms, { energy: 1 }, "activity-production"); benefit.note = "The Thronebound's direct assistance added 1 dungeon energy."; }
     return benefit;
   }
   function configureAptitude(dms, attributeName, aptitude, preference = 3) {
     aptitude = clean(aptitude).toUpperCase(); if (!APTITUDE_OUTCOMES[aptitude]) throw new Error(`Aptitude must be ${Object.keys(APTITUDE_OUTCOMES).join(", ")}.`);
     const attribute = [...Object.values(dms.thronebound.attributes.combat), ...Object.values(dms.thronebound.attributes.support)].find((value, index) => [...Object.keys(dms.thronebound.attributes.combat), ...Object.keys(dms.thronebound.attributes.support)][index].toLowerCase() === clean(attributeName).toLowerCase());
-    if (!attribute) throw new Error("Unknown Thronebound Attribute."); attribute.aptitude = aptitude; attribute.preference = clamp(Math.floor(preference), 1, 5); return attribute;
+    if (!attribute) throw new Error("Unknown Thronebound Attribute."); attribute.aptitude = aptitude; attribute.preference = clamp(Math.floor(preference), 1, 5); record(dms, `Configured ${attributeName} Aptitude ${aptitude}.`); return attribute;
   }
   function levelThreshold(level) { return 100 * level; }
   function growAttributes(dms) {
@@ -11678,20 +11723,21 @@ function AutoCards(inHook, inText, inStop) {
   function awardQuest(dms, quest) {
     if (quest.rewarded) return null; quest.rewarded = true; const rewards = quest.rewards || {};
     dms.thronebound.experience += Number(rewards.experience || 0);
-    for (const role of RESOURCE_ROLES) dms.dungeon.resources[role].amount += Number(rewards[role] || 0);
+    rewardResources(dms, rewards, `quest:${quest.title}`);
     const levels = [];
     while (dms.thronebound.experience >= levelThreshold(dms.thronebound.level)) { dms.thronebound.experience -= levelThreshold(dms.thronebound.level); dms.thronebound.level += 1; levels.push({ level: dms.thronebound.level, gains: growAttributes(dms) }); }
     return levels;
   }
   function createQuest(dms, category, titleText, objective, rewards = {}) {
     category = QUEST_CATEGORIES.find(value => value.toLowerCase() === clean(category).toLowerCase()); if (!category) throw new Error(`Quest category must be ${QUEST_CATEGORIES.join(", ")}.`);
-    const id = `${category.toLowerCase()}-${stableNumber(`${titleText}|${Object.keys(dms.quests.records).length}`).toString(36)}`;
-    dms.quests.records[id] = { category, title: clean(titleText), objective: clean(objective), tier: dms.dungeon.tier, status: "active", rewards: { experience: 50 * Math.max(1, dms.dungeon.tier), energy: 10 * Math.max(1, dms.dungeon.tier), ...rewards } }; return dms.quests.records[id];
+    const seed = `${category}|${clean(titleText)}|${clean(objective)}`, id = `${category.toLowerCase()}-${stableNumber(seed).toString(36)}`;
+    if (dms.quests.records[id]) return dms.quests.records[id];
+    dms.quests.records[id] = { category, title: clean(titleText), objective: clean(objective), tier: dms.dungeon.tier, status: "active", prerequisites: [], rewards: { experience: 50 * Math.max(1, dms.dungeon.tier), energy: 10 * Math.max(1, dms.dungeon.tier), ...rewards } }; record(dms, `Created ${category} Quest: ${clean(titleText)}.`); return dms.quests.records[id];
   }
   function completeQuest(dms, questId) { const quest = dms.quests.records[clean(questId)]; if (!quest || quest.status !== "active") throw new Error("Unknown or inactive Quest."); quest.status = "cleared"; const levels = awardQuest(dms, quest); record(dms, `Completed ${quest.category || "Dungeon"} Quest: ${quest.title}.`); return { quest, levels }; }
   function trainAttribute(dms, attributeName, energy = 10) {
     const all = { ...dms.thronebound.attributes.combat, ...dms.thronebound.attributes.support }, key = Object.keys(all).find(name => name.toLowerCase() === clean(attributeName).toLowerCase()); if (!key) throw new Error("Unknown Attribute.");
-    const hall = Object.values(dms.rooms).find(room => room.definition === "attribute-training-hall"); if (!hall) throw new Error("Attribute Training Hall is required."); energy = clamp(Math.floor(energy), 1, 10000); spend(dms, { energy }); const attribute = all[key], outcomes = APTITUDE_OUTCOMES[attribute.aptitude] || APTITUDE_OUTCOMES.C, gain = choose(outcomes, `${key}|training|${dms.activity.cycle}|${energy}`) + Math.floor(energy / 50); attribute.value += gain; return { attribute: key, gain, value: attribute.value };
+    const hall = Object.values(dms.rooms).find(room => room.definition === "attribute-training-hall" && room.state === "Active"); if (!hall) throw new Error("An active Attribute Training Hall is required."); energy = clamp(Math.floor(energy), 1, 10000); spend(dms, { energy }, "attribute-training"); const attribute = all[key], outcomes = APTITUDE_OUTCOMES[attribute.aptitude] || APTITUDE_OUTCOMES.C, gain = choose(outcomes, `${key}|training|${dms.activity.cycle}|${energy}`) + Math.floor(energy / 50); attribute.value += gain; return { attribute: key, gain, value: attribute.value };
   }
   function trainSkill(dms, target, skillName, amount = 10) {
     const character = resolveCharacter(dms, target); if (!character) throw new Error("Unknown linked character."); const skill = [...character.class.skills, ...character.class.traits].find(item => item.name.toLowerCase() === clean(skillName).toLowerCase()); if (!skill) throw new Error("Unknown Skill or Trait.");
@@ -11752,9 +11798,70 @@ function AutoCards(inHook, inText, inStop) {
     return `Current authoritative location: ${location.major}${location.secondary ? `, ${location.secondary}` : ""}${location.detail ? `, ${location.detail}` : ""}. Current Activity: ${dms.activity.mode}; Target: ${dms.activity.targets.join(", ") || "None"}; Pace: ${dms.activity.pace}. Use these facts to frame what the Thronebound is doing and how quickly time passes. ${dms.thronebound.name} is the Thronebound of ${dms.dungeon.name}. ${identity} The Dungeon System is accessible only from the Throne Room. Rooms have no required map placement; describe connections only when narratively useful. Managed tiers, resources, population, class progression, sectors, veins, and outcomes are backend facts and cannot be changed by narration alone.${references.length ? ` Immediate lore references: ${references.join(" | ")}` : ""}`;
   }
 
+
+  function saveCardByTitle(titleText) { return Array.isArray(global.storyCards) ? global.storyCards.find(card => card.title === titleText) : null; }
+  function savePayload(card) {
+    if (!card?.entry) return null;
+    try { const value = JSON.parse(card.entry); return value && value.sv === SAVE_SCHEMA && Number.isFinite(Number(value.rev)) ? value : null; } catch { return null; }
+  }
+  function compactCoreSave(dms) {
+    return { sv: SAVE_SCHEMA, rev: dms.persistence.revision, schema: dms.schema, tier: dms.dungeon.tier, cycle: dms.activity.cycle, progress: dms.activity.progress, res: Object.fromEntries(RESOURCE_ROLES.map(role => [role, dms.dungeon.resources[role].amount])), gen: dms.generation, activity: { mode: dms.activity.mode, pace: dms.activity.pace, targets: dms.activity.targets, location: dms.activity.location, lastTurnKey: dms.activity.lastTurnKey || "" } };
+  }
+  function compactProgressionSave(dms) {
+    const attrs = Object.fromEntries(["combat", "support"].map(group => [group, Object.fromEntries(Object.entries(dms.thronebound.attributes[group] || {}).map(([name, value]) => [name, { value: value.value, aptitude: value.aptitude, preference: value.preference }]))]));
+    const abilities = list => list.map(item => [item.name, item.mastery || 0, item.grade || 1, item.gradeName || "Basic", item.tier || 1]);
+    return { sv: SAVE_SCHEMA, rev: dms.persistence.revision, tb: { level: dms.thronebound.level, xp: dms.thronebound.experience, attrs, unique: dms.thronebound.attributes.unique, classTier: dms.thronebound.class.tier, skills: abilities(dms.thronebound.class.skills), traits: abilities(dms.thronebound.class.traits) }, admins: Object.fromEntries(Object.entries(dms.administrators).map(([id, a]) => [id, { level: a.level, xp: a.experience, role: a.role, rank: a.rank, effectiveness: a.effectiveness, specialization: a.attributeSpecialization, bond: a.bond, assignedRooms: a.assignedRooms, classTier: a.class?.tier || 0 }])), quests: Object.fromEntries(Object.entries(dms.quests.records).map(([id, q]) => [id, { status: q.status, rewarded: !!q.rewarded, tier: q.tier, category: q.category, prerequisites: q.prerequisites || [] }])) };
+  }
+  function compactOperationsSave(dms) {
+    return { sv: SAVE_SCHEMA, rev: dms.persistence.revision, rooms: Object.fromEntries(Object.entries(dms.rooms).map(([id, room]) => [id, { definition: room.definition, tier: room.tier, expansion: room.expansion || 1, state: room.state, assignedAdministrator: room.assignedAdministrator || "", targetedVeins: room.targetedVeins || [] }])), tasks: dms.tasks, soldiers: dms.population.soldiers.cohorts, research: dms.shops.research };
+  }
+  function compactWorldSave(dms) { return { sv: SAVE_SCHEMA, rev: dms.persistence.revision, lustria: { sectors: dms.world.lustria.sectors, veins: dms.world.lustria.veins, inventory: dms.world.lustria.inventory, controlledSectors: dms.world.lustria.controlledSectors } }; }
+  function writeSaveCards(dms) {
+    if (!Array.isArray(global.storyCards)) return false;
+    const payloads = { core: compactCoreSave(dms), progression: compactProgressionSave(dms), operations: compactOperationsSave(dms), world: compactWorldSave(dms) };
+    for (const [key, payload] of Object.entries(payloads)) { const card = ensureCard(SAVE_CARD_TITLES[key], `DMS_SAVE_${key.toUpperCase()}`); card.type = "System — DMS Save"; card.description = `Compact DMS mechanical save; revision ${dms.persistence.revision}. Ordinary Story Cards remain authoritative for lore.`; card.entry = JSON.stringify(payload); }
+    dms.persistence.lastSavedRevision = dms.persistence.revision; dms.persistence.cacheRevision = dms.persistence.revision; return true;
+  }
+  function readSaveCards() {
+    if (!Array.isArray(global.storyCards)) return null;
+    const values = Object.fromEntries(Object.entries(SAVE_CARD_TITLES).map(([key, titleText]) => [key, savePayload(saveCardByTitle(titleText))]));
+    if (!values.core) return null;
+    const rev = Number(values.core.rev);
+    for (const value of Object.values(values)) if (value && Number(value.rev) !== rev) return null;
+    return { revision: rev, ...values };
+  }
+  function cardField(card, label) { return clean(String(card?.entry || "").match(new RegExp("^" + label + ":\\s*(.+)$", "im"))?.[1]); }
+  function hydrateIdentityFromCards(dms) {
+    const dungeon = saveCardByTitle("DMS — Dungeon");
+    const dungeonLine = String(dungeon?.entry || "").match(/^Dungeon:\s*(.+?)\s*\|\s*Tier/im); if (dungeonLine) dms.dungeon.name = clean(dungeonLine[1]);
+    const identity = String(dungeon?.entry || "").match(/^Identity:\s*(.+?)\s*\/\s*(.+)$/im); if (identity) { dms.dungeon.theme = clean(identity[1]); dms.dungeon.style = clean(identity[2]); }
+    const throne = saveCardByTitle("DMS — Thronebound"), first = String(throne?.entry || "").split("\n")[0].split(/\s+[—-]\s+/); if (first.length >= 2) { dms.thronebound.name = clean(first[0]); dms.thronebound.race = clean(first.slice(1).join(" — ")); }
+    const worldIdentity = saveCardByTitle("DMS — Identity"); if (worldIdentity) { dms.population.workerDescription = cardField(worldIdentity, "Workers") || dms.population.workerDescription; dms.population.soldierDescription = cardField(worldIdentity, "Soldiers") || dms.population.soldierDescription; dms.world.homeworld = cardField(worldIdentity, "Homeworld") || dms.world.homeworld; dms.world.secondaryLocation = cardField(worldIdentity, "Secondary") || dms.world.secondaryLocation; }
+    const resources = saveCardByTitle("DMS — Dungeon Resources");
+    for (const role of RESOURCE_ROLES) { const block = String(resources?.entry || "").match(new RegExp(`\\[${title(role)}\\] ([^:]+): ([^\\n]*)\\nCollection: ([^\\n]*)\\nUse: ([^\\n]*)`, "i")); if (block) dms.dungeon.resources[role] = { ...dms.dungeon.resources[role], role, name: clean(block[1]), description: clean(block[2]), collection: clean(block[3]), use: clean(block[4]) }; }
+    return dms;
+  }
+  function loadSaveCards(candidate, snapshot = readSaveCards()) {
+    if (!snapshot?.core) throw new Error("No valid DMS Save cards were found.");
+    const dms = hydrateIdentityFromCards(normalize(candidate || defaultState()));
+    const core = snapshot.core, progression = snapshot.progression || {}, operations = snapshot.operations || {}, world = snapshot.world || {};
+    dms.dungeon.tier = clamp(core.tier, 0, 10); dms.activity.cycle = Math.max(0, Number(core.cycle) || 0); dms.activity.progress = clamp(core.progress, 0, 0.999999);
+    for (const role of RESOURCE_ROLES) if (Number.isFinite(Number(core.res?.[role]))) dms.dungeon.resources[role].amount = Number(core.res[role]);
+    dms.generation = { ...dms.generation, ...(core.gen || {}) }; if (core.activity) dms.activity = { ...dms.activity, ...core.activity, location: { ...dms.activity.location, ...(core.activity.location || {}) } };
+    const tb = progression.tb || {}; dms.thronebound.level = Math.max(1, Number(tb.level) || dms.thronebound.level); dms.thronebound.experience = Math.max(0, Number(tb.xp) || 0); dms.thronebound.class.tier = Math.max(0, Number(tb.classTier) || 0); dms.thronebound.attributes.unique = tb.unique || dms.thronebound.attributes.unique;
+    for (const group of ["combat", "support"]) for (const [name, value] of Object.entries(tb.attrs?.[group] || {})) if (dms.thronebound.attributes[group]?.[name]) dms.thronebound.attributes[group][name] = { ...dms.thronebound.attributes[group][name], ...value };
+    dms.rooms = {}; for (const [id, saved] of Object.entries(operations.rooms || {})) { const definition = ROOM_DEFINITIONS[saved.definition]; if (!definition) continue; dms.rooms[id] = { id, definition: saved.definition, name: definition.name, tier: Math.max(1, Number(saved.tier) || definition.unlockTier || 1), expansion: Math.max(1, Number(saved.expansion) || 1), state: saved.state || "Active", assignedWorkers: 0, jobPopulation: 0, targetedVeins: Array.isArray(saved.targetedVeins) ? saved.targetedVeins : [], assignedAdministrator: saved.assignedAdministrator || "", lore: roomLore(dms, definition, Math.max(1, Number(saved.tier) || definition.unlockTier || 1)) }; }
+    dms.tasks = Array.isArray(operations.tasks) ? operations.tasks : []; dms.population.soldiers.cohorts = Array.isArray(operations.soldiers) ? operations.soldiers : []; dms.shops.research = operations.research || {};
+    dms.world.lustria = { ...dms.world.lustria, ...(world.lustria || {}) };
+    for (const [id, saved] of Object.entries(progression.quests || {})) { if (dms.quests.records[id]) Object.assign(dms.quests.records[id], saved); else { const card = Array.isArray(global.storyCards) ? global.storyCards.find(item => clean(item.keys).split(",").includes(`DMS_QUEST_${id.toUpperCase().replace(/\\W/g, "_")}`)) : null; dms.quests.records[id] = { category: saved.category || "Personal", tier: saved.tier ?? dms.dungeon.tier, title: clean(String(card?.title || "").replace(/^DMS Quest — /, "")) || id, status: saved.status || "locked", objective: cardField(card, "Objective"), rewards: (() => { try { return JSON.parse(cardField(card, "Rewards") || "{}"); } catch { return {}; } })(), prerequisites: saved.prerequisites || [], rewarded: !!saved.rewarded }; } }
+    dms.administrators = {}; for (const [id, saved] of Object.entries(progression.admins || {})) { const card = Array.isArray(global.storyCards) ? global.storyCards.find(item => clean(item.keys).split(",").includes(`DMS_ADMIN_${id.toUpperCase().replace(/\\W/g, "_")}`)) : null; const line = String(card?.entry || "").split("\n")[0].split(/\s+[—-]\s+/), admin = characterBase(clean(line[0]) || id, clean(line.slice(1).join(" — ")) || dms.population.workerDescription, saved.role || "Manager"); admin.id = id; admin.role = saved.role || "Manager"; admin.rank = saved.rank || "F"; admin.effectiveness = Number(saved.effectiveness) || ADMINISTRATOR_RANK_MULTIPLIERS[admin.rank] || 1; admin.attributeSpecialization = saved.specialization || "support"; admin.attributes = { [admin.attributeSpecialization]: attributeSet(ATTRIBUTE_TEMPLATES[admin.attributeSpecialization]) }; admin.level = Math.max(1, Number(saved.level) || 1); admin.experience = Math.max(0, Number(saved.xp) || 0); admin.bond = saved.bond || { value: 0, completedEvents: [] }; admin.assignedRooms = saved.assignedRooms || []; admin.class.tier = Math.max(0, Number(saved.classTier) || 0); admin.status = "Active"; dms.administrators[id] = admin; }
+    dms.persistence = { saveSchema: SAVE_SCHEMA, revision: snapshot.revision, cacheRevision: snapshot.revision, lastSavedRevision: snapshot.revision };
+    dms.initialized = identityReady(dms); applyDerivedState(dms); updateQuests(dms); dms.persistence.revision = snapshot.revision; dms.persistence.cacheRevision = snapshot.revision; return dms;
+  }
+
   function ensureCard(titleText, keys = "") {
     if (!Array.isArray(global.storyCards)) return null;
-    let card = global.storyCards.find(candidate => candidate.title === titleText);
+    const matches = global.storyCards.filter(candidate => candidate.title === titleText); let card = matches[0]; if (matches.length > 1) for (let index = global.storyCards.length - 1; index >= 0; index--) if (global.storyCards[index].title === titleText && global.storyCards[index] !== card) global.storyCards.splice(index, 1);
     if (!card) { card = { title: titleText, keys, entry: "", type: "System Cards", description: "Managed by the Dungeon Management System." }; global.storyCards.push(card); }
     return card;
   }
@@ -11762,6 +11869,7 @@ function AutoCards(inHook, inText, inStop) {
     const lore = ensureCard("Lore — Nexus Realm of Lustria", "Nexus realm of Lustria, Architect's artificial realm, Dominion regulation of dungeons");
     if (lore) { lore.type = "Global Lore"; lore.description = "Setting-wide Lustria canon only; excludes story-specific worlds, protagonists, and named dungeons."; lore.entry = "Lustria is an artificial nexus realm attributed to the Architect. Dungeon-controlled portals connect it to many homeworlds. Its enormous, shifting lands hold magical ecosystems, ancient ruins, independent peoples, merchant powers, adventurers, and the dominant Dominion of Lustria, which regulates dungeon expansion. Dungeon growth brings opportunity, conflict, and scrutiny; resource exploitation can provoke native factions that value Lustria's long-term balance."; }
     const dungeonCard = ensureCard("DMS — Dungeon", "DMS_SYS_DUNGEON_STATUS"); if (dungeonCard) dungeonCard.entry = status(dms);
+    const identityCard = ensureCard("DMS — Identity", "DMS_SYS_IDENTITY"); if (identityCard) identityCard.entry = `Workers: ${dms.population.workerDescription}\nSoldiers: ${dms.population.soldierDescription}\nHomeworld: ${dms.world.homeworld}\nSecondary: ${dms.world.secondaryLocation}`;
     const resources = ensureCard("DMS — Dungeon Resources", "DMS_SYS_DUNGEON_RESOURCES"); if (resources) resources.entry = RESOURCE_ROLES.map(role => { const resource = dms.dungeon.resources[role]; return `[${title(role)}] ${resource.name}: ${resource.description}\nCollection: ${resource.collection}\nUse: ${resource.use}\nStored: ${Number(resource.amount.toFixed(2))}`; }).join("\n\n");
     const formatAttributes = attributes => Object.entries(attributes).map(([name, attribute]) => `${name} [${attribute.aptitude || "C"}]: ${attribute.value ?? attribute}`).join("; ");
     const character = ensureCard("DMS — Thronebound", "DMS_SYS_THRONEBOUND_STATUS"); if (character) character.entry = `${dms.thronebound.name} — ${dms.thronebound.race}\nClass: ${dms.thronebound.class.name}, Tier ${dms.thronebound.class.tier}; Level ${dms.thronebound.level}; Experience ${dms.thronebound.experience}/${levelThreshold(dms.thronebound.level)}\nClass Description: ${dms.thronebound.class.description}\nCombat Attributes: ${formatAttributes(dms.thronebound.attributes.combat)}\nSupport Attributes: ${formatAttributes(dms.thronebound.attributes.support)}\nUnique Attributes: ${JSON.stringify(dms.thronebound.attributes.unique)}\nSkills: ${dms.thronebound.class.skills.map(skill => `${skill.name} [${skill.gradeName || "Basic"}] ${skill.mastery || 0}%`).join(", ") || "None"}\nTraits: ${dms.thronebound.class.traits.map(trait => `${trait.name} [${trait.gradeName || "Basic"}] ${trait.mastery || 0}%`).join(", ") || "None"}`;
@@ -11775,14 +11883,16 @@ function AutoCards(inHook, inText, inStop) {
     for (const [kind, shop] of Object.entries(dms.shops.custom)) { const card = ensureCard(`DMS Custom ${title(kind)} Shop — ${shop.theme}`, `DMS_CUSTOM_${kind.toUpperCase()}_SHOP`); if (card) card.entry = shop.entries.map(entry => `${entry.name} — ${entry.description} Cost: ${entry.cost}.`).join("\n"); }
     for (const ability of [...dms.thronebound.class.skills, ...dms.thronebound.class.traits]) { const card = ensureCard(`DMS ${ability.category ? "Skill" : "Trait"} — ${ability.name}`, `DMS_ABILITY_${ability.name.toUpperCase().replace(/\W/g, "_")}`); if (card) card.entry = `${ability.name}\nDescription: ${ability.description}\nGrade: ${ability.gradeName || "Basic"}\nMastery: ${ability.mastery || 0}%\nSource: ${ability.source}`; }
     for (const sector of Object.values(dms.world.lustria.sectors)) { const card = ensureCard(`DMS Lustria Sector — ${sector.name}`, `DMS_LUSTRIA_${sector.id.toUpperCase().replace(/\W/g, "_")}`); if (card) card.entry = `Status: ${sector.status}\nThreat: ${sector.threat}\nResource Sites: ${sector.veins.map(id => { const vein = dms.world.lustria.veins[id]; return `${vein.name} (${id}) — ${vein.status}, ${vein.remaining} remaining`; }).join("; ")}`; }
+    writeSaveCards(dms);
   }
 
   const split = value => clean(value).split("|").map(clean);
   function execute(dms, raw) {
     const body = clean(raw).replace(/^\/dms\s*/i, ""); let match, output;
-    if (!body || /^help$/i.test(body)) return "DMS: setup; resource define; aptitude; status; dungeon upgrade; room list/build/upgrade/expand; administrator summon/assign/rank/bond; class preview/regenerate/accept; skill buy/train/grade; attribute train; shop buy/custom; research custom; soldiers recruit; location; mode; scout; vein target; sector secure/conquer; cycle; quest add/complete/status.";
+    if (!body || /^help$/i.test(body)) return "DMS: load; setup; resource define; aptitude; status; dungeon upgrade; room list/build/upgrade/expand; administrator summon/assign/rank/bond; class preview/regenerate/accept; skill buy/train/grade; attribute train; shop buy/custom; research custom; soldiers recruit; location; mode; scout; vein target; sector secure/conquer; cycle; quest add/complete/status.";
     if (/^status$/i.test(body)) return status(dms);
-    if ((match = body.match(/^setup\s+(.+)$/i))) { const values = split(match[1]); configure(dms, { thronebound: values[0], race: values[1], name: values[2], theme: values[3], style: values[4], workerDescription: values[5], soldierDescription: values[6], homeworld: values[7], secondaryLocation: values[8] }); output = "Tier 0 dungeon identity recorded. Define all four resources, enter System Mode in the Throne Room, and summon the first Manager."; }
+    if (/^load$/i.test(body)) { const loaded = loadSaveCards(dms); for (const key of Object.keys(dms)) delete dms[key]; Object.assign(dms, loaded); output = `Loaded DMS Save revision ${dms.persistence.revision}.`; }
+    else if ((match = body.match(/^setup\s+(.+)$/i))) { const values = split(match[1]); configure(dms, { thronebound: values[0], race: values[1], name: values[2], theme: values[3], style: values[4], workerDescription: values[5], soldierDescription: values[6], homeworld: values[7], secondaryLocation: values[8] }); output = "Tier 0 dungeon identity recorded. Define all four resources, enter System Mode in the Throne Room, and summon the first Manager."; }
     else if ((match = body.match(/^resource\s+define\s+(construction|sustenance|development|energy)\s*\|(.+)$/i))) { defineResource(dms, match[1], split(match[2])); output = `${title(match[1])} resource defined.`; }
     else if ((match = body.match(/^attribute\s+unique\s+(.+)$/i))) { const [name, description, value] = split(match[1]); defineUniqueAttribute(dms, name, description, value); output = `Unique Attribute ${name} defined.`; }
     else if ((match = body.match(/^aptitude\s+(.+)$/i))) { const [name, aptitude, preference] = split(match[1]); const attribute = configureAptitude(dms, name, aptitude, preference); output = `${name} Aptitude ${attribute.aptitude}; preference ${attribute.preference}.`; }
@@ -11819,12 +11929,17 @@ function AutoCards(inHook, inText, inStop) {
     applyDerivedState(dms); updateQuests(dms); refreshCards(dms); return output;
   }
 
-  const api = Object.freeze({ SCHEMA, RESOURCE_ROLES, LOCATIONS, MODES, PACES, ACTIVITY_PACES, SOLDIER_ARCHETYPES, ADMINISTRATOR_RANKS, APTITUDE_OUTCOMES, QUEST_CATEGORIES, CLASS_GRADES, ROOM_DEFINITIONS, LUSTRIAN_RESOURCES, defaultState, normalize, configure, defineResource, identityReady, tierRules, availableRoomDefinitions, createRoom, upgradeRoom, expandRoom, upgradeDungeon, applyDerivedState, recruitSoldiers, combatPower, summonAdministrator, createAdministrator, assignAdministrator, addAdministratorBond, completeBondEvent, rankUpAdministrator, generateClassPreviews, acceptClassPreview, buySkill, buyShopEntry, trainSkill, upgradeSkillGrade, defineUniqueAttribute, configureAptitude, trainAttribute, createQuest, completeQuest, awardQuest, researchCustomShop, defineCustomShop, setLocation, setActivity, systemAvailable, applyActivityTurn, scoutSector, targetVein, secureSector, resolveCycle, advanceActivity, updateQuests, status, contextGuidance, refreshCards, execute, stableNumber });
+  const api = Object.freeze({ SCHEMA, SAVE_SCHEMA, SAVE_CARD_TITLES, RESOURCE_ROLES, LOCATIONS, MODES, PACES, ACTIVITY_PACES, SOLDIER_ARCHETYPES, ADMINISTRATOR_RANKS, APTITUDE_OUTCOMES, QUEST_CATEGORIES, CLASS_GRADES, ROOM_DEFINITIONS, LUSTRIAN_RESOURCES, defaultState, normalize, configure, defineResource, identityReady, tierRules, availableRoomDefinitions, createRoom, upgradeRoom, expandRoom, upgradeDungeon, applyDerivedState, transactResources, spend, rewardResources, resourceStorage, recruitSoldiers, combatPower, summonAdministrator, createAdministrator, assignAdministrator, addAdministratorBond, completeBondEvent, rankUpAdministrator, generateClassPreviews, acceptClassPreview, buySkill, buyShopEntry, trainSkill, upgradeSkillGrade, defineUniqueAttribute, configureAptitude, trainAttribute, createQuest, completeQuest, awardQuest, researchCustomShop, defineCustomShop, setLocation, setActivity, systemAvailable, applyActivityTurn, scoutSector, targetVein, secureSector, resolveCycle, advanceActivity, updateQuests, status, contextGuidance, refreshCards, writeSaveCards, readSaveCards, loadSaveCards, execute, stableNumber });
   global.DMSCore = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 
   if (typeof global.state !== "undefined") {
-    const root = () => (global.state.DMS = normalize(global.state.DMS));
+    const root = () => {
+      const snapshot = readSaveCards();
+      let dms = normalize(global.state.DMS);
+      if (snapshot && (!global.state.DMS || snapshot.revision > Number(dms.persistence?.cacheRevision || 0))) dms = loadSaveCards(global.state.DMS, snapshot);
+      global.state.DMS = dms; return dms;
+    };
     const commandOutput = value => `> **DUNGEON MANAGEMENT SYSTEM**\n>\n${String(value).split("\n").map(line => `> ${line}`).join("\n")}`;
     global.DungeonManagement = function DungeonManagement(hook) {
       const dms = root();
