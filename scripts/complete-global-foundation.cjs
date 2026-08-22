@@ -20,8 +20,8 @@ replacePattern(
 );
 
 replacePattern(
-  /    const key = `\$\{actionCount\}\|\$\{clean\(inputText\)\}\|\$\{dms\.activity\.mode\}`; if \(dms\.activity\.lastTurnKey === key\) return \{ repeated: true, reports: \[\] \}; dms\.activity\.lastTurnKey = key;/,
-  '    const locationKey = [dms.activity.location.major, dms.activity.location.secondary, dms.activity.location.detail].map(clean).join("|"); const key = `${actionCount}|${clean(inputText)}|${dms.activity.mode}|${dms.activity.pace}|${locationKey}|${dms.activity.targets.map(clean).join(",")}`; if (dms.activity.lastTurnKey === key) return { repeated: true, reports: [] }; dms.activity.lastTurnKey = key;',
+  /    const key = `[^\n]+lastTurnKey = key;\n/,
+  '    const locationKey = [dms.activity.location.major, dms.activity.location.secondary, dms.activity.location.detail].map(clean).join("|"); const key = `${actionCount}|${clean(inputText)}|${dms.activity.mode}|${dms.activity.pace}|${locationKey}|${dms.activity.targets.map(clean).join(",")}`; if (dms.activity.lastTurnKey === key) return { repeated: true, reports: [] }; dms.activity.lastTurnKey = key;\n',
   "activity retry identity"
 );
 
