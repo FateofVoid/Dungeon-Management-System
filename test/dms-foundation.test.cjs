@@ -24,6 +24,47 @@ function rich(dms, amount = 100000) { for (const role of DMS.RESOURCE_ROLES) dms
 function systemMode(dms) { DMS.setLocation(dms, "Dungeon", "Throne Room"); DMS.setActivity(dms, "System", [], "Timeless"); return dms; }
 function finishTasks(dms) { let guard = 100; while (dms.tasks.length && guard-- > 0) DMS.resolveCycle(dms); assert.ok(guard > 0); }
 
+test("global Lustria cards stay compact, foundational, and scenario-neutral", () => {
+  global.storyCards.length = 0;
+  global.storyCards.push({ title: "Lore — Nexus Realm of Lustria", keys: "stale key", entry: "stale entry", type: "Other" });
+  const dms = configured();
+  DMS.refreshCards(dms);
+
+  const expectedTitles = new Set(DMS.GLOBAL_LUSTRIA_LORE.map(card => card.title));
+  const cards = global.storyCards.filter(card => expectedTitles.has(card.title));
+  assert.equal(cards.length, DMS.GLOBAL_LUSTRIA_LORE.length);
+  assert.equal(new Set(cards.map(card => card.title)).size, cards.length);
+  assert.ok(cards.every(card => card.type === "Global Lore" && card.keys && card.entry.length <= 420));
+  assert.ok(cards.some(card => card.title === "Lore — Dungeon Thrones"));
+  assert.ok(cards.some(card => card.title === "Lore — Thronebound Bond"));
+  assert.ok(cards.some(card => card.title === "Lore — Dominion of Lustria"));
+  assert.ok(cards.some(card => card.title === "Lore — Adventurer Guilds of Lustria"));
+  assert.ok(cards.some(card => card.title === "Lore — Administrator Capacity" && /1 \+ twice Dungeon Tier/.test(card.entry)));
+  assert.ok(cards.some(card => card.title === "Lore — Administrator Level" && /Level 1/.test(card.entry)));
+  assert.ok(cards.some(card => card.title === "Lore — Administrator Rank" && /distinct from Level/.test(card.entry)));
+  assert.ok(cards.some(card => card.title === "Lore — Dungeon Resource Roles" && /Energy powers dungeon functions/.test(card.entry)));
+  assert.ok(cards.some(card => card.title === "Lore — Grades" && /distinct from Tier and Rank/.test(card.entry)));
+  assert.ok(cards.some(card => card.title === "Lore — Dominion Dungeon Law" && /Tier 4/.test(card.entry) && /Tier 5\+/.test(card.entry)));
+  assert.ok(cards.some(card => card.title === "Lore — Dominion Dungeon Detection"));
+  assert.ok(cards.some(card => card.title === "Lore — Resonance Cores" && /remain unproven/.test(card.entry)));
+  assert.ok(cards.some(card => card.title === "Lore — Persistent Discovery" && /becomes canon/.test(card.entry)));
+  assert.ok(cards.some(card => card.title === "Lore — Dungeon Signatures"));
+  assert.ok(cards.some(card => card.title === "Lore — Resonance"));
+  for (let tier = 0; tier <= 10; tier++) assert.ok(cards.some(card => card.title === `Lore — Dungeon Tier ${tier}`), `missing Tier ${tier} lore card`);
+  for (const rank of DMS.ADMINISTRATOR_RANKS) assert.ok(cards.some(card => card.title === `Lore — Rank ${rank}`), `missing Rank ${rank} lore card`);
+  for (const grade of DMS.CLASS_GRADES) assert.ok(cards.some(card => card.title === `Lore — Grade ${grade.grade} ${grade.name}`), `missing Grade ${grade.grade} lore card`);
+  for (const role of ["Construction", "Sustenance", "Development", "Dungeon Energy"]) assert.ok(cards.some(card => card.title === `Lore — ${role}${role === "Dungeon Energy" ? "" : " Resource"}`), `missing ${role} lore card`);
+  for (const grade of ["Unique", "Apex", "Growth"]) assert.ok(cards.some(card => card.title === `Lore — ${grade} Grade`), `missing ${grade} Grade lore card`);
+  for (const category of ["Survey", "Gathering", "Escort", "Hunt", "Investigation", "Defense", "Recovery", "Exploration", "Subjugation", "Dungeon Raid", "Bounty", "Emergency"]) assert.ok(cards.some(card => card.title === `Lore — ${category} Quests`), `missing ${category} quest lore card`);
+  const triggers = cards.flatMap(card => card.keys.split(",").map(key => key.trim().toLowerCase()));
+  assert.equal(new Set(triggers).size, triggers.length, "global lore trigger phrases must be distinct");
+  assert.doesNotMatch(cards.map(card => card.entry).join("\n"), /Eryndral|Fate Veylark|Velis Reverie|Orphan|Seven Sins|Gluttony|Demon King/i);
+
+  DMS.refreshCards(dms);
+  assert.equal(global.storyCards.filter(card => expectedTitles.has(card.title)).length, cards.length, "refresh must update global lore rather than duplicate it");
+  assert.notEqual(global.storyCards.find(card => card.title === "Lore — Nexus Realm of Lustria").keys, "stale key");
+});
+
 test("identity readiness rejects placeholder core identity even with complete resources", () => {
   const dms = DMS.defaultState();
   DMS.configure(dms, { thronebound: "Mara", name: "The Ashen Court", theme: "Volcanic necromancy", style: "Gothic basalt fortress", workerDescription: "masked ashbound skeletons", soldierDescription: "ember-wreathed revenants", homeworld: "Caelus" });
