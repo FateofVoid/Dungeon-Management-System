@@ -1,6 +1,13 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const DMS = require("../src/dms-engine.js");
+global.state = {};
+global.storyCards = [];
+global.history = [];
+global.info = { actionCount: 0, maxChars: 12000 };
+global.log = () => {};
+global.text = "";
+global.stop = false;
+const DMS = require("../Library.js");
 
 test("setup requires a complete user-defined dungeon identity", () => {
   const state = DMS.defaultState();

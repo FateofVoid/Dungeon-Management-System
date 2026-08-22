@@ -12,7 +12,7 @@ The user defines the dungeon's theme, style, and population. DMS then uses those
 - Adapted Activity Mode and management Cycles
 - Initial managed quest chain
 - Silent-author `/dms` command routing
-- AI Dungeon `Input.js`, `Context.js`, `Output.js`, and bundled `Library.js` build
+- Aetheria-compatible root `Library.js`, `Input.js`, `Context.js`, and `Output.js` structure
 - GitHub Codespaces development environment
 
 ## Develop from any computer
@@ -37,10 +37,19 @@ Example:
 /dms setup Mara|The Ashen Court|Volcanic necromancy|Gothic fortress|skeletons, ember wraiths
 ```
 
-## Build and test
+## AI Dungeon installation
+
+Copy each root script into the matching AI Dungeon tab:
+
+- `Library.js` contains every runtime component: Toolbox, Inner Self/Auto-Cards, and DMS.
+- `Input.js`, `Context.js`, and `Output.js` are the minimal lifecycle hooks.
+
+Do not install separate copies of Toolbox, Inner Self, or Auto-Cards; doing so would duplicate their state and story-card ownership.
+
+## Test
 
 ```text
 npm run check
 ```
 
-Copy the generated files from `dist/` into the corresponding AI Dungeon script tabs. See [the architecture](docs/ARCHITECTURE.md) for the domain model and adaptation plan.
+See [the architecture](docs/ARCHITECTURE.md) for the domain model and adaptation plan.

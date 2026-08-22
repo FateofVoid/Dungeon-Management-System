@@ -1,6 +1,6 @@
 # Dungeon Management System architecture
 
-The Dungeon Management System is an AI Dungeon script stack with three layers.
+The Dungeon Management System uses Aetheria's AI Dungeon file structure. All three runtime layers are contained in the root `Library.js`; the three hook files only invoke the shared lifecycle.
 
 1. **Toolbox** coordinates commands, context filtering, output cleanup, and optional narrative tools.
 2. **Inner Self and Auto-Cards** provide persistent minds and memories for Administrators and important dungeon inhabitants.

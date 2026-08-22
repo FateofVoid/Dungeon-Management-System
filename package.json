@@ -4,9 +4,8 @@
   "private": true,
   "description": "Theme-driven dungeon management for AI Dungeon, integrated with Toolbox and Inner Self.",
   "scripts": {
-    "build": "node scripts/build.cjs",
     "test": "node --test test/*.test.cjs",
-    "check": "npm run build && npm test"
+    "check": "node --check Library.js && node --check Input.js && node --check Context.js && node --check Output.js && npm test"
   },
   "engines": {
     "node": ">=20"
