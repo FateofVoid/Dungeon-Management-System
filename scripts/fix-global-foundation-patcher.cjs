@@ -11,10 +11,16 @@ const endMarker = "\n`;\nreplaceOnce('  function ensureCard";
 const end = source.indexOf(endMarker, bodyStart);
 if (end < 0) throw new Error("persistenceHelpers template end not found");
 
-// Normalize the entire nested helper template on every run. Earlier versions
-// skipped once they found one escaped marker, leaving later template literals
-// (notably cardField()) able to terminate persistenceHelpers prematurely.
-let body = source.slice(bodyStart, end)
+let body = source.slice(bodyStart, end);
+body = body.replace(
+  'function cardField(card, label) { return clean(String(card?.entry || "").match(new RegExp(`^${label}:\\\\s*(.+)$`, "im"))?.[1]); }',
+  'function cardField(card, label) { return clean(String(card?.entry || "").match(new RegExp("^" + label + ":\\\\s*(.+)$", "im"))?.[1]); }'
+);
+
+// Normalize every remaining nested helper template on every run. The cardField
+// regex above deliberately avoids a nested template because its `$` anchor next
+// to an escaped backtick is fragile when the generator is converted to String.raw.
+body = body
   .replace(/\\`/g, "`")
   .replace(/\\\$\{/g, "${")
   .replace(/`/g, "\\`")
@@ -22,4 +28,4 @@ let body = source.slice(bodyStart, end)
 
 source = source.slice(0, bodyStart) + body + source.slice(end);
 fs.writeFileSync(file, source);
-console.log("Normalized nested persistence template literals.");
+console.log("Normalized nested persistence template literals and cardField regex.");
