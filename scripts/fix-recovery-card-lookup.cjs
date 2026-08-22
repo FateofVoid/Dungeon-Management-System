@@ -22,18 +22,18 @@ source = source.replace(
 );
 source = source.replace(
   /const card = Array\.isArray\(global\.storyCards\) \? global\.storyCards\.find\(item => clean\(item\.keys\)\.split\(","\)\.includes\(`DMS_ADMIN_\$\{id\.toUpperCase\(\)\.replace\(\/\\W\/g, "_"\)\}`\)\) : null;/g,
-  'const card = managedCardByKey(`DMS_ADMIN_${id.toUpperCase().replace(/\\W/g, "_")}`);'
+  'const card = managedCardByKey(`DMS_ADMIN_${id.toUpperCase().replace(/\\W/g, "_")}`) || saveCardByTitle(`DMS Administrator — ${saved.name || ""}`);'
 );
 
-// Class names are compact mechanical progression references. Descriptions and
-// ability flavor remain in ordinary Story Cards and are not duplicated here.
+// Compact names are linkage/progression references only; descriptions remain in
+// ordinary Story Cards and are intentionally excluded from save payloads.
 source = source.replace(
   'classTier: dms.thronebound.class.tier, skills:',
   'classTier: dms.thronebound.class.tier, className: dms.thronebound.class.name, skills:'
 );
 source = source.replace(
   'assignedRooms: a.assignedRooms, classTier: a.class?.tier || 0, attrs:',
-  'assignedRooms: a.assignedRooms, classTier: a.class?.tier || 0, className: a.class?.name || a.role, attrs:'
+  'assignedRooms: a.assignedRooms, name: a.name, race: a.race, classTier: a.class?.tier || 0, className: a.class?.name || a.role, attrs:'
 );
 source = source.replace(
   'if (throneClass) dms.thronebound.class.name = clean(throneClass[1]);',
@@ -43,6 +43,10 @@ source = source.replace(
   'if (adminClass) admin.class.name = clean(adminClass[1]);',
   'admin.class.name = clean(saved.className) || (adminClass ? clean(adminClass[1]) : admin.class.name);'
 );
+source = source.replace(
+  'const line = String(card?.entry || "").split("\\n")[0].split(/\\s+[—-]\\s+/), admin = characterBase(clean(line[0]) || id, clean(line.slice(1).join(" — ")) || dms.population.workerDescription, saved.role || "Manager");',
+  'const line = String(card?.entry || "").split("\\n")[0].split(/\\s+[—-]\\s+/), admin = characterBase(clean(saved.name) || clean(line[0]) || id, clean(saved.race) || clean(line.slice(1).join(" — ")) || dms.population.workerDescription, saved.role || "Manager");'
+);
 
 fs.writeFileSync(file, source);
-console.log("Normalized managed Story Card lookup and class progression references for recovery.");
+console.log("Normalized managed Story Card linkage and class progression references for recovery.");
