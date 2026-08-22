@@ -12,42 +12,48 @@ function replaceBetween(startMarker, endMarker, replacement, label) {
   source = source.slice(0, start) + replacement + source.slice(end);
 }
 
-replaceBetween(
-  '  function identityReady(dms) {',
-  '  function defineResource(dms, role, specification) {',
-  `  function identityReady(dms) {
+if (!source.includes('const defined = value => clean(value)')) {
+  replaceBetween(
+    '  function identityReady(dms) {',
+    '  function defineResource(dms, role, specification) {',
+    `  function identityReady(dms) {
     const defined = value => clean(value) && !/^(?:Undefined|Unnamed|Unformed)(?:\\b|$)/i.test(clean(value));
     return defined(dms.thronebound.name) && defined(dms.thronebound.race) && defined(dms.dungeon.name) && defined(dms.dungeon.theme) && defined(dms.dungeon.style) && defined(dms.population.workerDescription) && defined(dms.population.soldierDescription) && defined(dms.world.homeworld) && RESOURCE_ROLES.every(role => resourceReady(dms.dungeon.resources[role]));
   }
 `,
-  "strict identity readiness"
-);
+    "strict identity readiness"
+  );
+}
 
-{
+if (!source.includes('const locationKey = [dms.activity.location.major')) {
   const fn = source.indexOf('  function applyActivityTurn(dms, inputText, actionCount = 0) {');
   if (fn < 0) throw new Error("Activity function not found");
-  const lineStart = source.indexOf('    const key = ', fn);
+  let lineStart = source.indexOf('const key = ', fn);
   if (lineStart < 0) throw new Error("Activity retry line not found");
+  lineStart = source.lastIndexOf('\n', lineStart) + 1;
   const lineEnd = source.indexOf('\n', lineStart);
   if (lineEnd < 0) throw new Error("Activity retry line end not found");
   const replacement = '    const locationKey = [dms.activity.location.major, dms.activity.location.secondary, dms.activity.location.detail].map(clean).join("|"); const key = `${actionCount}|${clean(inputText)}|${dms.activity.mode}|${dms.activity.pace}|${locationKey}|${dms.activity.targets.map(clean).join(",")}`; if (dms.activity.lastTurnKey === key) return { repeated: true, reports: [] }; dms.activity.lastTurnKey = key;';
   source = source.slice(0, lineStart) + replacement + source.slice(lineEnd);
 }
 
-{
+if (!source.includes('if (Object.values(values).some(value => !value)) return null;')) {
   const fn = source.indexOf('  function readSaveCards() {');
   if (fn < 0) throw new Error("readSaveCards not found");
-  const start = source.indexOf('    if (!values.core) return null;', fn);
-  const end = source.indexOf('    return { revision: rev, ...values };', start);
+  const start = source.indexOf('if (!values.core) return null;', fn);
+  const end = source.indexOf('return { revision: rev, ...values };', start);
   if (start < 0 || end < 0) throw new Error("Save bundle validation block not found");
+  const blockStart = source.lastIndexOf('\n', start) + 1;
+  const returnStart = source.lastIndexOf('\n', end) + 1;
   const replacement = '    if (Object.values(values).some(value => !value)) return null;\n    const rev = Number(values.core.rev);\n    for (const value of Object.values(values)) if (Number(value.rev) !== rev) return null;\n';
-  source = source.slice(0, start) + replacement + source.slice(end);
+  source = source.slice(0, blockStart) + replacement + source.slice(returnStart);
 }
 
-replaceBetween(
-  '  function createQuest(dms, category, titleText, objective, rewards = {}) {',
-  '  function trainAttribute(dms, attributeName, energy = 10) {',
-  `  function questPrerequisitesMet(dms, quest) { return (quest.prerequisites || []).every(id => dms.quests.records[id]?.status === "cleared"); }
+if (!source.includes('function questPrerequisitesMet(dms, quest)')) {
+  replaceBetween(
+    '  function createQuest(dms, category, titleText, objective, rewards = {}) {',
+    '  function trainAttribute(dms, attributeName, energy = 10) {',
+    `  function questPrerequisitesMet(dms, quest) { return (quest.prerequisites || []).every(id => dms.quests.records[id]?.status === "cleared"); }
   function createQuest(dms, category, titleText, objective, rewards = {}, prerequisites = []) {
     category = QUEST_CATEGORIES.find(value => value.toLowerCase() === clean(category).toLowerCase()); if (!category) throw new Error(\`Quest category must be \${QUEST_CATEGORIES.join(", ")}.\`);
     const required = unique((Array.isArray(prerequisites) ? prerequisites : [prerequisites]).map(clean).filter(Boolean));
@@ -58,13 +64,16 @@ replaceBetween(
   }
   function completeQuest(dms, questId) { const quest = dms.quests.records[clean(questId)]; if (!quest) throw new Error("Unknown Quest."); if (!questPrerequisitesMet(dms, quest)) throw new Error("Quest prerequisites are not cleared."); if (quest.status === "locked") quest.status = "active"; if (quest.status !== "active") throw new Error("Unknown or inactive Quest."); quest.status = "cleared"; const levels = awardQuest(dms, quest); for (const candidate of Object.values(dms.quests.records)) if (candidate.status === "locked" && questPrerequisitesMet(dms, candidate)) candidate.status = "active"; record(dms, \`Completed \${quest.category || "Dungeon"} Quest: \${quest.title}.\`); return { quest, levels }; }
 `,
-  "quest prerequisites"
-);
+    "quest prerequisites"
+  );
+}
 
-source = source.replace(
-  'trainAttribute, createQuest, completeQuest, awardQuest,',
-  'trainAttribute, createQuest, completeQuest, questPrerequisitesMet, awardQuest,'
-);
+if (!source.includes('completeQuest, questPrerequisitesMet, awardQuest')) {
+  source = source.replace(
+    'trainAttribute, createQuest, completeQuest, awardQuest,',
+    'trainAttribute, createQuest, completeQuest, questPrerequisitesMet, awardQuest,'
+  );
+}
 
 fs.writeFileSync(file, source);
 console.log("Completed DMS foundation safeguards.");
