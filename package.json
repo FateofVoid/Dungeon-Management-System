@@ -1,0 +1,14 @@
+{
+  "name": "dungeon-management-system",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Theme-driven dungeon management for AI Dungeon, integrated with Toolbox and Inner Self.",
+  "scripts": {
+    "build": "node scripts/build.cjs",
+    "test": "node --test test/*.test.cjs",
+    "check": "npm run build && npm test"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
