@@ -42,7 +42,17 @@ jobs:
       - name: Apply follow-up room-effect patch
         run: node scripts/apply-global-foundation-followup.cjs
       - name: Syntax and regression tests
-        run: npm run check
+        run: |
+          if ! node --check Library.js; then
+            echo "::group::Generated DMS tail"
+            sed -n '11680,12110p' Library.js
+            echo "::endgroup::"
+            exit 1
+          fi
+          node --check Input.js
+          node --check Context.js
+          node --check Output.js
+          npm test
       - name: Verify clean patch formatting
         run: git diff --check
       - name: Commit generated Library.js
