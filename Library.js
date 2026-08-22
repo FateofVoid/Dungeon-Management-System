@@ -11363,7 +11363,8 @@ function AutoCards(inHook, inText, inStop) {
   function record(dms, message) { dms.log.push({ cycle: dms.activity.cycle, location: dms.activity.location.major, message: clean(message) }); dms.log = dms.log.slice(-100); markStateChanged(dms); }
   function resourceReady(resource) { return resource && !/^Undefined\b/i.test(resource.name) && clean(resource.description) && clean(resource.collection) && clean(resource.use); }
   function identityReady(dms) {
-    return dms.dungeon.theme !== "Unformed" && dms.dungeon.style !== "Undefined" && dms.population.workerDescription !== "Undefined dungeon workers" && dms.population.soldierDescription !== "Undefined dungeon soldiers" && RESOURCE_ROLES.every(role => resourceReady(dms.dungeon.resources[role]));
+    const defined = value => clean(value) && !/^(?:Undefined|Unnamed|Unformed)(?:\b|$)/i.test(clean(value));
+    return defined(dms.thronebound.name) && defined(dms.thronebound.race) && defined(dms.dungeon.name) && defined(dms.dungeon.theme) && defined(dms.dungeon.style) && defined(dms.population.workerDescription) && defined(dms.population.soldierDescription) && defined(dms.world.homeworld) && RESOURCE_ROLES.every(role => resourceReady(dms.dungeon.resources[role]));
   }
   function defineResource(dms, role, specification) {
     role = clean(role).toLowerCase();
@@ -11694,7 +11695,7 @@ function AutoCards(inHook, inText, inStop) {
     return reports;
   }
   function applyActivityTurn(dms, inputText, actionCount = 0) {
-    const key = `${actionCount}|${clean(inputText)}|${dms.activity.mode}`; if (dms.activity.lastTurnKey === key) return { repeated: true, reports: [] }; dms.activity.lastTurnKey = key;
+    const locationKey = [dms.activity.location.major, dms.activity.location.secondary, dms.activity.location.detail].map(clean).join("|"); const key = `${actionCount}|${clean(inputText)}|${dms.activity.mode}|${dms.activity.pace}|${locationKey}|${dms.activity.targets.map(clean).join(",")}`; if (dms.activity.lastTurnKey === key) return { repeated: true, reports: [] }; dms.activity.lastTurnKey = key;
     const benefit = { mode: dms.activity.mode, reports: [], note: "" }, words = clean(inputText);
     if (dms.activity.mode === "System" && systemAvailable(dms)) { const natural = words.match(/^system\s*[:,]\s*(status|cycle|quest\s+status|room\s+list)$/i); if (natural) { benefit.system = execute(dms, `/dms ${natural[1]}`); benefit.note = benefit.system; return benefit; } }
     if (dms.activity.mode === "Construction" && /\b(?:build|construct|shape|repair|assist|help|work)\b/i.test(words)) {
@@ -11728,13 +11729,16 @@ function AutoCards(inHook, inText, inStop) {
     while (dms.thronebound.experience >= levelThreshold(dms.thronebound.level)) { dms.thronebound.experience -= levelThreshold(dms.thronebound.level); dms.thronebound.level += 1; levels.push({ level: dms.thronebound.level, gains: growAttributes(dms) }); }
     return levels;
   }
-  function createQuest(dms, category, titleText, objective, rewards = {}) {
+  function questPrerequisitesMet(dms, quest) { return (quest.prerequisites || []).every(id => dms.quests.records[id]?.status === "cleared"); }
+  function createQuest(dms, category, titleText, objective, rewards = {}, prerequisites = []) {
     category = QUEST_CATEGORIES.find(value => value.toLowerCase() === clean(category).toLowerCase()); if (!category) throw new Error(`Quest category must be ${QUEST_CATEGORIES.join(", ")}.`);
-    const seed = `${category}|${clean(titleText)}|${clean(objective)}`, id = `${category.toLowerCase()}-${stableNumber(seed).toString(36)}`;
+    const required = unique((Array.isArray(prerequisites) ? prerequisites : [prerequisites]).map(clean).filter(Boolean));
+    for (const id of required) if (!dms.quests.records[id]) throw new Error(`Unknown Quest prerequisite: ${id}.`);
+    const seed = `${category}|${clean(titleText)}|${clean(objective)}|${required.join(",")}`, id = `${category.toLowerCase()}-${stableNumber(seed).toString(36)}`;
     if (dms.quests.records[id]) return dms.quests.records[id];
-    dms.quests.records[id] = { category, title: clean(titleText), objective: clean(objective), tier: dms.dungeon.tier, status: "active", prerequisites: [], rewards: { experience: 50 * Math.max(1, dms.dungeon.tier), energy: 10 * Math.max(1, dms.dungeon.tier), ...rewards } }; record(dms, `Created ${category} Quest: ${clean(titleText)}.`); return dms.quests.records[id];
+    const quest = { category, title: clean(titleText), objective: clean(objective), tier: dms.dungeon.tier, status: required.every(requiredId => dms.quests.records[requiredId]?.status === "cleared") ? "active" : "locked", prerequisites: required, rewards: { experience: 50 * Math.max(1, dms.dungeon.tier), energy: 10 * Math.max(1, dms.dungeon.tier), ...rewards } }; dms.quests.records[id] = quest; record(dms, `Created ${category} Quest: ${clean(titleText)}.`); return quest;
   }
-  function completeQuest(dms, questId) { const quest = dms.quests.records[clean(questId)]; if (!quest || quest.status !== "active") throw new Error("Unknown or inactive Quest."); quest.status = "cleared"; const levels = awardQuest(dms, quest); record(dms, `Completed ${quest.category || "Dungeon"} Quest: ${quest.title}.`); return { quest, levels }; }
+  function completeQuest(dms, questId) { const quest = dms.quests.records[clean(questId)]; if (!quest) throw new Error("Unknown Quest."); if (!questPrerequisitesMet(dms, quest)) throw new Error("Quest prerequisites are not cleared."); if (quest.status === "locked") quest.status = "active"; if (quest.status !== "active") throw new Error("Unknown or inactive Quest."); quest.status = "cleared"; const levels = awardQuest(dms, quest); for (const candidate of Object.values(dms.quests.records)) if (candidate.status === "locked" && questPrerequisitesMet(dms, candidate)) candidate.status = "active"; record(dms, `Completed ${quest.category || "Dungeon"} Quest: ${quest.title}.`); return { quest, levels }; }
   function trainAttribute(dms, attributeName, energy = 10) {
     const all = { ...dms.thronebound.attributes.combat, ...dms.thronebound.attributes.support }, key = Object.keys(all).find(name => name.toLowerCase() === clean(attributeName).toLowerCase()); if (!key) throw new Error("Unknown Attribute.");
     const hall = Object.values(dms.rooms).find(room => room.definition === "attribute-training-hall" && room.state === "Active"); if (!hall) throw new Error("An active Attribute Training Hall is required."); energy = clamp(Math.floor(energy), 1, 10000); spend(dms, { energy }, "attribute-training"); const attribute = all[key], outcomes = APTITUDE_OUTCOMES[attribute.aptitude] || APTITUDE_OUTCOMES.C, gain = choose(outcomes, `${key}|training|${dms.activity.cycle}|${energy}`) + Math.floor(energy / 50); attribute.value += gain; return { attribute: key, gain, value: attribute.value };
@@ -11825,9 +11829,9 @@ function AutoCards(inHook, inText, inStop) {
   function readSaveCards() {
     if (!Array.isArray(global.storyCards)) return null;
     const values = Object.fromEntries(Object.entries(SAVE_CARD_TITLES).map(([key, titleText]) => [key, savePayload(saveCardByTitle(titleText))]));
-    if (!values.core) return null;
+    if (Object.values(values).some(value => !value)) return null;
     const rev = Number(values.core.rev);
-    for (const value of Object.values(values)) if (value && Number(value.rev) !== rev) return null;
+    for (const value of Object.values(values)) if (Number(value.rev) !== rev) return null;
     return { revision: rev, ...values };
   }
   function cardField(card, label) { return clean(String(card?.entry || "").match(new RegExp("^" + label + ":\\s*(.+)$", "im"))?.[1]); }
