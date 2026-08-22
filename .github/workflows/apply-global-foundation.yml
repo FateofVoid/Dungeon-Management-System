@@ -8,6 +8,8 @@ on:
     paths:
       - scripts/apply-global-foundation.cjs
       - scripts/fix-global-foundation-patcher.cjs
+      - scripts/fix-global-foundation-targets.cjs
+      - scripts/apply-global-foundation-followup.cjs
       - test/dms-foundation.test.cjs
       - .github/workflows/apply-global-foundation.yml
   pull_request:
@@ -30,8 +32,12 @@ jobs:
           node-version: 20
       - name: Repair generator quoting
         run: node scripts/fix-global-foundation-patcher.cjs
+      - name: Normalize generator targets
+        run: node scripts/fix-global-foundation-targets.cjs
       - name: Apply foundation patch
         run: node scripts/apply-global-foundation.cjs
+      - name: Apply follow-up room-effect patch
+        run: node scripts/apply-global-foundation-followup.cjs
       - name: Syntax and regression tests
         run: npm run check
       - name: Verify clean patch formatting
