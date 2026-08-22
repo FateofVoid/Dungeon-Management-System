@@ -25,5 +25,24 @@ source = source.replace(
   'const card = managedCardByKey(`DMS_ADMIN_${id.toUpperCase().replace(/\\W/g, "_")}`);'
 );
 
+// Class names are compact mechanical progression references. Descriptions and
+// ability flavor remain in ordinary Story Cards and are not duplicated here.
+source = source.replace(
+  'classTier: dms.thronebound.class.tier, skills:',
+  'classTier: dms.thronebound.class.tier, className: dms.thronebound.class.name, skills:'
+);
+source = source.replace(
+  'assignedRooms: a.assignedRooms, classTier: a.class?.tier || 0, attrs:',
+  'assignedRooms: a.assignedRooms, classTier: a.class?.tier || 0, className: a.class?.name || a.role, attrs:'
+);
+source = source.replace(
+  'if (throneClass) dms.thronebound.class.name = clean(throneClass[1]);',
+  'dms.thronebound.class.name = clean(tb.className) || (throneClass ? clean(throneClass[1]) : dms.thronebound.class.name);'
+);
+source = source.replace(
+  'if (adminClass) admin.class.name = clean(adminClass[1]);',
+  'admin.class.name = clean(saved.className) || (adminClass ? clean(adminClass[1]) : admin.class.name);'
+);
+
 fs.writeFileSync(file, source);
-console.log("Normalized managed Story Card lookup for recovery.");
+console.log("Normalized managed Story Card lookup and class progression references for recovery.");
