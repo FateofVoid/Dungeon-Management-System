@@ -68,6 +68,12 @@ if (!source.includes('function questPrerequisitesMet(dms, quest)')) {
   );
 }
 
+// Earlier completion materialization could install prerequisite handling before
+// the stable id field was added. Repair that exact intermediate state as well.
+if (source.includes('function createQuest(dms, category, titleText, objective, rewards = {}, prerequisites = [])') && source.includes('const quest = { category, title: clean(titleText)')) {
+  source = source.replace('const quest = { category, title: clean(titleText)', 'const quest = { id, category, title: clean(titleText)');
+}
+
 if (!source.includes('completeQuest, questPrerequisitesMet, awardQuest')) {
   source = source.replace(
     'trainAttribute, createQuest, completeQuest, awardQuest,',
