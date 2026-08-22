@@ -24,6 +24,18 @@ function rich(dms, amount = 100000) { for (const role of DMS.RESOURCE_ROLES) dms
 function systemMode(dms) { DMS.setLocation(dms, "Dungeon", "Throne Room"); DMS.setActivity(dms, "System", [], "Timeless"); return dms; }
 function finishTasks(dms) { let guard = 100; while (dms.tasks.length && guard-- > 0) DMS.resolveCycle(dms); assert.ok(guard > 0); }
 
+test("identity readiness rejects placeholder core identity even with complete resources", () => {
+  const dms = DMS.defaultState();
+  DMS.configure(dms, { thronebound: "Mara", name: "The Ashen Court", theme: "Volcanic necromancy", style: "Gothic basalt fortress", workerDescription: "masked ashbound skeletons", soldierDescription: "ember-wreathed revenants", homeworld: "Caelus" });
+  DMS.defineResource(dms, "construction", ["Graveglass", "Crystal.", "Quarried.", "Construction."]);
+  DMS.defineResource(dms, "sustenance", ["Cinder Marrow", "Biomass.", "Cultivated.", "Sustenance."]);
+  DMS.defineResource(dms, "development", ["Sovereign Ichor", "Essence.", "Refined.", "Development."]);
+  DMS.defineResource(dms, "energy", ["Pyreflow", "Energy.", "Drawn.", "Power."]);
+  assert.equal(DMS.identityReady(dms), false, "Undefined race must keep identity incomplete");
+  DMS.configure(dms, { race: "Voidkin" });
+  assert.equal(DMS.identityReady(dms), true);
+});
+
 test("resource transactions are atomic and report exact deltas", () => {
   const dms = configured();
   const before = dms.dungeon.resources.energy.amount;
@@ -60,6 +72,17 @@ test("compact save cards restore newer mechanical state without recreating cards
   assert.equal(global.storyCards.length, cardCount, "manual load must not recreate Story Cards");
 });
 
+test("incomplete or torn save-card bundles are rejected", () => {
+  global.storyCards.length = 0;
+  const dms = configured();
+  DMS.refreshCards(dms);
+  const worldIndex = global.storyCards.findIndex(card => card.title === DMS.SAVE_CARD_TITLES.world);
+  assert.ok(worldIndex >= 0);
+  global.storyCards.splice(worldIndex, 1);
+  assert.equal(DMS.readSaveCards(), null);
+  assert.throws(() => DMS.loadSaveCards(dms), /No valid DMS Save cards/);
+});
+
 test("refresh removes duplicate managed save cards", () => {
   global.storyCards.length = 0;
   const dms = configured();
@@ -82,6 +105,17 @@ test("Activity retry protection prevents duplicate natural production rewards", 
   assert.equal(dms.dungeon.resources.energy.amount, before + 1);
 });
 
+test("Activity retry identity includes pace and targets", () => {
+  const dms = configured();
+  DMS.setActivity(dms, "Production", ["conduit"], "Standard");
+  const before = dms.dungeon.resources.energy.amount;
+  DMS.applyActivityTurn(dms, "I help produce energy", 77);
+  DMS.setActivity(dms, "Production", ["conduit"], "Fast");
+  const changedContext = DMS.applyActivityTurn(dms, "I help produce energy", 77);
+  assert.notEqual(changedContext.repeated, true);
+  assert.equal(dms.dungeon.resources.energy.amount, before + 2);
+});
+
 test("inactive facilities never provide their mechanical room effects", () => {
   const dms = rich(configured());
   dms.dungeon.tier = 2;
@@ -91,6 +125,19 @@ test("inactive facilities never provide their mechanical room effects", () => {
   assert.throws(() => DMS.trainAttribute(dms, "Might", 5), /active Attribute Training Hall/);
   finishTasks(dms);
   assert.doesNotThrow(() => DMS.trainAttribute(dms, "Might", 5));
+});
+
+test("custom quests enforce deterministic prerequisites and unlock automatically", () => {
+  const dms = configured();
+  const first = DMS.createQuest(dms, "Personal", "First Oath", "Complete the first oath.", { energy: 1 });
+  const second = DMS.createQuest(dms, "Personal", "Second Oath", "Follow the first oath.", { energy: 1 }, [first.id]);
+  assert.ok(first.id);
+  assert.equal(second.status, "locked");
+  assert.equal(DMS.createQuest(dms, "Personal", "Second Oath", "Follow the first oath.", { energy: 1 }, [first.id]).id, second.id);
+  DMS.completeQuest(dms, first.id);
+  assert.equal(second.status, "active");
+  DMS.completeQuest(dms, second.id);
+  assert.equal(second.status, "cleared");
 });
 
 test("recognized natural System requests delegate to the authoritative command operation", () => {
