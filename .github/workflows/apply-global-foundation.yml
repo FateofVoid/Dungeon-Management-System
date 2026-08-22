@@ -6,16 +6,9 @@ on:
     branches:
       - feature/global-foundation-persistence
     paths:
-      - scripts/apply-global-foundation.cjs
-      - scripts/fix-global-foundation-patcher.cjs
-      - scripts/fix-global-foundation-targets.cjs
-      - scripts/fix-global-foundation-raw-template.cjs
-      - scripts/apply-global-foundation-followup.cjs
+      - scripts/complete-global-foundation.cjs
       - test/dms-foundation.test.cjs
       - .github/workflows/apply-global-foundation.yml
-  pull_request:
-    branches:
-      - main
 
 permissions:
   contents: write
@@ -31,41 +24,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Repair generator quoting
-        run: node scripts/fix-global-foundation-patcher.cjs
-      - name: Preserve generated escape sequences
-        run: node scripts/fix-global-foundation-raw-template.cjs
-      - name: Normalize generator targets
-        run: node scripts/fix-global-foundation-targets.cjs
-      - name: Apply foundation patch
-        run: node scripts/apply-global-foundation.cjs
-      - name: Apply follow-up room-effect patch
-        run: node scripts/apply-global-foundation-followup.cjs
+      - name: Apply final foundation safeguards
+        run: node scripts/complete-global-foundation.cjs
       - name: Syntax and regression tests
         run: |
-          if ! node --check Library.js; then
-            echo "::group::Generated DMS tail"
-            sed -n '11680,12110p' Library.js
-            echo "::endgroup::"
-            exit 1
-          fi
+          node --check Library.js
           node --check Input.js
           node --check Context.js
           node --check Output.js
           npm test
       - name: Verify clean patch formatting
         run: git diff --check
-      - name: Commit generated Library.js
-        if: github.event_name != 'pull_request'
+      - name: Commit completed Library.js
         run: |
           if git diff --quiet -- Library.js; then
-            echo "Library.js already contains the foundation patch."
+            echo "Library.js already contains the completion patch."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Library.js scripts/apply-global-foundation.cjs
-          git commit -m "feat: implement DMS global foundation persistence"
+          git add Library.js
+          git commit -m "fix: complete DMS foundation safeguards"
           git push origin HEAD:feature/global-foundation-persistence
-
-# This workflow is intentionally one-shot infrastructure for applying the large Library.js patch safely.
