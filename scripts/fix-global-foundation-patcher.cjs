@@ -10,12 +10,16 @@ const bodyStart = start + marker.length;
 const endMarker = "\n`;\nreplaceOnce('  function ensureCard";
 const end = source.indexOf(endMarker, bodyStart);
 if (end < 0) throw new Error("persistenceHelpers template end not found");
-let body = source.slice(bodyStart, end);
-if (!body.includes("\\`DMS_SAVE_")) {
-  body = body.replace(/`/g, "\\`").replace(/\$\{/g, "\\${");
-  source = source.slice(0, bodyStart) + body + source.slice(end);
-  fs.writeFileSync(file, source);
-  console.log("Escaped nested persistence template literals.");
-} else {
-  console.log("Persistence template quoting already repaired.");
-}
+
+// Normalize the entire nested helper template on every run. Earlier versions
+// skipped once they found one escaped marker, leaving later template literals
+// (notably cardField()) able to terminate persistenceHelpers prematurely.
+let body = source.slice(bodyStart, end)
+  .replace(/\\`/g, "`")
+  .replace(/\\\$\{/g, "${")
+  .replace(/`/g, "\\`")
+  .replace(/\$\{/g, "\\${");
+
+source = source.slice(0, bodyStart) + body + source.slice(end);
+fs.writeFileSync(file, source);
+console.log("Normalized nested persistence template literals.");
