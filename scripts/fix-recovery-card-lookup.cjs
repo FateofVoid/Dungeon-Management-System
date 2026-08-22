@@ -20,10 +20,6 @@ source = source.replace(
   /const card = Array\.isArray\(global\.storyCards\) \? global\.storyCards\.find\(item => clean\(item\.keys\)\.split\(","\)\.includes\(`DMS_QUEST_\$\{id\.toUpperCase\(\)\.replace\(\/\\W\/g, "_"\)\}`\)\) : null;/g,
   'const card = managedCardByKey(`DMS_QUEST_${id.toUpperCase().replace(/\\W/g, "_")}`);'
 );
-source = source.replace(
-  /const card = Array\.isArray\(global\.storyCards\) \? global\.storyCards\.find\(item => clean\(item\.keys\)\.split\(","\)\.includes\(`DMS_ADMIN_\$\{id\.toUpperCase\(\)\.replace\(\/\\W\/g, "_"\)\}`\)\) : null;/g,
-  'const card = managedCardByKey(`DMS_ADMIN_${id.toUpperCase().replace(/\\W/g, "_")}`) || saveCardByTitle(`DMS Administrator — ${saved.name || ""}`);'
-);
 
 // Compact names are linkage/progression references only; descriptions remain in
 // ordinary Story Cards and are intentionally excluded from save payloads.
@@ -47,6 +43,18 @@ source = source.replace(
   'const line = String(card?.entry || "").split("\\n")[0].split(/\\s+[—-]\\s+/), admin = characterBase(clean(line[0]) || id, clean(line.slice(1).join(" — ")) || dms.population.workerDescription, saved.role || "Manager");',
   'const line = String(card?.entry || "").split("\\n")[0].split(/\\s+[—-]\\s+/), admin = characterBase(clean(saved.name) || clean(line[0]) || id, clean(saved.race) || clean(line.slice(1).join(" — ")) || dms.population.workerDescription, saved.role || "Manager");'
 );
+
+// Replace the administrator card lookup by position so formatting changes in the
+// generated source cannot leave the old lookup behind.
+{
+  const adminBlock = source.indexOf('dms.administrators = {}; for (const [id, saved] of Object.entries(progression.admins || {})) {');
+  if (adminBlock < 0) throw new Error("Administrator recovery block not found");
+  const cardStart = source.indexOf('const card = ', adminBlock);
+  const cardEnd = source.indexOf(';', cardStart);
+  if (cardStart < 0 || cardEnd < 0) throw new Error("Administrator recovery card lookup not found");
+  const replacement = 'const card = managedCardByKey(`DMS_ADMIN_${id.toUpperCase().replace(/\\W/g, "_")}`) || saveCardByTitle(`DMS Administrator — ${saved.name || ""}`)';
+  source = source.slice(0, cardStart) + replacement + source.slice(cardEnd);
+}
 
 fs.writeFileSync(file, source);
 console.log("Normalized managed Story Card linkage and class progression references for recovery.");
