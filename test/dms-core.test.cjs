@@ -11,234 +11,243 @@ const DMS = require("../Library.js");
 
 function configured() {
   const dms = DMS.defaultState();
-  DMS.configure(dms, {
-    thronebound: "Mara", race: "Voidkin", className: "Ash Sovereign", name: "The Ashen Court",
-    theme: "Volcanic necromancy", style: "Gothic basalt fortress",
-    workerDescription: "masked ashbound skeletons", soldierDescription: "ember-wreathed revenants",
-    homeworld: "Caelus", secondaryLocation: "The Crossroads"
-  });
-  DMS.defineResource(dms, "construction", ["Graveglass", "Black volcanic crystal shot through with soul-light.", "Quarried from cooling ossuary flows.", "Shapes rooms, fortifications, and dungeon infrastructure."]);
-  DMS.defineResource(dms, "sustenance", ["Cinder Marrow", "Heat-rich spiritual biomass consumed by the ashbound.", "Rendered from fungal char gardens.", "Sustains Workers and Soldiers."]);
-  DMS.defineResource(dms, "development", ["Sovereign Ichor", "Concentrated adaptive essence compatible with linked souls.", "Refined from voluntary resonance shed in the sanctum.", "Develops the Thronebound and Administrators."]);
-  DMS.defineResource(dms, "energy", ["Pyreflow", "The dungeon's current of necromantic heat and command.", "Drawn through conduits from the throne's Lustrian bond.", "Primary currency for dungeon development."]);
+  DMS.configure(dms, { thronebound: "Mara", race: "Voidkin", name: "The Ashen Court", theme: "Volcanic necromancy", style: "Gothic basalt fortress", workerDescription: "masked ashbound skeletons", soldierDescription: "ember-wreathed revenants", homeworld: "Caelus", secondaryLocation: "The Crossroads" });
+  DMS.defineResource(dms, "construction", ["Graveglass", "Black volcanic crystal shot through with soul-light.", "Quarried from cooling ossuary flows.", "Shapes rooms and fortifications."]);
+  DMS.defineResource(dms, "sustenance", ["Cinder Marrow", "Heat-rich spiritual biomass.", "Rendered from fungal char gardens.", "Sustains the dungeon population."]);
+  DMS.defineResource(dms, "development", ["Sovereign Ichor", "Concentrated adaptive essence.", "Refined from resonance.", "Develops linked characters."]);
+  DMS.defineResource(dms, "energy", ["Pyreflow", "Necromantic heat and command.", "Drawn through the throne.", "Primary dungeon currency."]);
   return dms;
 }
+function rich(dms, amount = 100000) { for (const role of DMS.RESOURCE_ROLES) dms.dungeon.resources[role].amount = amount; return dms; }
+function systemMode(dms) { DMS.setLocation(dms, "Dungeon", "Throne Room"); DMS.setActivity(dms, "System", [], "Timeless"); return dms; }
+function finishTasks(dms) { let guard = 100; while (dms.tasks.length && guard-- > 0) DMS.resolveCycle(dms); if (dms.tasks.length) throw new Error("Task guard exhausted"); return dms; }
+function build(dms, definition) { const room = DMS.createRoom(dms, definition); finishTasks(dms); return room; }
+function awakenTier1() { const dms = rich(systemMode(configured())); DMS.summonAdministrator(dms, "Veyra", "Ashborn"); DMS.upgradeDungeon(dms); return dms; }
 
-function rich(dms, amount = 100000) {
-  for (const role of DMS.RESOURCE_ROLES) dms.dungeon.resources[role].amount = amount;
-  return dms;
-}
-
-function foundation(dms) {
-  DMS.createRoom(dms, "material-works");
-  DMS.createRoom(dms, "sustenance-works");
-  DMS.createRoom(dms, "worker-habitat");
-  return dms;
-}
-
-test("requires all four fully described theme resources", () => {
-  const dms = DMS.defaultState();
-  DMS.configure(dms, { theme: "Crystal hive", style: "Prismatic lattice", workerDescription: "shard drones", soldierDescription: "crystal wardens" });
-  assert.equal(DMS.identityReady(dms), false);
-  assert.equal(dms.initialized, false);
-  const ready = configured();
-  assert.equal(DMS.identityReady(ready), true);
-  assert.equal(ready.initialized, true);
-  assert.equal(ready.dungeon.resources.development.name, "Sovereign Ichor");
-});
-
-test("migrates the prototype tronebound spelling to canonical thronebound", () => {
-  const dms = DMS.normalize({ schema: 1, tronebound: { name: "Legacy Name", level: 4 } });
-  assert.equal(dms.thronebound.name, "Legacy Name");
-  assert.equal(dms.thronebound.level, 4);
-  assert.equal(Object.hasOwn(dms, "tronebound"), false);
-});
-
-test("creates a throne room without tracking map placement", () => {
+test("starts at Tier 0 with only the Throne Room and a Classless Thronebound", () => {
   const dms = configured();
-  assert.equal(dms.rooms["room-throne"].definition, "throne-room");
-  assert.equal(Object.hasOwn(dms.rooms["room-throne"], "coordinates"), false);
-  assert.match(dms.rooms["room-throne"].lore.appearance, /Volcanic necromancy/);
+  assert.equal(dms.dungeon.tier, 0);
+  assert.deepEqual(Object.keys(dms.rooms), ["room-throne"]);
+  assert.equal(dms.thronebound.class.name, "Classless");
+  assert.equal(dms.thronebound.class.tier, 0);
+  assert.equal(dms.dungeon.administratorCapacity, 1);
 });
 
-test("room functions are scripted while Appearance Function and Job are themed lore", () => {
-  const dms = configured();
-  const room = DMS.createRoom(dms, "material-works");
-  assert.equal(room.definition, "material-works");
-  assert.match(room.lore.appearance, /Gothic basalt fortress/);
-  assert.match(room.lore.function, /Graveglass/);
-  assert.match(room.lore.job, /Material Gatherer/);
-  assert.match(room.lore.job, /masked ashbound skeletons/);
-});
-
-test("Dungeon Tier controls capacities room unlocks and room upgrade limits", () => {
-  const dms = rich(foundation(configured()));
-  DMS.createAdministrator(dms, { name: "Veyra", race: "Ashborn", className: "Court Steward", specialization: "support" });
-  assert.throws(() => DMS.createRoom(dms, "barracks"), /unlocks at Dungeon Tier 2/);
-  const result = DMS.upgradeDungeon(dms);
-  assert.equal(result.tier, 2);
-  assert.equal(dms.dungeon.administratorCapacity, 2);
-  assert.ok(result.unlockedRooms.some(room => room.name === "Barracks"));
-  const room = DMS.upgradeRoom(dms, "room-1");
-  assert.equal(room.tier, 2);
-  assert.throws(() => DMS.upgradeRoom(dms, "room-1"), /limited by Dungeon Tier 2/);
-});
-
-test("Administrator Capacity and attribute specialization follow Dungeon Tier", () => {
-  const dms = configured();
-  const admin = DMS.createAdministrator(dms, { name: "Veyra", race: "Ashborn", className: "Court Warden", specialization: "combat" });
-  assert.deepEqual(Object.keys(admin.attributes), ["combat"]);
-  assert.throws(() => DMS.createAdministrator(dms, { name: "Second", specialization: "support" }), /Capacity is 1/);
-  assert.throws(() => DMS.createAdministrator(DMS.defaultState(), { name: "Invalid", specialization: "unique" }), /Combat or Support/);
-});
-
-test("Thronebound tracks Combat Support and theme-defined Unique Attributes", () => {
-  const dms = configured();
-  DMS.defineUniqueAttribute(dms, "Pyre Dominion", "Authority over the dungeon's necromantic heat.", 3);
-  assert.ok(dms.thronebound.attributes.combat.Might);
-  assert.ok(dms.thronebound.attributes.support.Command);
-  assert.equal(dms.thronebound.attributes.unique["Pyre Dominion"].value, 3);
-});
-
-test("Class Tier is capped by Dungeon Tier and evolution grants exactly one Skill and Trait", () => {
+test("requires the first summoned Manager and full Administrator Capacity for Tier Up", () => {
   const dms = rich(configured());
-  assert.throws(() => DMS.evolveClass(dms, "thronebound", "Ash Step", "Move through cinders.", "Pyre Heart", "Endure spiritual heat."), /requires Dungeon Tier 2/);
-  foundation(dms);
+  assert.throws(() => DMS.upgradeDungeon(dms), /Fill Administrator Capacity/);
+  assert.throws(() => DMS.summonAdministrator(dms), /System Mode/);
+  systemMode(dms);
+  const manager = DMS.summonAdministrator(dms, "Veyra", "Ashborn");
+  assert.equal(manager.role, "Manager");
+  assert.ok(DMS.ADMINISTRATOR_RANKS.includes(manager.rank));
   DMS.upgradeDungeon(dms);
-  const evolved = DMS.evolveClass(dms, "thronebound", "Ash Step", "Move through cinders.", "Pyre Heart", "Endure spiritual heat.");
-  assert.equal(evolved.class.tier, 2);
-  assert.deepEqual(evolved.class.skills.map(skill => skill.name), ["Ash Step"]);
-  assert.deepEqual(evolved.class.traits.map(trait => trait.name), ["Pyre Heart"]);
-  DMS.buySkill(dms, "thronebound", "Graveglass Guard", "Raise a themed defensive plane.", 10);
-  assert.equal(evolved.class.skills.length, 2);
+  assert.equal(dms.dungeon.tier, 1);
+  assert.equal(dms.dungeon.administratorCapacity, 3);
+  assert.throws(() => DMS.upgradeDungeon(dms), /Fill Administrator Capacity/);
 });
 
-test("Workers require capacity and assigned Workers drive production", () => {
-  const dms = configured();
-  const works = DMS.createRoom(dms, "material-works");
-  assert.throws(() => DMS.recruitWorkers(dms, 1), /Worker Capacity/);
-  DMS.createRoom(dms, "worker-habitat");
-  DMS.recruitWorkers(dms, 2);
-  DMS.assignWorkers(dms, works.id, 3);
+test("Administrator Capacity grows by two per Tier and every Tier unlocks facilities", () => {
+  for (let tier = 0; tier <= 10; tier++) {
+    assert.equal(DMS.tierRules(tier).administratorCapacity, 1 + tier * 2);
+    assert.ok(Object.values(DMS.ROOM_DEFINITIONS).some(room => room.unlockTier === tier), `Tier ${tier} lacks a facility`);
+  }
+});
+
+test("has no global Room or population capacity", () => {
+  const dms = awakenTier1();
+  assert.equal(Object.hasOwn(dms.dungeon, "roomCapacity"), false);
+  assert.equal(Object.hasOwn(dms.population.workers, "capacity"), false);
+  assert.equal(Object.hasOwn(dms.population.soldiers, "capacity"), false);
+});
+
+test("construction and expansion advance through Cycles and expansion grows job population", () => {
+  const dms = awakenTier1();
+  const room = DMS.createRoom(dms, "material-works");
+  assert.equal(room.state, "Constructing");
+  assert.equal(room.jobPopulation, 0);
+  DMS.resolveCycle(dms);
+  assert.equal(room.state, "Active");
+  assert.equal(room.jobPopulation, 4);
+  DMS.expandRoom(dms, room.id);
+  assert.equal(room.state, "Expanding");
+  finishTasks(dms);
+  assert.equal(room.expansion, 2);
+  assert.equal(room.jobPopulation, 8);
+});
+
+test("facility Tier Up updates Appearance and yield without increasing jobs", () => {
+  const dms = awakenTier1();
+  const room = build(dms, "material-works");
+  const jobs = room.jobPopulation;
+  dms.dungeon.tier = 2; DMS.applyDerivedState(dms); rich(dms);
+  DMS.upgradeRoom(dms, room.id); finishTasks(dms);
+  assert.equal(room.tier, 2);
+  assert.equal(room.jobPopulation, jobs);
+  assert.match(room.lore.appearance, /Tier 2/);
+});
+
+test("creates separate facility-unlock and job-cohort lore cards", () => {
+  global.storyCards.length = 0;
+  const dms = awakenTier1();
+  DMS.refreshCards(dms);
+  assert.ok(global.storyCards.some(card => card.title === "DMS Facility Unlock — Material Works"));
+  const room = build(dms, "material-works"); DMS.refreshCards(dms);
+  assert.ok(global.storyCards.some(card => card.title.includes(`DMS Job Cohort — ${room.id}`) && /Typical Appearance:/.test(card.entry)));
+});
+
+test("later summons select deterministic random roles limited to active facility functions", () => {
+  const dms = awakenTier1();
+  build(dms, "material-works");
+  const second = DMS.summonAdministrator(dms, "Kara", "Ashborn");
+  assert.notEqual(second.role, "Manager");
+  assert.ok(["Production Overseer"].includes(second.role));
+});
+
+test("Administrator assignment validates role and Rank modifies facility production", () => {
+  const dms = awakenTier1(), room = build(dms, "material-works");
+  const admin = DMS.summonAdministrator(dms, "Kara", "Ashborn");
+  DMS.assignAdministrator(dms, admin.id, room.id);
   const before = dms.dungeon.resources.construction.amount;
   const report = DMS.resolveCycle(dms);
-  assert.equal(report.dungeonResources.construction, 9);
-  assert.equal(dms.dungeon.resources.construction.amount, before + 9);
+  assert.equal(report.dungeonResources.construction, Number((4 * 3 * admin.effectiveness).toFixed(2)));
+  assert.equal(dms.dungeon.resources.construction.amount, before + report.dungeonResources.construction);
 });
 
-test("unique-worker rooms use one worker and scale primarily from Room Tier", () => {
-  const dms = rich(foundation(configured()));
-  DMS.upgradeDungeon(dms);
-  const sanctum = DMS.createRoom(dms, "development-sanctum");
-  DMS.assignWorkers(dms, sanctum.id, 4);
-  assert.equal(sanctum.assignedWorkers, 1);
-  DMS.upgradeRoom(dms, sanctum.id);
-  assert.equal(dms.population.workers.assignments[sanctum.id].tier, 2);
-  assert.equal(dms.population.workers.assignments[sanctum.id].job, "Development Attendant");
-  const report = DMS.resolveCycle(dms);
-  assert.equal(report.dungeonResources.development, 4);
-});
-
-test("Soldiers unlock through Barracks and contribute Tier-scaled Combat Power", () => {
-  const dms = rich(foundation(configured()));
-  DMS.upgradeDungeon(dms);
-  const barracks = DMS.createRoom(dms, "barracks");
-  const cohort = DMS.recruitSoldiers(dms, "Guardian", 3, barracks.id);
-  assert.equal(cohort.tier, 1);
-  assert.equal(dms.population.soldiers.capacity, 6);
-  assert.equal(dms.population.soldiers.current, 3);
-  assert.ok(dms.dungeon.power > 10);
-});
-
-test("Activity tracks major and optional secondary locations", () => {
-  const dms = configured();
-  DMS.setLocation(dms, "Homeworld", "Capital", "Northern district");
-  assert.equal(dms.activity.location.major, "Homeworld");
-  assert.equal(dms.activity.location.secondary, "Capital");
-  DMS.setLocation(dms, "Secondary", "The Crossroads", "Market");
-  assert.equal(dms.activity.location.major, "Secondary");
-});
-
-test("Dungeon System availability is restricted to the Throne Room", () => {
-  const dms = configured();
-  assert.equal(DMS.systemAvailable(dms), true);
-  DMS.setLocation(dms, "Dungeon", "Material Works");
-  assert.equal(DMS.systemAvailable(dms), false);
-  DMS.setLocation(dms, "Lustria", "Frontier");
-  assert.equal(DMS.systemAvailable(dms), false);
-});
-
-test("scouting Lustria deterministically discovers setting resources and threat gates exploitation", () => {
-  function discover() {
-    const dms = rich(foundation(configured()));
-    DMS.upgradeDungeon(dms);
-    DMS.createRoom(dms, "scout-lodge");
-    DMS.setLocation(dms, "Lustria", "Western frontier");
-    DMS.setActivity(dms, "Survey", [], "Standard");
-    return { dms, sector: DMS.scoutSector(dms, "Glasswild Reach") };
-  }
-  const first = discover(), second = discover();
-  assert.deepEqual(first.sector, second.sector);
-  const vein = first.dms.world.lustria.veins[first.sector.veins[0]];
-  assert.ok(DMS.LUSTRIAN_RESOURCES.some(resource => resource.key === vein.resourceKey));
-  assert.ok(["Accessible", "Contested"].includes(first.sector.status));
-  first.dms.population.soldiers.cohorts.push({ id: "test-army", archetype: "Guardian", count: 100, tier: 2 });
-  const secured = DMS.secureSector(first.dms, first.sector.id);
-  assert.equal(secured.status, "Secured");
-});
-
-test("higher-tier vein facilities target sites and extract by Room Tier and staffing", () => {
-  const dms = rich(foundation(configured()));
-  DMS.upgradeDungeon(dms);
-  DMS.createRoom(dms, "scout-lodge");
-  DMS.createRoom(dms, "barracks");
-  DMS.recruitSoldiers(dms, "Specialist", 6);
-  rich(dms);
-  DMS.upgradeDungeon(dms);
-  const extractor = DMS.createRoom(dms, "vein-extractor");
-  DMS.createRoom(dms, "worker-habitat");
-  DMS.assignWorkers(dms, extractor.id, 2);
-  DMS.setLocation(dms, "Lustria", "Frontier");
-  DMS.setActivity(dms, "Survey", [], "Standard");
-  const sector = DMS.scoutSector(dms, "Crownless Expanse");
-  dms.dungeon.power = 10000;
-  const vein = DMS.targetVein(dms, extractor.id, sector.veins[0]);
-  const before = vein.remaining;
-  const report = DMS.resolveCycle(dms);
-  assert.equal(before - vein.remaining, 4);
-  assert.equal(Object.values(report.lustriaResources)[0], 4);
-  DMS.upgradeRoom(dms, extractor.id);
-  assert.equal(extractor.tier, 2);
-});
-
-test("global Lustria lore excludes story-specific names and Eryndral", () => {
+test("automatically registers summoned Administrators with Inner Self", () => {
   global.storyCards.length = 0;
-  const dms = configured();
+  global.storyCards.push({ title: "Configure \nInner Self", notes: "" });
+  const dms = rich(systemMode(configured())), admin = DMS.summonAdministrator(dms, "Veyra", "Ashborn");
+  assert.ok(global.storyCards.some(card => card.title === `@${admin.name}`));
+  assert.match(global.storyCards.find(card => /^Configure/.test(card.title)).notes, /Veyra/);
+});
+
+test("Bond stops at every 5 percent Event until its Bond Quest is completed", () => {
+  const dms = rich(systemMode(configured())), admin = DMS.summonAdministrator(dms, "Veyra", "Ashborn");
+  DMS.addAdministratorBond(dms, admin.id, 50);
+  assert.equal(admin.bond.value, 5);
+  assert.equal(DMS.addAdministratorBond(dms, admin.id, 5).value, 5);
+  assert.equal(dms.quests.records[`bond-${admin.id}-5`].category, "Bond");
+  DMS.completeBondEvent(dms, admin.id);
+  DMS.addAdministratorBond(dms, admin.id, 50);
+  assert.equal(admin.bond.value, 10);
+});
+
+test("Bond soft locks can require higher-tier gifts or non-Dungeon locations", () => {
+  const dms = rich(systemMode(configured())), admin = DMS.summonAdministrator(dms, "Veyra", "Ashborn");
+  dms.dungeon.tier = 1; DMS.applyDerivedState(dms);
+  for (const threshold of [5, 10, 15]) { DMS.addAdministratorBond(dms, admin.id, 100); if (threshold === 15) assert.throws(() => DMS.completeBondEvent(dms, admin.id), /outside the Dungeon/); else DMS.completeBondEvent(dms, admin.id); }
+  DMS.setLocation(dms, "Homeworld", "Capital");
+  DMS.completeBondEvent(dms, admin.id);
+  for (const threshold of [20, 25]) { DMS.addAdministratorBond(dms, admin.id, 100); DMS.completeBondEvent(dms, admin.id); }
+  DMS.addAdministratorBond(dms, admin.id, 100); assert.equal(admin.bond.value, 30);
+  assert.throws(() => DMS.completeBondEvent(dms, admin.id), /Tier 2/);
+});
+
+test("Administrator Rank Up is Bond-gated", () => {
+  const dms = rich(systemMode(configured())), admin = DMS.summonAdministrator(dms, "Veyra", "Ashborn");
+  if (admin.rank === "SSS") return;
+  assert.throws(() => DMS.rankUpAdministrator(dms, admin.id), /requires Bond/);
+  admin.bond.value = 100;
+  const previous = DMS.ADMINISTRATOR_RANKS.indexOf(admin.rank);
+  DMS.rankUpAdministrator(dms, admin.id);
+  assert.equal(DMS.ADMINISTRATOR_RANKS.indexOf(admin.rank), previous + 1);
+});
+
+test("Tier 1 generates three editable Thronebound Class branch cards", () => {
+  global.storyCards.length = 0;
+  const dms = awakenTier1(); DMS.refreshCards(dms);
+  assert.equal(dms.classPreviews.thronebound.length, 3);
+  assert.equal(global.storyCards.filter(card => card.title.startsWith("DMS Class Preview — thronebound")).length, 3);
+  const card = global.storyCards.find(item => item.title === "DMS Class Preview — thronebound — Option 1");
+  card.entry = card.entry.replace(/^Class:.+$/m, "Class: Ash Imperator");
+  DMS.acceptClassPreview(dms, "thronebound", 1);
+  assert.equal(dms.thronebound.class.name, "Ash Imperator");
+  assert.equal(dms.thronebound.class.tier, 1);
+  assert.equal(dms.thronebound.class.skills.length, 2);
+  assert.equal(dms.thronebound.class.traits.length, 1);
+});
+
+test("later Thronebound Class Ups require the Evolution Chamber at the target Tier", () => {
+  const dms = awakenTier1(); DMS.acceptClassPreview(dms, "thronebound", 1);
+  const chamber = build(dms, "class-evolution-chamber");
+  dms.dungeon.tier = 2; DMS.applyDerivedState(dms); rich(dms); DMS.generateClassPreviews(dms, "thronebound");
+  assert.throws(() => DMS.acceptClassPreview(dms, "thronebound", 1), /Chamber at Tier 2/);
+  DMS.upgradeRoom(dms, chamber.id); finishTasks(dms);
+  DMS.acceptClassPreview(dms, "thronebound", 1);
+  assert.equal(dms.thronebound.class.tier, 2);
+});
+
+test("Administrator Class evolution grants only its matching Skill category and one Trait", () => {
+  const dms = awakenTier1(), chamber = build(dms, "class-evolution-chamber"), admin = Object.values(dms.administrators)[0];
+  assert.equal(dms.classPreviews[admin.id].length, 1);
+  DMS.acceptClassPreview(dms, admin.id, 1);
+  assert.equal(admin.class.skills.length, 1);
+  assert.equal(admin.class.skills[0].category, admin.attributeSpecialization);
+  assert.equal(admin.class.traits.length, 1);
+  assert.equal(chamber.tier, 1);
+});
+
+test("rejects duplicate Skills and tracks mastery and Grades", () => {
+  const dms = awakenTier1(); DMS.acceptClassPreview(dms, "thronebound", 1); const skill = dms.thronebound.class.skills[0];
+  assert.throws(() => DMS.buySkill(dms, "thronebound", skill.name, "Duplicate", 1), /Duplicate Skill/);
+  rich(dms); assert.throws(() => DMS.trainSkill(dms, "thronebound", skill.name, 100), /Attribute Training Hall/);
+  dms.dungeon.tier = 2; DMS.applyDerivedState(dms); build(dms, "attribute-training-hall"); DMS.trainSkill(dms, "thronebound", skill.name, 100); assert.equal(skill.mastery, 100);
+  dms.dungeon.tier = 4; DMS.upgradeSkillGrade(dms, "thronebound", skill.name); assert.equal(skill.gradeName, "Intermediate");
+});
+
+test("general Skill and Trait shop cards are generated by separate facilities", () => {
+  global.storyCards.length = 0;
+  const dms = awakenTier1(); build(dms, "general-skill-hall"); build(dms, "general-trait-archive"); DMS.refreshCards(dms);
+  assert.ok(global.storyCards.some(card => card.title === "DMS General Skill Shop — Tier 1"));
+  assert.ok(global.storyCards.some(card => card.title === "DMS General Trait Shop — Tier 1"));
+  rich(dms); const entry = DMS.buyShopEntry(dms, "thronebound", "skill", 1, 2);
+  assert.ok(dms.thronebound.class.skills.some(skill => skill.name === entry.name && skill.source === "General Shop"));
+});
+
+test("custom shops require Laboratory research and their dedicated facility", () => {
+  const dms = rich(awakenTier1()); dms.dungeon.tier = 4; DMS.applyDerivedState(dms);
+  const lab = build(dms, "laboratory");
+  assert.throws(() => DMS.createRoom(dms, "custom-skill-studio"), /research/);
+  DMS.researchCustomShop(dms, "skill", "Blood geometry"); finishTasks(dms);
+  build(dms, "custom-skill-studio");
+  const shop = DMS.defineCustomShop(dms, "skill", "Blood geometry");
+  assert.match(shop.entries[0].name, /Blood Geometry/);
+  assert.equal(lab.state, "Active");
+});
+
+test("Quest Experience levels the Thronebound with Aptitude-based Attribute growth", () => {
+  const dms = configured(); DMS.configureAptitude(dms, "Might", "SSS", 5);
+  const quest = DMS.createQuest(dms, "Personal", "Trial by Fire", "Survive the crucible.", { experience: 500 });
+  const id = Object.keys(dms.quests.records).find(key => dms.quests.records[key] === quest);
+  DMS.completeQuest(dms, id);
+  assert.ok(dms.thronebound.level > 1);
+  assert.equal(dms.thronebound.attributes.combat.Might.aptitude, "SSS");
   DMS.refreshCards(dms);
-  const card = global.storyCards.find(item => item.title === "Lore — Nexus Realm of Lustria");
-  assert.ok(card);
-  assert.match(card.entry, /Architect/);
-  assert.match(card.entry, /Dominion of Lustria/);
-  assert.doesNotMatch(card.entry, /Eryndral|Fate Veylark|Velis Reverie|Orphan/i);
-  assert.ok(global.storyCards.some(item => item.title === "DMS — Activity"));
-  assert.ok(global.storyCards.some(item => item.type === "Active Quests"));
+  assert.match(global.storyCards.find(card => card.title === "DMS — Thronebound").entry, /Might \[SSS\]:/);
 });
 
-test("managed commands preserve the monolithic AI Dungeon command lifecycle", () => {
-  const dms = configured();
-  const output = DMS.execute(dms, "/dms status");
-  assert.match(output, /Thronebound: Mara/);
-  assert.match(DMS.execute(dms, "/dms room list"), /vein-extractor/);
+test("Activity context loads matching location and target Lore Cards", () => {
+  global.storyCards.length = 0;
+  global.storyCards.push({ title: "Glasswild Reach", keys: "Glasswild frontier", entry: "A luminous frontier of singing crystal forests." });
+  const dms = configured(); DMS.setLocation(dms, "Lustria", "Glasswild Reach"); DMS.setActivity(dms, "Exploration", ["Glasswild Reach"], "Slow");
+  const context = DMS.contextGuidance(dms);
+  assert.match(context, /Current Activity: Exploration/);
+  assert.match(context, /luminous frontier/);
 });
 
-test("Input Context and Output hooks route slash commands without story generation", () => {
-  global.state.DMS = configured();
-  global.text = "/dms status";
-  global.DungeonManagement("input");
-  assert.equal(global.state.DMSCommandTurn, true);
-  global.text = "irrelevant model output";
-  global.DungeonManagement("output");
-  assert.match(global.text, /DUNGEON MANAGEMENT SYSTEM/);
-  assert.match(global.text, /Thronebound: Mara/);
-  assert.equal(global.state.DMSCommandTurn, false);
+test("Activity turns advance allowed Paces and are retry-safe", () => {
+  const dms = rich(awakenTier1()); dms.dungeon.tier = 2; DMS.applyDerivedState(dms); DMS.upgradeRoom(dms, "room-throne"); const before = dms.tasks[0].remaining; DMS.setActivity(dms, "Construction", [], "Fast");
+  const result = DMS.applyActivityTurn(dms, "I help shape the chamber.", 10);
+  assert.equal(dms.activity.progress, 0.5);
+  assert.equal(result.task, dms.tasks[0].id);
+  assert.ok(dms.tasks[0].remaining < before);
+  const repeated = DMS.applyActivityTurn(dms, "I help shape the chamber.", 10);
+  assert.equal(repeated.repeated, true);
+  assert.equal(dms.activity.progress, 0.5);
+  assert.throws(() => DMS.setActivity(dms, "System", [], "Fast"), /permits Pace/);
+});
+
+test("Input and Output hooks preserve silent command routing", () => {
+  global.state.DMS = configured(); global.text = "/dms status"; global.DungeonManagement("input"); assert.equal(global.state.DMSCommandTurn, true); global.text = "model output"; global.DungeonManagement("output"); assert.match(global.text, /DUNGEON MANAGEMENT SYSTEM/); assert.equal(global.state.DMSCommandTurn, false);
 });

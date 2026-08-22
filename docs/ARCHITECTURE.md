@@ -1,62 +1,95 @@
 # Dungeon Management System architecture
 
-The Dungeon Management System uses Aetheria's AI Dungeon file structure. All three runtime layers are contained in the root `Library.js`; the three hook files only invoke the shared lifecycle.
+DMS uses the Aetheria AI Dungeon structure. The root `Library.js` contains Toolbox, Inner Self/Auto-Cards, and DMS Core. The three hook scripts only invoke the shared lifecycle. DMS Core is authoritative for the Thronebound, Dungeon, Administrators, facilities, population cohorts, Classes, quests, Activity, Cycles, and Lustria operations; narration can express those facts but cannot overwrite them.
 
-1. **Toolbox** coordinates commands, context filtering, output cleanup, and optional narrative tools.
-2. **Inner Self and Auto-Cards** provide persistent minds and memories for Administrators and important dungeon inhabitants.
-3. **DMS Core** is the sole mechanical authority for the Thronebound, Dungeon, Administrators, Rooms, Activity Mode, quests, statistics, and deterministic generation decisions.
+## Dungeon development map
 
-Narration may describe managed changes, but it cannot decide or overwrite them. The input hook plans or executes a valid change, the context hook tells the model what has already been established, and the output hook presents or commits the managed result.
+The Dungeon begins at Tier 0 and ends at Tier 10. Administrator Capacity is `1 + (2 × Tier)`, from 1 at Tier 0 to 21 at Tier 10. Reaching the current maximum is mandatory for the next Tier Up. Each new Administrator is summoned into a role selected only from active dungeon functions; the first is always the Manager.
 
-## Authoritative records
+There is no global room or population capacity. Each unlocked facility may be constructed once and developed in two ways. Expansion raises its job population. Tier Up raises its benefit per job and updates its themed Appearance. Workers are automatically represented as job cohorts; Soldier cohort positions come from Barracks Expansion.
 
-### Thronebound
+| Dungeon Tier | Administrator Capacity | Major facility unlocks | Thronebound development |
+| ---: | ---: | --- | --- |
+| 0 | 1 | Throne Room | Classless; identity, resources, System Mode, first Manager |
+| 1 | 3 | resource works, habitat, Development Sanctum, Energy Conduit, Class Evolution Chamber, General Skill Hall, General Trait Archive | initial three-branch Class Selection; Basic abilities |
+| 2 | 5 | Barracks, Training Hall, Administration Office, Scout Lodge, Attribute Training Hall | Soldier cohorts, Lustria scouting, Attribute and mastery training |
+| 3 | 7 | Gatehouse, Vein Extraction Facility, Forge, Population Nexus | Lustrian vein exploitation and equipment development |
+| 4 | 9 | Laboratory, researched Custom Skill Studio and Trait Atelier, War Room, Grand Vault | Intermediate Grade; custom themed ability research |
+| 5 | 11 | Portal Gate, Dungeon Academy | stable travel and advanced Class development |
+| 6 | 13 | Elite Barracks, Architectural Core | elite cohorts and advanced construction |
+| 7 | 15 | Nexus Observatory | Advanced Grade and high-threat exploration |
+| 8 | 17 | Conquest Command | sustained Lustrian territorial conquest |
+| 9 | 19 | World Gate Array | remote and multi-world operations |
+| 10 | 21 | Architect Apotheosis Core | Mastery Grade and sovereign capstone functions |
 
-The mostly user-authored player character bound to the dungeon. Its record owns Name, Race, Level, Class, Class Tier, Combat Attributes, Support Attributes, theme-defined Unique Attributes, Skills, and Traits. Schema migration accepts the prototype `tronebound` key but stores the canonical `thronebound` key.
+Tier Up also raises the maximum facility and Class Tier. Facilities unlocked earlier can be Tiered Up as the Dungeon grows.
 
-### Dungeon
+## Thronebound development map
 
-The parent identity and economy. Theme, style, Worker description, Soldier description, and four resources are user-defined seeds. The four purposes are always Construction, Sustenance, linked-character Development, and Dungeon Energy even though their names and lore differ by dungeon. Ten Dungeon Tiers control Administrator Capacity, Room Capacity, maximum Room Tier, maximum Class Tier, and facility unlocks.
+The Thronebound is mostly user-authored: Name, Race, Attribute Aptitudes, preferences, and theme-defined Unique Attributes. The system does not ask the user to define a Class.
 
-### Administrators
+At Dungeon Tier 1, three Class Preview cards are generated from the dungeon theme. Each contains a Class name and description, Combat Skill, Management Skill, and Trait. The player may edit a preview card, regenerate the options, or accept one. Acceptance updates the Class record, adds both Skills and the Trait, and creates their individual cards. Duplicate names are rejected.
 
-Named, individually tracked agents with Race, Level, Class, Class Tier, Skills, Traits, and either the Combat or Support Attribute set. Administrator Capacity equals Dungeon Tier. Administrators are the primary Inner Self agents; their duties are mechanically constrained while their personalities remain narratively expressive.
+Every later Class Up repeats the three-branch preview process and requires:
 
-### Rooms
+1. the Dungeon at the target Tier;
+2. the Class Evolution Chamber at the target Tier;
+3. the themed Development and Energy cost;
+4. acceptance of one editable preview.
 
-Individually identified facilities without mandatory coordinates or layout. Scripted definitions decide unlock Tier, costs, production, capacity, bonuses, and other backend functions. Generated Appearance, Function, and Job lore expresses that fixed function through the user's theme and style. A Room cannot exceed the Dungeon Tier. Worker assignments inherit the Room's Job and Tier.
+Skills and Traits have mastery from 0–100% and ordinary Grades. Maximum mastery is required before a Grade Up.
 
-### Population
+| Grade | Minimum Tier |
+| --- | ---: |
+| Basic | 1 |
+| Intermediate | 4 |
+| Advanced | 7 |
+| Mastery | 10 |
 
-Population is cohort-based, never individually simulated. Worker Capacity and Soldier Capacity are derived from built Rooms and their upgrade Tiers. Worker assignments drive production; unique-worker facilities require one operator and scale mainly from Room Tier. Soldiers unlock through Barracks, use fixed combat archetypes, inherit their Barracks Tier, and produce Combat Power used for defense and Lustrian access.
+Unique, Apex, and Growth are supported as special nonstandard Grades. General Skills and Traits come from separate facilities with a separate shop card for every facility Tier. Custom facilities require Laboratory research and produce a limited shop from one player-defined theme. Attribute Training Hall functions spend Dungeon Energy to train Attributes and ability mastery.
 
-### Lustria and locations
+## Administrators and Bond
 
-Activity state records a major location—Dungeon, Lustria, Homeworld, or the configured optional Secondary location—plus secondary and detailed location text. The private Dungeon System is available only in the Dungeon's Throne Room; `/dms` remains a silent author command everywhere.
+Administrators have Name, Race, Level, fixed-role Class path, Rank, assignment effectiveness, either Combat or Support Attributes, Skills, Traits, and Bond. Summoned Rank is random from F, E, D, C, B, A, S, SS, and SSS. Rank modifies facility assignment output.
 
-Scout facilities deterministically discover Lustrian sectors and resource sites. Sector threat is compared with Dungeon Combat Power. Vein Extraction Facilities target discovered sites; their Tier controls extraction rate and concurrent targets. Extracted Lustrian resources are separate from the four dungeon-theme resources.
+Administrator Class previews evolve their existing path rather than offering three choices. Combat Administrators receive one Combat Skill and one Trait; Support Administrators receive one Support Skill and one Trait. The same editable-preview acceptance and duplicate protection apply.
 
-## Adapted Aetheria systems
+Bond stops at every 5% threshold until its Bond Quest is completed. Some events have soft locks for an appropriately Tiered gift or an accessible location. Bond is not directly capped by Dungeon Tier. Sufficient Bond and resources permit Rank Up. Every summoned Administrator is automatically given an Inner Self character card and added to the Inner Self configuration.
 
-| Aetheria foundation | Dungeon adaptation |
-| --- | --- |
-| Player/party character tracking | Thronebound and Administrator sheets |
-| Activity Mode | Location-aware Travel, Survey, Construction, Administration, Production, Training, Recruitment, Defense, Exploration, Exploitation, and System |
-| Managed quests | Dungeon foundation, expansion, Administrator, room, defense, and Tronebound quest families |
-| `/mass` commands | Silent-author `/dms` commands |
-| System voice windows | Private dungeon status and management interfaces while in System Mode |
-| Character and System cards | Tronebound, Dungeon, Administrator, Room, Activity, Quest, and Log cards |
-| Deterministic action planning | Validate costs and outcomes before narration; output wording is never mechanical authority |
+## Resources, facilities, and population
 
-## Generation contract
+The player defines the lore for four mechanically fixed dungeon resource roles:
 
-Generation consumes an explicit dungeon identity plus a stable sequence number. Generated records must:
+- Construction material
+- Population sustenance
+- Thronebound/Administrator development resource
+- Dungeon-themed energy and primary currency
 
-- retain the configured theme and style;
-- select population only from configured groups or explicit later additions;
-- state their functional dungeon role;
-- remain stable across retries;
-- create a managed record before the narrative model describes the result;
-- never alter the Tronebound's user-authored identity.
+Each definition records its name, nature, collection method, and use. Facilities use these roles consistently regardless of their themed names.
 
-The current implementation includes deterministic room lore, Tier upgrades, themed resources, production Cycles, character progression, population cohorts, Combat Power, location tracking, Lustrian scouting, resource sites, and extraction.
+Facility definitions own the backend function, unlock Tier, costs, jobs, yields, and bonuses. Unlock cards expose Function and Job Name without inventing an Appearance. Construction creates the themed Appearance. The Facility card then holds Appearance and Function while a separate Job Cohort card explains the cohort's typical Appearance and duties.
+
+## Quests, Levels, and Aptitudes
+
+Quest categories are Dungeon, Thronebound, Tutorial, Bond, Personal, Guild, and Bounty. Dungeon and Thronebound quests track progression milestones; Tutorials introduce systems; Bond quests gate relationship thresholds; Guild and Bounty quests support Lustria; Personal quests are user-authored and inherit the current Dungeon Tier for reward scaling.
+
+Quest experience raises Thronebound Level. Combat and Support Attributes are stored as `Attribute [Aptitude]: Value`. Aptitude ranges F–SSS and selects from five possible gains on each growth roll. Player preference weights which Attributes receive Level Up growth. Aptitude also affects training results.
+
+## Activity, Cycles, and context
+
+Activity records:
+
+- major location: Dungeon, Lustria, Homeworld, or a configured Secondary world/location;
+- immediate secondary location and detail;
+- Activity Mode and target Story Cards;
+- permitted Pace: Timeless, Slow, Normal, or Fast.
+
+The context hook loads matching location and target lore so these fields affect the story as well as mechanics. Timed Paces accumulate Cycles; System Mode is Timeless and is required for Administrator summoning. Cycles progress construction, facility upgrades, expansions, production, extraction, upkeep, and research. Natural actions can add mode-specific benefits: construction help shortens tasks based on Craft and Logistics, production help adds Energy, Training advances a target, and Lustrian exploration can discover sectors.
+
+## Lustria boundary
+
+Global Lustria lore is setting-wide and excludes Eryndral, specific protagonists, and specific dungeons. Scout facilities discover sectors and resource veins. Sector threat is compared against Dungeon Combat Power. Extraction facilities target discovered veins; Expansion supports their job cohort while Tier improves extraction and concurrent operations. Conquest Command unlocks territorial control.
+
+## Deterministic generation contract
+
+Generated state uses the Dungeon identity plus stable sequence keys. It must remain stable across retries, use only configured theme and population constraints, establish managed records before narrative description, preserve the Thronebound's user-authored identity, and reject duplicate abilities. Editable Class Preview cards are the deliberate approval boundary between generated suggestions and permanent progression.
