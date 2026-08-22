@@ -41,3 +41,5 @@ jobs:
           git add Library.js
           git commit -m "feat: implement DMS global foundation persistence"
           git push origin HEAD:feature/global-foundation-persistence
+
+# This workflow is intentionally one-shot infrastructure for applying the large Library.js patch safely.
