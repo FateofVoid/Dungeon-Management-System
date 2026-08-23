@@ -48,7 +48,7 @@ test("requires the first summoned Manager and full Administrator Capacity for Ti
   assert.equal(dms.dungeon.tier, 1);
   assert.equal(dms.rooms["room-throne"].tier, 1);
   assert.equal(dms.dungeon.administratorCapacity, 3);
-  assert.throws(() => DMS.upgradeDungeon(dms), /Fill Administrator Capacity/);
+  assert.throws(() => DMS.upgradeDungeon(dms), /verified through Dungeon Tier 1/);
 });
 
 test("Administrator Capacity grows by two per Tier and every Tier unlocks facilities", () => {

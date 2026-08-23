@@ -114,6 +114,58 @@ test("save cards are subsystem-aware, chunk safely, migrate schema 1, and reject
   assert.equal(loaded.dungeon.resources.energy.amount, 50);
 });
 
+test("save-card character limits are asserted after every authoritative save", () => {
+  global.storyCards.length = 0;
+  const dms = configured();
+  DMS.refreshCards(dms);
+  const report = DMS.assertSaveCardCharacterLimits();
+  assert.ok(report.count >= 2);
+  assert.ok(report.maximum <= DMS.SAVE_CARD_MAX);
+  assert.equal(report.limit, 1800);
+  const oversized = [{ title: `${DMS.SAVE_CARD_TITLES.core} Oversized`, entry: "x".repeat(DMS.SAVE_CARD_MAX + 1) }];
+  assert.throws(() => DMS.assertSaveCardCharacterLimits(oversized), /exceeds the 1800-character save-card boundary/);
+});
+
+test("save cards update through AI Dungeon's key-based Story Card API without relying on titles", () => {
+  global.storyCards.length = 0;
+  const backingCards = [];
+  global.addStoryCard = (keys, entry, type) => { backingCards.push({ id: String(backingCards.length + 1), keys, entry, type }); };
+  global.updateStoryCard = (index, keys, entry, type) => { backingCards[index] = { id: backingCards[index].id, keys, entry, type }; };
+  global.removeStoryCard = index => { backingCards.splice(index, 1); };
+  try {
+    const dms = configured();
+    DMS.refreshCards(dms);
+    DMS.execute(dms, "/dms status");
+    DMS.execute(dms, "/dms resources");
+    DMS.writeSaveCards(dms);
+    const snapshot = DMS.readSaveCards();
+    assert.equal(snapshot.revision, dms.persistence.revision);
+    assert.equal(snapshot.core.onboarding[0], 1);
+    assert.equal(snapshot.core.onboarding[1], 1);
+    assert.equal(global.storyCards.filter(card => card.keys === "DMS_SAVE_CORE_1").length, 1);
+    assert.equal(backingCards.filter(card => card.keys === "DMS_SAVE_CORE_1").length, 1);
+    assert.equal(backingCards.find(card => card.keys === "DMS_SAVE_CORE_1").entry, global.storyCards.find(card => card.keys === "DMS_SAVE_CORE_1").entry);
+    assert.ok(global.storyCards.every(card => !Object.hasOwn(card, "title")), "the test adapter mirrors the live API, which exposes no card title field");
+    const cardCount = backingCards.length;
+    global.storyCards.splice(0, global.storyCards.length, ...global.storyCards.filter(card => String(card.keys).startsWith("DMS_SAVE_")));
+    DMS.refreshCards(dms);
+    assert.equal(backingCards.length, cardCount, "managed cards must not be recreated when AI Dungeon omits them from the next runtime snapshot");
+    const restored = DMS.loadSaveCards(undefined, snapshot);
+    assert.equal(restored.thronebound.name, dms.thronebound.name);
+    assert.equal(restored.thronebound.race, dms.thronebound.race);
+    assert.equal(restored.dungeon.name, dms.dungeon.name);
+    assert.equal(restored.dungeon.theme, dms.dungeon.theme);
+    assert.equal(restored.dungeon.style, dms.dungeon.style);
+    assert.equal(restored.dungeon.resources.construction.name, dms.dungeon.resources.construction.name);
+    assert.deepEqual(restored.generation.managedCardKeys, dms.generation.managedCardKeys);
+    assert.deepEqual(DMS.dungeonSignature(restored), DMS.dungeonSignature(dms));
+  } finally {
+    delete global.addStoryCard;
+    delete global.updateStoryCard;
+    delete global.removeStoryCard;
+  }
+});
+
 test("Main Dungeon progression and independent tutorial chains advance through authoritative play", () => {
   const dms = rich(systemMode(configured()));
   DMS.execute(dms, "/dms status");
@@ -135,7 +187,7 @@ test("Main Dungeon progression and independent tutorial chains advance through a
 test("natural System requests delegate queries and common management actions to execute", () => {
   const dms = rich(systemMode(configured()));
   const query = DMS.applyActivityTurn(dms, "System: show resources", 101);
-  assert.equal(query.system, DMS.execute(dms, "/dms resources"));
+  assert.ok(query.system.startsWith(DMS.execute(dms, "/dms resources")));
   DMS.summonAdministrator(dms); DMS.upgradeDungeon(dms);
   const action = DMS.applyActivityTurn(dms, "System: build material-works", 102);
   assert.match(action.system, /Began construction of Material Works/);

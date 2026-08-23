@@ -88,3 +88,25 @@ test("slash commands are retry-safe for the same AI Dungeon action", () => {
   assert.match(global.state.DMSCommandOutput, /already applied/i);
   global.DungeonManagement("output");
 });
+
+test("the live cache-reset diagnostic preserves save cards and automatically recovers before output", () => {
+  global.storyCards.length = 0;
+  const dms = systemMode(configured());
+  const admin = DMS.summonAdministrator(dms);
+  DMS.refreshCards(dms);
+  const expected = { revision: dms.persistence.revision, tier: dms.dungeon.tier, manager: admin.name, rank: admin.rank, bond: admin.bond.value };
+  global.state = { DMS: dms };
+  global.info = { actionCount: 777, maxChars: 12000 };
+  global.text = '> You say, "/dms cache reset"';
+  global.DungeonManagement("input");
+  assert.equal(global.state.DMS, undefined);
+  global.DungeonManagement("context");
+  assert.equal(global.state.DMS.persistence.revision, expected.revision);
+  assert.equal(global.state.DMS.dungeon.tier, expected.tier);
+  const restored = Object.values(global.state.DMS.administrators)[0];
+  assert.equal(restored.name, expected.manager);
+  assert.equal(restored.rank, expected.rank);
+  assert.equal(restored.bond.value, expected.bond);
+  global.DungeonManagement("output");
+  assert.match(global.text, /Runtime cache removed/);
+});

@@ -31,13 +31,16 @@ test("fresh Tier 0 completes both onboarding chains and reaches Tier 1 without i
   assert.equal(dms.rooms["room-throne"].tier, 0);
   assert.deepEqual(DMS.dungeonSignature(dms), { state: "Nascent", strength: 0, externallyDetectable: false, theme: "Volcanic necromancy" });
 
-  const naturalStatus = DMS.applyActivityTurn(dms, "System: show status", 1);
-  const naturalResources = DMS.applyActivityTurn(dms, "System: show resources", 2);
+  const help = DMS.applyActivityTurn(dms, '> You say, "System, help me."', 0);
+  const naturalStatus = DMS.applyActivityTurn(dms, '> You say, "System, show my Dungeon Status."', 1);
+  const naturalResources = DMS.applyActivityTurn(dms, '> You say "System, show my resources."', 2);
+  assert.match(help.system, /System Awakening — Read Dungeon Status/);
   assert.match(naturalStatus.system, /Dungeon: The Ashen Court/);
   assert.match(naturalResources.system, /Construction — Graveglass/);
   assert.equal(dms.activity.mode, "Idle", "read-only Throne Room System requests do not require entering management mode");
-  run(dms, "mode System||Timeless");
-  const summon = run(dms, "administrator summon");
+  const mode = DMS.applyActivityTurn(dms, '> You say "System, enter management mode."', 3);
+  const summon = DMS.applyActivityTurn(dms, '> You say "System, summon the Manager."', 4).system;
+  assert.match(mode.system, /Activity: System \/ Timeless/);
   const manager = Object.values(dms.administrators)[0];
   assert.match(summon, /Rank .* Manager/);
   assert.equal(manager.role, "Manager");
@@ -50,10 +53,12 @@ test("fresh Tier 0 completes both onboarding chains and reaches Tier 1 without i
   assert.ok(global.storyCards.some(card => card.keys === `DMS_ADMIN_${manager.id.toUpperCase().replace(/\W/g, "_")}`));
   assert.ok(global.storyCards.some(card => card.title === `@${manager.name}`));
 
-  run(dms, "tier requirements");
+  const requirements = DMS.applyActivityTurn(dms, '> You ask: "System, what is required to awaken Tier 1?"', 5);
+  assert.match(requirements.system, /Tier 1 requires Administrator Capacity 1\/1 filled/);
   const constructionBefore = dms.dungeon.resources.construction.grades.Basic;
   const energyBefore = dms.dungeon.resources.energy.amount;
-  run(dms, "dungeon upgrade");
+  const awakening = DMS.applyActivityTurn(dms, '> You say "System, awaken Tier 1."', 6);
+  assert.match(awakening.system, /Dungeon advanced to Tier 1/);
 
   assert.equal(dms.dungeon.tier, 1);
   assert.equal(dms.dungeon.administratorCapacity, 3);
@@ -62,6 +67,39 @@ test("fresh Tier 0 completes both onboarding chains and reaches Tier 1 without i
   assert.equal(dms.dungeon.resources.construction.grades.Basic, constructionBefore - 50);
   assert.equal(dms.dungeon.resources.energy.amount, energyBefore - 30 + 20, "Tier Up cost and its quest reward are both authoritative");
   for (const quest of Object.values(dms.quests.records).filter(quest => ["Survive the Awakening", "System Awakening"].includes(quest.chain))) assert.equal(quest.status, "cleared", `${quest.title} should clear through normal play`);
+});
+
+test("Release A seals Dungeon Tier 2 until its deployment gate is verified", () => {
+  const dms = defineTierZeroIdentity(DMS.defaultState());
+  DMS.setActivity(dms, "System", [], "Timeless");
+  DMS.summonAdministrator(dms);
+  DMS.upgradeDungeon(dms);
+  assert.throws(() => DMS.upgradeDungeon(dms), /verified through Dungeon Tier 1/);
+  DMS.summonAdministrator(dms);
+  DMS.summonAdministrator(dms);
+  assert.equal(DMS.VERIFIED_DUNGEON_TIER, 1);
+  assert.match(DMS.tierRequirementsStatus(dms), /Tier 2 requirements remain sealed/);
+  assert.throws(() => DMS.upgradeDungeon(dms), /verified through Dungeon Tier 1/);
+  assert.equal(dms.dungeon.tier, 1);
+});
+
+test("spoken System requests replace model output with an authoritative immersive response", () => {
+  global.storyCards.length = 0;
+  global.state = { DMS: defineTierZeroIdentity(DMS.defaultState()) };
+  global.info = { actionCount: 700, maxChars: 12000 };
+  global.text = '> You say, "System, show my Dungeon Status."';
+  global.DungeonManagement("input");
+  assert.equal(global.state.DMSVoiceTurn, true);
+  global.DungeonManagement("context");
+  global.text = "This model text must be replaced.";
+  global.DungeonManagement("output");
+  assert.match(global.text, /^> \*\*DUNGEON MANAGEMENT SYSTEM\*\*/);
+  assert.match(global.text, /Dungeon: The Ashen Court/);
+  assert.doesNotMatch(global.text, /model text/);
+});
+
+test("natural System help accepts an immersive request for understanding", () => {
+  assert.equal(DMS.naturalSystemCommand('You say, "System, help me understand the Dungeon."'), "system help");
 });
 
 test("Tier 0 throne-only System operations reject use elsewhere", () => {
