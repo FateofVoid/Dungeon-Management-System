@@ -1,0 +1,52 @@
+[
+  {
+    "isSpoiler": false,
+    "showInStoryCards": true,
+    "keys": "DMS_SETUP_VARIABLES_IDENTITY",
+    "value": "Thronebound: ${What is your Thronebound's name, title, or designation?}\nRace: ${What is your Thronebound's Race?}\nDungeon: ${What is the Dungeon's name?}\nTheme: ${What Theme governs the Dungeon's creatures, materials, powers, and atmosphere?}\nStyle: ${What architectural and visual Style does the Dungeon express?}\nWorkers: ${What is the typical manifestation and appearance of the Dungeon's Workers?}\nSoldiers: ${What is the typical manifestation and appearance of the Dungeon's Soldiers?}\nHomeworld: ${What is the Thronebound's Homeworld called?}\nSecondary Location: ${Optionally name one additional major location the Thronebound can visit. Write None if there is no secondary location.}",
+    "type": "class",
+    "title": "DMS Setup — Dungeon Identity Variables",
+    "description": "Character-creation variables imported into authoritative Tier 0 state. The unique key prevents casual story activation.",
+    "useForCharacterCreation": true
+  },
+  {
+    "isSpoiler": false,
+    "showInStoryCards": true,
+    "keys": "DMS_SETUP_VARIABLES_RESOURCES",
+    "value": "Construction: ${Define the Construction Resource as Name | Description | How it is found or collected | How it is used.}\nSustenance: ${Define the Sustenance Resource as Name | Description | How it is found or collected | How it is used.}\nDevelopment: ${Define the Development Resource as Name | Description | How it is found or collected | How it is used.}\nEnergy: ${Define Dungeon Energy as Name | Description | How it is found or collected | How it is used.}",
+    "type": "class",
+    "title": "DMS Setup — Dungeon Resource Variables",
+    "description": "Each answer defines one themed resource while preserving its universal mechanical role. Use exactly four pipe-separated fields.",
+    "useForCharacterCreation": true
+  },
+  {
+    "isSpoiler": false,
+    "showInStoryCards": true,
+    "keys": "DMS_SETUP_VARIABLES_COMBAT_APTITUDES",
+    "value": "Might: ${Choose the Thronebound's Might Aptitude and growth preference as Rank | 1-5, where Rank is F, E, D, C, B, A, S, SS, or SSS.}\nAgility: ${Choose the Thronebound's Agility Aptitude and growth preference as Rank | 1-5, where Rank is F, E, D, C, B, A, S, SS, or SSS.}\nEndurance: ${Choose the Thronebound's Endurance Aptitude and growth preference as Rank | 1-5, where Rank is F, E, D, C, B, A, S, SS, or SSS.}\nArcana: ${Choose the Thronebound's Arcana Aptitude and growth preference as Rank | 1-5, where Rank is F, E, D, C, B, A, S, SS, or SSS.}",
+    "type": "class",
+    "title": "DMS Setup — Combat Aptitude Variables",
+    "description": "Tier 0 Combat Aptitudes and growth preferences. Every answer uses Rank | Preference.",
+    "useForCharacterCreation": true
+  },
+  {
+    "isSpoiler": false,
+    "showInStoryCards": true,
+    "keys": "DMS_SETUP_VARIABLES_SUPPORT_APTITUDES",
+    "value": "Command: ${Choose the Thronebound's Command Aptitude and growth preference as Rank | 1-5, where Rank is F, E, D, C, B, A, S, SS, or SSS.}\nLogistics: ${Choose the Thronebound's Logistics Aptitude and growth preference as Rank | 1-5, where Rank is F, E, D, C, B, A, S, SS, or SSS.}\nInsight: ${Choose the Thronebound's Insight Aptitude and growth preference as Rank | 1-5, where Rank is F, E, D, C, B, A, S, SS, or SSS.}\nCraft: ${Choose the Thronebound's Craft Aptitude and growth preference as Rank | 1-5, where Rank is F, E, D, C, B, A, S, SS, or SSS.}",
+    "type": "class",
+    "title": "DMS Setup — Support Aptitude Variables",
+    "description": "Tier 0 Support Aptitudes and growth preferences. Every answer uses Rank | Preference.",
+    "useForCharacterCreation": true
+  },
+  {
+    "isSpoiler": false,
+    "showInStoryCards": true,
+    "keys": "DMS_SETUP_VARIABLES_UNIQUE_ATTRIBUTES",
+    "value": "Unique Attributes: ${Optionally define up to three dungeon-themed Unique Attributes as Name | Description | Starting Value, separated by semicolons. Write None if there are no Unique Attributes.}",
+    "type": "class",
+    "title": "DMS Setup — Optional Unique Attribute Variables",
+    "description": "Optional theme-specific Thronebound Attributes. This card remains separate because Unique Attributes are not required for every Dungeon.",
+    "useForCharacterCreation": true
+  }
+]

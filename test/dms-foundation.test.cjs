@@ -17,6 +17,7 @@ function configured() {
   DMS.defineResource(dms, "sustenance", ["Cinder Marrow", "Heat-rich spiritual biomass.", "Rendered from fungal char gardens.", "Sustains the dungeon population."]);
   DMS.defineResource(dms, "development", ["Sovereign Ichor", "Concentrated adaptive essence.", "Refined from resonance.", "Develops linked characters."]);
   DMS.defineResource(dms, "energy", ["Pyreflow", "Necromantic heat and command.", "Drawn through the throne.", "Primary dungeon currency."]);
+  DMS.confirmAptitudes(dms);
   return dms;
 }
 
@@ -72,6 +73,7 @@ test("identity readiness rejects placeholder core identity even with complete re
   DMS.defineResource(dms, "sustenance", ["Cinder Marrow", "Biomass.", "Cultivated.", "Sustenance."]);
   DMS.defineResource(dms, "development", ["Sovereign Ichor", "Essence.", "Refined.", "Development."]);
   DMS.defineResource(dms, "energy", ["Pyreflow", "Energy.", "Drawn.", "Power."]);
+  DMS.confirmAptitudes(dms);
   assert.equal(DMS.identityReady(dms), false, "Undefined race must keep identity incomplete");
   DMS.configure(dms, { race: "Voidkin" });
   assert.equal(DMS.identityReady(dms), true);
@@ -99,7 +101,11 @@ test("compact save cards restore newer mechanical state without recreating cards
   const saveRevision = dms.persistence.revision;
   const cardCount = global.storyCards.length;
   const saveCards = global.storyCards.filter(card => card.title.startsWith("DMS Save — "));
-  assert.equal(saveCards.length, 4);
+  assert.ok(saveCards.length >= 3);
+  assert.ok(saveCards.some(card => card.title === DMS.SAVE_CARD_TITLES.core));
+  assert.ok(saveCards.some(card => card.title === DMS.SAVE_CARD_TITLES.progression));
+  assert.ok(saveCards.some(card => card.title === DMS.SAVE_CARD_TITLES.operations));
+  assert.ok(saveCards.every(card => card.entry.length <= DMS.SAVE_CARD_MAX));
   assert.ok(saveCards.every(card => JSON.parse(card.entry).rev === saveRevision));
   assert.ok(saveCards.every(card => !/Appearance:|Class Description:/.test(card.entry)));
 
@@ -117,9 +123,9 @@ test("incomplete or torn save-card bundles are rejected", () => {
   global.storyCards.length = 0;
   const dms = configured();
   DMS.refreshCards(dms);
-  const worldIndex = global.storyCards.findIndex(card => card.title === DMS.SAVE_CARD_TITLES.world);
-  assert.ok(worldIndex >= 0);
-  global.storyCards.splice(worldIndex, 1);
+  const operationsIndex = global.storyCards.findIndex(card => card.title === DMS.SAVE_CARD_TITLES.operations);
+  assert.ok(operationsIndex >= 0);
+  global.storyCards.splice(operationsIndex, 1);
   assert.equal(DMS.readSaveCards(), null);
   assert.throws(() => DMS.loadSaveCards(dms), /No valid DMS Save cards/);
 });

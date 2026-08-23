@@ -16,6 +16,7 @@ function configured() {
   DMS.defineResource(dms, "sustenance", ["Cinder Marrow", "Heat-rich spiritual biomass.", "Rendered from fungal char gardens.", "Sustains the dungeon population."]);
   DMS.defineResource(dms, "development", ["Sovereign Ichor", "Concentrated adaptive essence.", "Refined from resonance.", "Develops linked characters."]);
   DMS.defineResource(dms, "energy", ["Pyreflow", "Necromantic heat and command.", "Drawn through the throne.", "Primary dungeon currency."]);
+  DMS.confirmAptitudes(dms);
   return dms;
 }
 function rich(dms, amount = 100000) { for (const role of DMS.RESOURCE_ROLES) dms.dungeon.resources[role].amount = amount; return dms; }
@@ -28,6 +29,7 @@ test("starts at Tier 0 with only the Throne Room and a Classless Thronebound", (
   const dms = configured();
   assert.equal(dms.dungeon.tier, 0);
   assert.deepEqual(Object.keys(dms.rooms), ["room-throne"]);
+  assert.equal(dms.rooms["room-throne"].tier, 0);
   assert.equal(dms.thronebound.class.name, "Classless");
   assert.equal(dms.thronebound.class.tier, 0);
   assert.equal(dms.dungeon.administratorCapacity, 1);
@@ -35,14 +37,16 @@ test("starts at Tier 0 with only the Throne Room and a Classless Thronebound", (
 
 test("requires the first summoned Manager and full Administrator Capacity for Tier Up", () => {
   const dms = rich(configured());
-  assert.throws(() => DMS.upgradeDungeon(dms), /Fill Administrator Capacity/);
+  assert.throws(() => DMS.upgradeDungeon(dms), /System Mode within the Throne Room/);
   assert.throws(() => DMS.summonAdministrator(dms), /System Mode/);
   systemMode(dms);
+  assert.throws(() => DMS.upgradeDungeon(dms), /Fill Administrator Capacity/);
   const manager = DMS.summonAdministrator(dms, "Veyra", "Ashborn");
   assert.equal(manager.role, "Manager");
   assert.ok(DMS.ADMINISTRATOR_RANKS.includes(manager.rank));
   DMS.upgradeDungeon(dms);
   assert.equal(dms.dungeon.tier, 1);
+  assert.equal(dms.rooms["room-throne"].tier, 1);
   assert.equal(dms.dungeon.administratorCapacity, 3);
   assert.throws(() => DMS.upgradeDungeon(dms), /Fill Administrator Capacity/);
 });
@@ -217,7 +221,7 @@ test("custom shops require Laboratory research and their dedicated facility", ()
 });
 
 test("Quest Experience levels the Thronebound with Aptitude-based Attribute growth", () => {
-  const dms = configured(); DMS.configureAptitude(dms, "Might", "SSS", 5);
+  const dms = systemMode(configured()); DMS.configureAptitude(dms, "Might", "SSS", 5);
   const quest = DMS.createQuest(dms, "Personal", "Trial by Fire", "Survive the crucible.", { experience: 500 });
   const id = Object.keys(dms.quests.records).find(key => dms.quests.records[key] === quest);
   DMS.completeQuest(dms, id);
