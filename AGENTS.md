@@ -2,7 +2,7 @@
 
 ## Runtime structure
 
-- Preserve the Aetheria AI Dungeon format.
+- Preserve the project's established AI Dungeon integration format.
 - All shared runtime code, including DMS, Toolbox, Inner Self, and Auto-Cards, belongs in the root `Library.js`.
 - Keep `Input.js`, `Context.js`, and `Output.js` as minimal lifecycle hooks.
 

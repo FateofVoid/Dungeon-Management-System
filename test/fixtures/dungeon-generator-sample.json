@@ -1,0 +1,82 @@
+{
+  "story_bible": {
+    "overview": {
+      "sexual_content": "Romantic content is permitted, but explicit sexual content is not required.",
+      "fetish_content": "Adult fetish themes may appear only when initiated by the player.",
+      "tags": "dark fantasy, crystal, oathbound, living fortress",
+      "dungeon": "Queen's Vault",
+      "thronebound": "Mara-Veil",
+      "homeworld": "Caelus",
+      "concept": "An oathbound sovereign awakens a living crystal fortress whose masked denizens turn memory, discipline, and stormlight into enduring power."
+    },
+    "queens_vault": {
+      "theme": "Oathbound crystal sovereignty",
+      "style": "Gothic halls of dark crystal, silver filigree, vaulted mirrors, and contained stormlight",
+      "population": "The Veiled Court",
+      "population_appearance": "Tall masked figures formed from smoke-dark crystal and silver latticework, with pale stormlight moving beneath their translucent surfaces.",
+      "description": "Queen's Vault is a silent living citadel of reflective galleries, oath-marked arches, and deep crystalline chambers. Every surface records faint impressions of duty, memory, and authority.",
+      "manifestation": "Structures grow through interlocking crystal planes, tools form from folded silver light, and the Veiled Court condenses from reflections when the Dungeon requires workers, attendants, or defenders.",
+      "throne_room": "A circular chamber of black crystal surrounds a silver throne beneath a captive indoor storm. Fine oath-script glows across the floor whenever the Thronebound invokes the Dungeon System."
+    },
+    "dungeon_resources": {
+      "construction_name": "Vowglass",
+      "construction_description": "A dark crystalline material that hardens around clearly defined purpose and remembered obligation.",
+      "construction_collection": "The Dungeon grows Vowglass along prepared lattice beds, where Workers harvest mature planes without damaging the underlying pattern.",
+      "construction_use": "It pays for facilities, Expansion, Tier Ups, structural reinforcement, and the physical forms of Dungeon equipment.",
+      "sustenance_name": "Stillwater Memory",
+      "sustenance_description": "A cool silver fluid carrying stable impressions of rest, identity, and collective belonging.",
+      "sustenance_collection": "Quiet galleries condense it from the harmless memories shed by the Veiled Court during work and recovery.",
+      "sustenance_use": "It pays population upkeep and restores the cohesion, resilience, and recovery of Dungeon-created cohorts.",
+      "development_name": "Sovereign Resonance",
+      "development_description": "Concentrated harmonic force produced when a Dungeon bond, personal oath, or practiced ability becomes more coherent.",
+      "development_collection": "The Development Sanctum refines it from training echoes, completed duties, research insights, and strengthened bonds.",
+      "development_use": "It supports Thronebound and Administrator growth, Classes, abilities, Bond advancement, Rank development, and research.",
+      "energy_name": "Crownlight",
+      "energy_description": "The ungraded storm-bright currency through which Queen's Vault expresses immediate Dungeon authority.",
+      "energy_collection": "The Dungeon channels Crownlight from the captive storm above the throne and circulates it through silver conduits.",
+      "energy_use": "It is the primary Dungeon currency for construction, facility operation, upgrades, summoning, training, research, portals, and Tier advancement."
+    },
+    "maraveil": {
+      "race": "Stormbound Human",
+      "gender": "Woman",
+      "appearance": "Mara-Veil is a tall human woman with deep brown skin, silver-black hair, pale stormlit eyes, and ceremonial armor traced with the same oath-script found throughout Queen's Vault.",
+      "personality": "Measured, protective, exacting, and deeply attentive to promises, with little patience for authority that cannot justify itself.",
+      "background": "Mara-Veil served as the last sworn warden of a failing Caelan fortress-state. She accepted the Dungeon bond while searching for a durable refuge for the people and obligations she refused to abandon.",
+      "capabilities": "She possesses formal command training, defensive swordsmanship, legal and logistical education, storm-channeling rituals, and practical experience managing a fortified estate.",
+      "values": "She values kept promises, competent stewardship, chosen loyalty, personal sovereignty, and protecting those who accept her authority in good faith.",
+      "voice_pattern": "Mara-Veil speaks in concise formal sentences, states conditions explicitly, and rarely uses casual contractions."
+    },
+    "unique_attributes": {
+      "primary_name": "Oath Dominion",
+      "primary_description": "The Dungeon turns clearly accepted promises and responsibilities into stable authority that strengthens its linked systems and Administrators.",
+      "primary_aptitude": "SS",
+      "secondary_name": "Crystal Memory",
+      "secondary_description": "Dungeon structures preserve useful impressions of work, training, and prior configurations without replacing personal memory.",
+      "secondary_aptitude": "S",
+      "tertiary_name": "Storm Conduction",
+      "tertiary_description": "The Dungeon efficiently channels volatile magical force through ordered structures, facilities, and bonded individuals.",
+      "tertiary_aptitude": "A"
+    },
+    "aptitudes": {
+      "might": "B",
+      "agility": "A",
+      "endurance": "S",
+      "arcana": "A",
+      "command": "SS",
+      "logistics": "S",
+      "insight": "B",
+      "craft": "C"
+    },
+    "attribute_growth_preference": {
+      "favored_attributes": "Command, Logistics, Endurance, Oath Dominion, Storm Conduction"
+    },
+    "homeworld": {
+      "description": "Caelus is a storm-wrapped world of floating basalt continents, fortified city-states, ritual weathercraft, windborne trade, and oath-governed magical institutions.",
+      "region": "The Vesper Crown, a chain of inhabited fortress-islands surrounding an ancient permanent cyclone.",
+      "primary_anchor": "The western gate court of Mara-Veil's former citadel, overlooking the lightning farms of Vesper Reach.",
+      "residence": "A private warden's apartment within the citadel's western tower.",
+      "time_period": "The 312th Year of the Tempest Concord",
+      "current_circumstances": "The Vesper Crown is recovering from the collapse of its central alliance while rival city-states compete for abandoned defenses, trade routes, and surviving weather engines."
+    }
+  }
+}

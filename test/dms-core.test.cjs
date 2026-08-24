@@ -51,6 +51,20 @@ test("requires the first summoned Manager and full Administrator Capacity for Ti
   assert.throws(() => DMS.upgradeDungeon(dms), /verified through Dungeon Tier 1/);
 });
 
+test("the Throne Room preserves its origin, follows Dungeon Tier, and keeps Manager authority separate from work", () => {
+  const dms = rich(systemMode(configured())), original = dms.dungeon.lore.throneRoom;
+  const manager = DMS.summonAdministrator(dms, "Veyra", "Ashborn");
+  assert.equal(dms.rooms["room-throne"].authorityAdministrator, manager.id);
+  DMS.upgradeDungeon(dms);
+  assert.equal(dms.rooms["room-throne"].tier, 1);
+  assert.ok(dms.rooms["room-throne"].lore.appearance.startsWith(original));
+  assert.throws(() => DMS.upgradeRoom(dms, "room-throne"), /cannot be upgraded independently/);
+  const material = build(dms, "material-works"); DMS.assignAdministrator(dms, manager.id, material.id);
+  assert.equal(material.assignedAdministrator, manager.id);
+  assert.equal(dms.rooms["room-throne"].authorityAdministrator, manager.id);
+  assert.equal(dms.rooms["room-throne"].assignedAdministrator, "");
+});
+
 test("Administrator Capacity grows by two per Tier and every Tier unlocks facilities", () => {
   for (let tier = 0; tier <= 10; tier++) {
     assert.equal(DMS.tierRules(tier).administratorCapacity, 1 + tier * 2);
@@ -231,13 +245,14 @@ test("Quest Experience levels the Thronebound with Aptitude-based Attribute grow
   assert.match(global.storyCards.find(card => card.title === "DMS — Thronebound").entry, /Might \[SSS\]:/);
 });
 
-test("Activity context loads matching location and target Lore Cards", () => {
+test("state-only location injection leaves narrative target Lore Cards to AI Dungeon", () => {
   global.storyCards.length = 0;
   global.storyCards.push({ title: "Glasswild Reach", keys: "Glasswild frontier", entry: "A luminous frontier of singing crystal forests." });
   const dms = configured(); DMS.setLocation(dms, "Lustria", "Glasswild Reach"); DMS.setActivity(dms, "Exploration", ["Glasswild Reach"], "Slow");
   const context = DMS.contextGuidance(dms);
-  assert.match(context, /Current Activity: Exploration/);
-  assert.match(context, /luminous frontier/);
+  assert.match(context, /Lustria Location Foundation:/);
+  assert.doesNotMatch(context, /Current Activity|luminous frontier|Glasswild Reach/);
+  assert.match(DMS.authorNoteText(dms), /Activity Mode: Exploration[\s\S]*Targets: Glasswild Reach[\s\S]*Pace: Slow/);
 });
 
 test("major-location aliases select distinct Homeworld, Lustria, and Dungeon context", () => {
@@ -252,27 +267,30 @@ test("major-location aliases select distinct Homeworld, Lustria, and Dungeon con
   const homeworld = DMS.contextGuidance(dms);
   assert.equal(dms.activity.location.major, "Homeworld");
   assert.equal(dms.activity.location.secondary, dms.world.homeworldAnchor);
-  assert.match(homeworld, /away from both Lustria and the Dungeon on Caelus/);
+  assert.match(homeworld, /Homeworld Description: A storm-wrapped world/);
   assert.match(homeworld, /The Vesper Crown/);
-  assert.match(homeworld, /The Heartstone Spire/);
+  assert.doesNotMatch(homeworld, /The Heartstone Spire/);
   assert.match(homeworld, /caldera is cooling/);
+  assert.match(homeworld, /Homeworld Primary Anchor: Mara's obsidian estate/);
+  DMS.setLocation(dms, "Homeworld", dms.world.homeworldResidence);
+  assert.match(DMS.contextGuidance(dms), /Homeworld Residence: The Heartstone Spire/);
 
   DMS.setLocation(dms, "Lustria", "Glasswild Reach");
   const lustria = DMS.contextGuidance(dms);
-  assert.match(lustria, /within Lustria but currently away from the Dungeon/);
-  assert.match(lustria, /Nexus Realm of Lustria/);
+  assert.match(lustria, /Lustria Location Foundation: Lustria is an artificial nexus realm/);
+  assert.doesNotMatch(lustria, /The Ashen Court|Caelus/);
 
   DMS.setLocation(dms, dms.dungeon.name, "Throne Room");
   const dungeon = DMS.contextGuidance(dms);
   assert.equal(dms.activity.location.major, "Dungeon");
-  assert.match(dungeon, /active Dungeon in Lustria/);
-  assert.match(dungeon, /DMS — Dungeon Foundation/);
-  assert.match(dungeon, /Nexus Realm of Lustria/);
-  assert.doesNotMatch(dungeon, /Homeworld description:/);
+  assert.match(dungeon, /Dungeon Description:/);
+  assert.match(dungeon, /Dungeon Manifestation:/);
+  assert.match(dungeon, /Dungeon Room: Throne Room/);
+  assert.doesNotMatch(dungeon, /Lustria Location Foundation|Homeworld Description|Personality/);
 });
 
 test("Activity turns advance allowed Paces and are retry-safe", () => {
-  const dms = rich(awakenTier1()); dms.dungeon.tier = 2; DMS.applyDerivedState(dms); DMS.upgradeRoom(dms, "room-throne"); const before = dms.tasks[0].remaining; DMS.setActivity(dms, "Construction", [], "Fast");
+  const dms = rich(awakenTier1()), room = build(dms, "material-works"); dms.dungeon.tier = 2; DMS.applyDerivedState(dms); DMS.upgradeRoom(dms, room.id); const before = dms.tasks[0].remaining; DMS.setActivity(dms, "Construction", [], "Fast");
   const result = DMS.applyActivityTurn(dms, "I help shape the chamber.", 10);
   assert.equal(dms.activity.progress, 0.5);
   assert.equal(result.task, dms.tasks[0].id);

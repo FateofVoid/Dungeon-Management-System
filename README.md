@@ -1,8 +1,8 @@
 # Dungeon Management System
 
-A theme-driven AI Dungeon system centered on the **Thronebound**: a player-created character bound to a growing dungeon. A separate Dungeon Generator turns four concise player inputs into the Dungeon, Thronebound, shared population, origin world, resources, Aptitudes, and Unique Dungeon Attributes through an eight-section outline. The main Thronebound Awakening scenario validates that generated JSON and turns it into facilities, jobs, Administrators, Classes, quests, population cohorts, and Lustrian operations while keeping mechanical state under script control.
+A theme-driven AI Dungeon system centered on the **Thronebound**: a player-created character bound to a growing dungeon. A separate Dungeon Generator turns four concise player inputs into the Dungeon, Thronebound, shared population, origin world, resources, Aptitudes, and Dungeon-influencing Thronebound Unique Attributes through an eight-section outline. The main Thronebound Awakening scenario validates that generated JSON and turns it into facilities, jobs, Administrators, Classes, quests, population cohorts, and Lustrian operations while keeping mechanical state under script control.
 
-The runtime follows the Aetheria project format. Toolbox, Inner Self/Auto-Cards, and every DMS subsystem are contained in the root `Library.js`; `Input.js`, `Context.js`, and `Output.js` remain minimal hooks.
+The runtime follows the project's established AI Dungeon integration format. Toolbox, Inner Self/Auto-Cards, and every DMS subsystem are contained in the root `Library.js`; `Input.js`, `Context.js`, and `Output.js` remain minimal hooks. The runtime and scenario lore are exclusively concerned with the Thronebound, their Dungeon, their generated Homeworld, and Lustria; unrelated scenario systems and settings are not loaded.
 
 DMS tracks exact facts that gate actions or change mechanical results; narration and Story Cards handle social and descriptive texture. The authoritative scope and current implementation gaps are recorded in [the tracking boundary](docs/TRACKING_BOUNDARY.md).
 
@@ -22,7 +22,7 @@ DMS tracks exact facts that gate actions or change mechanical results; narration
 - General Skill and Trait shops, researched custom-theme shops, mastery training, and Grade Ups
 - Dungeon, Thronebound, Tutorial, Bond, Personal, Guild, and Bounty quests, including a Tier 0–10 Main Dungeon chain and independent tutorial chains
 - Aptitudes from F to SSS, one Aptitude roll for every Attribute on each Level Up, up to five favored Attributes with +1 growth, and quest-based Levels
-- one to three prioritized, theme-named Unique Dungeon Attributes that grow on Dungeon Tier Up, strengthen broad Dungeon functions and Signature, and provide Administrator affinities
+- one to three prioritized, theme-named Thronebound Unique Attributes that grow with Thronebound Levels, strengthen broad Dungeon functions and Signature, and provide Administrator affinities
 - location-aware Activity Mode, timed Cycles, construction/production/training/exploration benefits, and timeless System Mode
 - Lustria scouting, persistent resource-vein discovery, extraction and depletion, Combat Power gates, Sector securing, and basic controlled-Sector state
 - deterministic Forge equipment options, Cycle-based crafting, assignments, and persistent Portal Anchors and routes
@@ -52,7 +52,7 @@ On GitHub, choose **Code → Codespaces → Create codespace on main**. The incl
 
 ## Commands
 
-Values separated by `|` are distinct fields. Administrator targets may use an Administrator ID or exact name. Setup, resource-definition, Aptitude, and Unique Dungeon Attribute commands remain migration/debug fallbacks; normal play uses the generator and the main scenario's [single JSON input card](DMS%20Scenario%20Setup%20Story%20Cards.json).
+Values separated by `|` are distinct fields. Administrator targets may use an Administrator ID or exact name. Setup, resource-definition, Aptitude, and Thronebound Unique Attribute commands remain migration/debug fallbacks; normal play uses the generator and the main scenario's [single JSON input card](DMS%20Scenario%20Setup%20Story%20Cards.json).
 
 ```text
 /dms setup <Thronebound>|<Race>|<Dungeon>|<Theme>|<Style>|<Population nature>|<Population appearance>|<Homeworld>|<Homeworld description>|<Homeworld anchor>|<Favored Attributes,...>
@@ -152,7 +152,9 @@ Copy each root script into the matching AI Dungeon tab:
 
 Do not install separate copies of Toolbox, Inner Self, or Auto-Cards; duplicate installations would compete for state and Story Card ownership.
 
-Plot Essentials is maintained as a sectioned, player-readable Thronebound/Dungeon status sheet with ability names but not full Skill or Trait descriptions. The scenario template contains only a readable waiting state; the first DMS lifecycle sync replaces it with resolved live values. Author's Note is maintained as the current Activity State. Both use delimited DMS blocks, so unrelated scenario text is preserved.
+Plot Essentials continuously exposes permanent identity and changing mechanics: the Thronebound's Appearance, Attributes, progression and ability names, plus Dungeon identity, population, Signature, facilities, and current stocks. Author's Note continuously preserves the Generator's exact sexual-content text, kink-content text, and tags above the current Activity State. Both use delimited DMS blocks, so unrelated scenario text is preserved.
+
+Normal Lore Cards use natural AI Dungeon triggers. DMS never scans narration or activity targets to decide that a Lore Card seems relevant. The context hook injects only the exact fields selected by authoritative Major/Secondary Location state; controlled Administrator, room, Class, and quest generation use separate deterministic input builders. See [the context architecture](docs/CONTEXT_ARCHITECTURE.md).
 
 The exact initialization order, accepted formats, and complete examples are listed in [the scenario initialization reference](docs/SCENARIO_INITIALIZATION.md).
 

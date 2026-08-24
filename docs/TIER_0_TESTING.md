@@ -20,7 +20,7 @@ The Thronebound must remain Classless until a preview is accepted. The Tier 0 Si
 - System Mode cannot be entered outside the Throne Room.
 - The Manager cannot be summoned outside Throne Room System Mode.
 - Tier Up cannot be performed outside Throne Room System Mode.
-- Once the identity is complete, identity, resources, Aptitudes, and Unique Dungeon Attributes cannot be changed outside Throne Room System Mode.
+- Once the identity is complete, identity, resources, Aptitudes, and Thronebound Unique Attributes cannot be changed outside Throne Room System Mode.
 - A missing or malformed mandatory variable answer must not partially initialize or overwrite an existing Dungeon.
 - Retrying the first action must not import the variables twice or duplicate quest rewards.
 - Travel narration at Tier 0 must not create a persistent Portal Anchor.

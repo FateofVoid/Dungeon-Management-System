@@ -61,7 +61,7 @@ test("global Lustria cards stay compact, foundational, and scenario-neutral", ()
   for (const category of ["Survey", "Gathering", "Escort", "Hunt", "Investigation", "Defense", "Recovery", "Exploration", "Subjugation", "Dungeon Raid", "Bounty", "Emergency"]) assert.ok(cards.some(card => card.title === `Lore — ${category} Quests`), `missing ${category} quest lore card`);
   const triggers = cards.flatMap(card => card.keys.split(",").map(key => key.trim().toLowerCase()));
   assert.equal(new Set(triggers).size, triggers.length, "global lore trigger phrases must be distinct");
-  assert.doesNotMatch(cards.map(card => card.entry).join("\n"), /Eryndral|Fate Veylark|Velis Reverie|Orphan|Seven Sins|Gluttony|Demon King/i);
+  assert.doesNotMatch(cards.map(card => card.entry).join("\n"), /Aetheria|Infinium|Genetic Essence|Gloamroot|Galactic Core|First Stratum|Birch World|Eryndral|Fate Veylark|Velis Reverie|Orphan|Seven Sins|Gluttony|Demon King/i);
 
   DMS.refreshCards(dms);
   assert.equal(global.storyCards.filter(card => expectedTitles.has(card.title)).length, cards.length, "refresh must update global lore rather than duplicate it");
@@ -95,6 +95,7 @@ test("managed Story Card presentation hides saves and unrevealed facilities", ()
 
 test("the original scenario export contains the complete global Lustria registry", () => {
   const exported = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "Lustria Story Cards.json"), "utf8"));
+  const unrelatedLore = /Aetheria|Infinium|Genetic Essence|Gloamroot|Galactic Core|First Stratum|Birch World|Eryndral|Fate Veylark|Velis Reverie|Orphan|Seven Sins|Gluttony|Demon King/i;
   assert.equal(exported.length, DMS.GLOBAL_LUSTRIA_LORE.length);
   assert.equal(new Set(exported.map(card => card.keys.toLowerCase())).size, exported.length);
   assert.ok(exported.every(card => card.type === "Global Lore" && card.value.length <= 420));
@@ -107,12 +108,21 @@ test("the original scenario export contains the complete global Lustria registry
   const scenarioBundle = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "DMS Original Scenario Story Cards.json"), "utf8"));
   const seededFacilities = Object.values(DMS.ROOM_DEFINITIONS).filter(definition => definition.unlockTier > 0).length;
   const seededQuests = Object.keys(DMS.defaultState().quests.records).length;
-  assert.equal(scenarioBundle.length, exported.length + 1 + 64 + seededFacilities + seededQuests);
+  assert.equal(scenarioBundle.length, exported.length + 1 + 64 + seededFacilities + seededQuests + 6);
   assert.equal(scenarioBundle.filter(card => card.keys === "DMS_SETUP_INITIALIZATION_JSON").length, 1);
   assert.equal(scenarioBundle.filter(card => card.type === "Global Lore").length, exported.length);
   assert.equal(scenarioBundle.filter(card => card.keys.startsWith("DMS_SAVE_RESERVE_") && card.showInStoryCards === false && card.isSpoiler === false).length, 64);
   assert.equal(scenarioBundle.filter(card => card.keys.startsWith("DMS_FACILITY_UNLOCK_") && card.showInStoryCards === false && card.isSpoiler === true).length, seededFacilities);
   assert.equal(scenarioBundle.filter(card => card.keys.startsWith("DMS_QUEST_") && card.showInStoryCards === false && card.isSpoiler === true).length, seededQuests - 2);
+  for (const key of ["DMS_SYS_IDENTITY", "DMS_LORE_SCENARIO_GUIDANCE", "DMS_LORE_THRONEBOUND_IDENTITY", "DMS_SYS_DUNGEON_RESOURCES", "DMS_SYS_DUNGEON_ATTRIBUTES", "DMS_SYS_ACTIVITY_STATUS"]) {
+    const card = scenarioBundle.find(item => item.keys === key); assert.ok(card, `${key} system template is missing`); assert.equal(card.showInStoryCards, false); assert.equal(card.isSpoiler, false); assert.match(card.type, /^System/);
+  }
+  assert.doesNotMatch(exported.map(card => [card.title, card.keys, card.value].join("\n")).join("\n"), unrelatedLore);
+  assert.doesNotMatch(scenarioBundle.map(card => [card.title, card.keys, card.value].join("\n")).join("\n"), unrelatedLore);
+  const setupBundle = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "DMS Scenario Setup Story Cards.json"), "utf8"));
+  assert.doesNotMatch(setupBundle.map(card => [card.title, card.keys, card.value].join("\n")).join("\n"), unrelatedLore);
+  const runtime = fs.readFileSync(path.join(__dirname, "..", "Library.js"), "utf8");
+  assert.doesNotMatch(runtime, /AetheriaMassCommand|MASSCommandTurn|MASSCommandOutput|\/mass\b/);
 });
 
 test("the recorded working save preserves derived player-presentation flags", () => {

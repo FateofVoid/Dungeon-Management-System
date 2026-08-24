@@ -27,7 +27,7 @@ The generator preserves supplied facts, creates coherent missing details, and pr
 7. Attribute Growth Preference
 8. Homeworld
 
-The final Continue returns the original Scenario Generator's copyable `story_bible` JSON object. The main DMS Library contains the adapter: it resolves the dynamically named Dungeon and Thronebound sections, strips any generator guidance accidentally appended to a field, and validates the result as canonical `DMS_INIT` version 2 before changing Tier 0 state. Its narrative content includes the Thronebound profile, Dungeon atmosphere and manifestation, shared population form and appearance, four resource definitions, and detailed Homeworld context. Workers and Soldiers do not receive separate appearance definitions; cohorts and Administrators adapt the shared population foundation.
+The final Continue returns the original Scenario Generator's copyable `story_bible` JSON object. The main DMS Library contains the adapter: it resolves dynamically named Dungeon and Thronebound sections using the generator's own punctuation rules, accepts both `kink_content` and the `fetish_content` label used by policy levels 6–10, strips any generator guidance accidentally appended to a field, and validates the result as canonical `DMS_INIT` version 3 before changing Tier 0 state. Its narrative content includes the Thronebound profile, Dungeon atmosphere and manifestation, shared population form and appearance, four resource definitions, and detailed Homeworld context. Workers and Soldiers do not receive separate appearance definitions; cohorts and Administrators adapt the shared population foundation.
 
 ## 2. Thronebound Awakening
 
@@ -35,20 +35,26 @@ Import root `Library.js`, the three root hooks, and `DMS Scenario Setup Story Ca
 
 > Paste the complete DMS Initialization JSON String produced by the Dungeon Generator.
 
-DMS accepts the Dungeon Generator's `story_bible` object directly, canonical `DMS_INIT` version `2`, and complete legacy version `1` objects. It validates the canonical result before mutation and imports only into pristine Tier 0 state. Invalid or incomplete JSON cannot partially initialize the Dungeon. The canonical object's stable hash is saved, so retries cannot duplicate initialization, rooms, quests, resources, or rewards.
+DMS accepts the Dungeon Generator's `story_bible` object directly, canonical `DMS_INIT` version `3`, and complete legacy version `1` or `2` objects. It validates the canonical result before mutation and imports only into pristine Tier 0 state. Invalid or incomplete JSON cannot partially initialize the Dungeon. The canonical object's stable hash is saved, so retries cannot duplicate initialization, rooms, quests, resources, or rewards.
 
-Major Activity locations accept either their category or their configured proper name. `Homeworld` or the Homeworld name loads the generated Homeworld foundation, region, return anchor, residence, and current circumstances. `Lustria` loads Lustria's global foundation while treating the Thronebound as away from the Dungeon. `Dungeon` or the Dungeon name loads both the Dungeon-specific foundation and Lustria's global foundation because the active Dungeon is situated in Lustria.
+Major Activity locations accept either their category or their configured proper name. `Homeworld` or the Homeworld name injects description, region, time period, and current circumstances; the Primary Anchor or Residence is added only when Secondary Location explicitly selects it. `Lustria` injects only the designated Nexus Realm location foundation. `Dungeon` or the Dungeon name injects the Dungeon description and manifestation, plus the current constructed room when Secondary Location resolves to one. No location path scans narration or Activity targets for apparently relevant Lore Cards.
 
-Long narrative details are written to separate compact lore Story Cards rather than the mechanical save cards. These cards preserve the Dungeon foundation, Thronebound identity and character, Homeworld foundation and anchor, and scenario guidance. Mechanical save cards retain only state that cannot otherwise be recovered.
+Long narrative details are written to separate compact Lore Cards rather than mechanical save cards. Natural cards preserve the Dungeon foundation, Thronebound character, individual resource definitions, Unique Attribute descriptions, Homeworld foundation and anchor, and constructed rooms. Identity and scenario guidance may be duplicated in hidden System Cards for recovery. Mechanical save cards retain only state that cannot otherwise be recovered.
 
 ## Attribute ownership
 
 Thronebound Combat and Support Attributes grow on Thronebound Level Up. Each independently selects one of the five outcomes for its Aptitude. A favored standard Attribute gains an additional +1.
 
-Unique Dungeon Attributes belong to the Dungeon. The Primary Attribute is required; Secondary and Tertiary Attributes are optional. Their priority weights their contribution to broad Dungeon functions, Dungeon Signature, and Administrator affinity. They grow on Dungeon Tier Up using their own Aptitude rolls, and a favored Unique Attribute gains an additional +1 at that time.
+Unique Attributes belong to the Thronebound and have effects that influence the Dungeon. The Primary Attribute is required; Secondary and Tertiary Attributes are optional. Their names cannot duplicate Might, Agility, Endurance, Arcana, Command, Logistics, Insight, or Craft. Their priority weights their contribution to broad Dungeon functions, Dungeon Signature, and Administrator affinity. They roll their Aptitude outcomes on Thronebound Level Up; a favored Unique Attribute receives the same additional +1 as a favored standard Attribute.
 
-Growth Preferences may contain one to five exact names drawn from the eight standard Attributes and the generated Unique Dungeon Attributes.
+Growth Preferences may contain one to five exact names drawn from the eight standard Attributes and the generated Thronebound Unique Attributes.
 
 ## Initial Plot Essentials
 
-Plot Essentials contains a readable status sheet, not the JSON or its long character-creation placeholder. DMS replaces the managed block with resolved live state on the first lifecycle sync. Detailed appearance, background, resource lore, and Homeworld information remain in focused Story Cards so Plot Essentials stays compact.
+Plot Essentials contains a readable status sheet, not the JSON or its long character-creation placeholder. It continuously includes Thronebound identity and Appearance, all Attributes, progression and ability names, Dungeon identity, population, Signature, current stocks, and facility state. Author's Note continuously preserves the Generator's exact sexual-content value, kink-content value, and tags above Activity State. Narrative descriptions remain in focused, naturally triggered Lore Cards as specified by [the context architecture](CONTEXT_ARCHITECTURE.md).
+
+## Regression fixture
+
+`test/fixtures/dungeon-generator-sample.json` is a complete, realistic Dungeon Generator output. It deliberately uses punctuation in the Dungeon and Thronebound names, the generator's `fetish_content` field, three nonstandard Unique Attributes, and every Homeworld context field.
+
+`test/dms-json-playthrough.test.cjs` imports that fixture through the same initialization adapter used by AI Dungeon, completes Tier 0 through natural System requests, develops the Tier 1 economy and facilities, fills Administrator Capacity, selects a Class, purchases abilities, earns the Tier 2 reserve through production, and verifies persistence recovery. It then invokes the Tier 2 upgrade boundary and confirms that Release A's verified-Tier deployment gate still prevents entry into unverified Tier 2 gameplay.

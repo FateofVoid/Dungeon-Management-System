@@ -42,8 +42,8 @@ function placeholders(value = storyBibleOutput()) { return [{ question: DMS.DMS_
 
 test("the main scenario has one compact JSON handoff input matching the runtime", () => {
   const library = fs.readFileSync(path.join(__dirname, "..", "Library.js"), "utf8");
-  assert.match(library.slice(0, 700), /Version: 0\.6\.0-dev[\s\S]*Runtime Schema: 11[\s\S]*Verified Dungeon Tiers: 0-1/);
-  assert.equal(DMS.DMS_VERSION, "0.6.0-dev");
+  assert.match(library.slice(0, 900), /Version: 0\.7\.0-dev[\s\S]*Runtime Schema: 12[\s\S]*Verified Dungeon Tiers: 0-1/);
+  assert.equal(DMS.DMS_VERSION, "0.7.0-dev");
   const cards = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "DMS Scenario Setup Story Cards.json"), "utf8"));
   const setup = cards.find(card => card.keys === "DMS_SETUP_INITIALIZATION_JSON");
   assert.ok(setup.value.length <= 1000);
@@ -53,15 +53,41 @@ test("the main scenario has one compact JSON handoff input matching the runtime"
   assert.ok(cards.filter(card => card.keys.startsWith("DMS_FACILITY_UNLOCK_")).every(card => card.showInStoryCards === false && card.isSpoiler === true));
 });
 
-test("Dungeon Generator story_bible output adapts to the canonical DMS_INIT v2 object", () => {
+test("Dungeon Generator story_bible output adapts to the canonical DMS_INIT v3 object", () => {
   const result = initialization();
   assert.equal(result.format, "DMS_INIT");
-  assert.equal(result.version, 2);
+  assert.equal(result.version, 3);
   assert.equal(result.homeworld.name, "Caelus");
-  assert.deepEqual(result.dungeon.uniqueAttributes.map(attribute => attribute.priority), ["Primary", "Secondary"]);
+  assert.equal(result.overview.tagsText, generatedSections()[0].Tags);
+  assert.deepEqual(result.thronebound.uniqueAttributes.map(attribute => attribute.priority), ["Primary", "Secondary"]);
+  assert.equal(result.dungeon.uniqueAttributes, undefined);
   assert.deepEqual(result.overview.contentPolicy, { sexual: "Mature romantic content", kink: "None" });
   assert.deepEqual(result.thronebound.growthPreferences, ["Might", "Endurance", "Command", "Cinder Sovereignty"]);
   assert.doesNotThrow(() => DMS.parseInitializationJson(JSON.stringify(storyBibleOutput())));
+});
+
+test("Dungeon Generator fetish policy and punctuated dynamic section names survive adaptation", () => {
+  const generated = storyBibleOutput();
+  generated.story_bible.overview.fetish_content = "Explicit fetish content permitted.";
+  delete generated.story_bible.overview.kink_content;
+  generated.story_bible.overview.dungeon = "Queen's Vault";
+  generated.story_bible.queens_vault = generated.story_bible.the_ashen_court;
+  delete generated.story_bible.the_ashen_court;
+  generated.story_bible.overview.thronebound = "Mara-Veil";
+  generated.story_bible.maraveil = generated.story_bible.mara;
+  delete generated.story_bible.mara;
+  const result = DMS.parseInitializationJson(generated);
+  assert.equal(result.overview.contentPolicy.kink, "Explicit fetish content permitted.");
+  assert.equal(result.dungeon.name, "Queen's Vault");
+  assert.equal(result.dungeon.theme, generatedSections()[1].Theme);
+  assert.equal(result.thronebound.name, "Mara-Veil");
+  assert.equal(result.thronebound.race, generatedSections()[3].Race);
+});
+
+test("Dungeon Generator Unique Attributes cannot duplicate standard Attributes", () => {
+  const generated = storyBibleOutput();
+  generated.story_bible.unique_attributes.primary_name = "Might";
+  assert.throws(() => DMS.parseInitializationJson(generated), /Might duplicates a standard Attribute/);
 });
 
 test("Dungeon Generator exposes exactly four opening inputs and the authoritative Outline card", () => {
@@ -111,39 +137,48 @@ test("the JSON adapter atomically initializes complete Tier 0 state and narrativ
   assert.equal(dms.dungeon.resources.construction.name, "Graveglass");
   assert.equal(dms.thronebound.attributes.combat.Might.aptitude, "SSS");
   assert.deepEqual(dms.thronebound.growthPreferences, ["Might", "Endurance", "Command", "Cinder Sovereignty"]);
-  assert.equal(dms.dungeon.uniqueAttributes["Cinder Sovereignty"].priority, "Primary");
-  assert.equal(dms.thronebound.attributes.unique, undefined);
+  assert.equal(dms.thronebound.attributes.unique["Cinder Sovereignty"].priority, "Primary");
+  assert.equal(dms.dungeon.uniqueAttributes, undefined);
   assert.deepEqual(Object.keys(dms.rooms), ["room-throne"]);
 });
 
-test("Thronebound Level Ups grow only Combat and Support Attributes", () => {
+test("Homeworld Activity context includes the generated Time Period", () => {
+  const dms = DMS.defaultState();
+  DMS.initializeFromScenarioVariables(dms, placeholders());
+  DMS.setLocation(dms, "Homeworld");
+  const context = DMS.contextGuidance(dms);
+  assert.match(context, /Time Period: The 312th Year of the Ashen Regency/);
+  assert.match(context, /Mara's obsidian estate on the western edge of Vesper/);
+});
+
+test("Thronebound Level Ups grow Combat, Support, and Dungeon-influencing Unique Attributes", () => {
   const favored = DMS.defaultState(), baseline = DMS.defaultState();
   for (const dms of [favored, baseline]) {
     dms.thronebound.name = "Mara"; dms.dungeon.name = "The Ashen Court"; dms.thronebound.level = 2;
     for (const group of ["combat", "support"]) for (const attribute of Object.values(dms.thronebound.attributes[group])) attribute.aptitude = "F";
-    dms.dungeon.uniqueAttributes = { "Cinder Sovereignty": { aptitude: "SSS", value: 3, description: "Theme power.", priority: "Primary" } };
+    dms.thronebound.attributes.unique = { "Cinder Sovereignty": { aptitude: "SSS", value: 3, description: "Theme power.", priority: "Primary" } };
   }
-  favored.thronebound.growthPreferences = ["Might", "Endurance", "Command", "Insight"];
-  const before = favored.dungeon.uniqueAttributes["Cinder Sovereignty"].value;
+  favored.thronebound.growthPreferences = ["Might", "Endurance", "Command", "Insight", "Cinder Sovereignty"];
+  const before = favored.thronebound.attributes.unique["Cinder Sovereignty"].value;
   const favoredGains = DMS.growAttributes(favored), baselineGains = DMS.growAttributes(baseline);
-  assert.deepEqual(Object.keys(favoredGains).sort(), DMS.aptitudeNames(favored).sort());
+  assert.deepEqual(Object.keys(favoredGains).sort(), [...DMS.aptitudeNames(favored), "Cinder Sovereignty"].sort());
   for (const name of Object.keys(favoredGains)) assert.equal(favoredGains[name], baselineGains[name] + (favored.thronebound.growthPreferences.includes(name) ? 1 : 0));
-  assert.equal(favored.dungeon.uniqueAttributes["Cinder Sovereignty"].value, before);
+  assert.equal(favored.thronebound.attributes.unique["Cinder Sovereignty"].value, before + favoredGains["Cinder Sovereignty"]);
 });
 
-test("Unique Dungeon Attributes grow at Dungeon Tier Up and favored ones gain a bonus", () => {
-  const favored = DMS.defaultState(), baseline = DMS.defaultState();
-  DMS.initializeFromScenarioVariables(favored, placeholders()); DMS.initializeFromScenarioVariables(baseline, placeholders());
-  baseline.thronebound.growthPreferences = baseline.thronebound.growthPreferences.filter(name => name !== "Cinder Sovereignty");
-  favored.dungeon.tier = 1; baseline.dungeon.tier = 1;
-  const favoredGains = DMS.growDungeonAttributes(favored), baselineGains = DMS.growDungeonAttributes(baseline);
-  assert.equal(favoredGains["Cinder Sovereignty"], baselineGains["Cinder Sovereignty"] + 1);
-  assert.ok(DMS.dungeonAttributeMultiplier(favored) > 1);
-  favored.dungeon.tier = 0; favored.activity.mode = "System"; favored.activity.pace = "Timeless";
-  const manager = DMS.summonAdministrator(favored, "Veyra"), base = manager.effectiveness;
-  assert.ok(DMS.administratorAssignmentEffectiveness(favored, manager) > base);
-  favored.population.soldiers.cohorts = [{ id: "soldiers-1", archetype: "Guardian", count: 2, tier: 1 }];
-  assert.ok(DMS.defensePower(favored) > 7);
+test("Thronebound Unique Attributes do not grow on Dungeon Tier Up but influence Dungeon systems", () => {
+  const dms = DMS.defaultState(); DMS.initializeFromScenarioVariables(dms, placeholders());
+  const before = dms.thronebound.attributes.unique["Cinder Sovereignty"].value;
+  for (const quest of Object.values(dms.quests.records)) quest.rewarded = true;
+  for (const role of DMS.RESOURCE_ROLES) dms.dungeon.resources[role].amount = 1000;
+  DMS.setActivity(dms, "System", [], "Timeless");
+  const manager = DMS.summonAdministrator(dms, "Veyra"), base = manager.effectiveness;
+  DMS.upgradeDungeon(dms);
+  assert.equal(dms.thronebound.attributes.unique["Cinder Sovereignty"].value, before);
+  assert.ok(DMS.dungeonAttributeMultiplier(dms) > 1);
+  assert.ok(DMS.administratorAssignmentEffectiveness(dms, manager) > base);
+  dms.population.soldiers.cohorts = [{ id: "soldiers-1", archetype: "Guardian", count: 2, tier: 1 }];
+  assert.ok(DMS.defensePower(dms) > 7);
 });
 
 test("initialization is retry-safe and malformed JSON cannot partially mutate state", () => {
@@ -156,7 +191,7 @@ test("initialization is retry-safe and malformed JSON cannot partially mutate st
   assert.equal(dms.persistence.revision, revision);
   assert.equal(dms.onboarding.scenarioVariableSignature, signature);
   const malformed = DMS.defaultState();
-  assert.throws(() => DMS.initializeFromScenarioVariables(malformed, placeholders('{"format":"DMS_INIT"}')), /version must be 1 or 2/i);
+  assert.throws(() => DMS.initializeFromScenarioVariables(malformed, placeholders('{"format":"DMS_INIT"}')), /version must be 1, 2, or 3/i);
   assert.equal(malformed.dungeon.name, "Unnamed Dungeon");
   assert.equal(malformed.persistence.revision, 0);
 });
@@ -166,46 +201,94 @@ test("Plot Essentials and compact lore cards expose readable generated state", (
   const dms = DMS.defaultState(); DMS.initializeFromScenarioVariables(dms, placeholders());
   global.state = { memory: { context: "Keep this plot fact.", authorsNote: "Write in close second person." } };
   assert.equal(DMS.syncScenarioPlot(dms), true); DMS.refreshCards(dms);
-  assert.match(global.state.memory.context, /THRONEBOUND STATUS\nName: Mara\nRace: Voidkin/);
-  assert.match(global.state.memory.context, /DUNGEON STATUS\nName: The Ashen Court\nTier: 0/);
-  assert.match(global.state.memory.context, /Unique Attributes: Primary — Cinder Sovereignty \[SSS\]: 1/);
+  assert.match(global.state.memory.context, /THRONEBOUND IDENTITY\nName: Mara\nRace: Voidkin\nGender: Woman\nAppearance:/);
+  assert.match(global.state.memory.context, /Voice Pattern: Mara speaks formally/);
+  assert.match(global.state.memory.context, /UNIQUE ATTRIBUTES\n- Cinder Sovereignty \(SSS\): 1/);
+  assert.match(global.state.memory.context, /DUNGEON IDENTITY\nName: The Ashen Court[\s\S]*Population: Ashbound undead[\s\S]*Homeworld: Caelus[\s\S]*Concept:/);
+  assert.match(global.state.memory.context, /DUNGEON MECHANICS\nTier: 0[\s\S]*Administrators: 0\/1[\s\S]*Dungeon Signature: Nascent/);
+  assert.doesNotMatch(global.state.memory.context, /Population Appearance|Return Anchor|Resource Description/);
   assert.doesNotMatch(global.state.memory.context, /\$\{/);
-  assert.ok(DMS.plotEssentialsText(dms).length <= 1800);
-  assert.match(global.state.memory.authorsNote, /\[DMS ACTIVITY STATE\]/);
-  for (const key of ["DMS_LORE_SCENARIO_GUIDANCE", "DMS_LORE_DUNGEON_FOUNDATION", "DMS_LORE_THRONEBOUND_IDENTITY", "DMS_LORE_THRONEBOUND_CHARACTER", "DMS_LORE_HOMEWORLD_FOUNDATION", "DMS_LORE_HOMEWORLD_ANCHOR"]) {
+  assert.match(global.state.memory.authorsNote, /Sexual Content: Mature romantic content\nKink Content: None\nTags: dark fantasy, volcanic, undead/);
+  assert.match(global.state.memory.authorsNote, /\[DMS ACTIVITY STATE\][\s\S]*Major Location: Dungeon[\s\S]*Secondary Location: Throne Room/);
+  for (const key of ["DMS_LORE_SCENARIO_GUIDANCE", "DMS_LORE_DUNGEON_FOUNDATION", "DMS_LORE_THRONEBOUND_IDENTITY", "DMS_LORE_THRONEBOUND_CHARACTER", "DMS_LORE_HOMEWORLD_FOUNDATION", "DMS_LORE_HOMEWORLD_ANCHOR", "DMS_LORE_UNIQUE_ATTRIBUTES", ...DMS.RESOURCE_ROLES.map(role => `DMS_LORE_RESOURCE_${role.toUpperCase()}`)]) {
     const card = global.storyCards.find(item => String(item.keys).includes(key)); assert.ok(card, `${key} was not created`); assert.ok(card.entry.length <= 2000, `${key} exceeds 2,000 characters`);
   }
+  const foundation = global.storyCards.find(item => String(item.keys).includes("DMS_LORE_DUNGEON_FOUNDATION"));
+  assert.match(foundation.keys, /The Ashen Court/); assert.match(foundation.keys, /Ashbound undead/);
+  assert.equal(foundation.entry, `Description: ${generatedSections()[1].Description}\nManifestation: ${generatedSections()[1].Manifestation}\nPopulation Appearance: ${generatedSections()[1]["Population Appearance"]}`);
+  const guidance = global.storyCards.find(item => String(item.keys).includes("DMS_LORE_SCENARIO_GUIDANCE"));
+  assert.equal(guidance.showInStoryCards, false); assert.match(guidance.type, /^System/);
 });
 
-test("initialization canon, Dungeon Attributes, affinity, and Throne Room survive recovery", () => {
+test("controlled generation receives only its explicit authoritative input set", () => {
+  const dms = DMS.defaultState(); DMS.initializeFromScenarioVariables(dms, placeholders());
+  const administrator = DMS.controlledGenerationContext(dms, "Administrator", { role: "Manager", rank: "A", room: "Throne Room" });
+  assert.equal(administrator.dungeon.population, "Ashbound undead");
+  assert.equal(administrator.uniqueAttributeDescriptions["Cinder Sovereignty"], generatedSections()[4]["Primary Description"]);
+  assert.equal(administrator.administrator.role, "Manager");
+  assert.equal(administrator.room.name, "Throne Room");
+  assert.equal(administrator.homeworld, undefined);
+  assert.equal(administrator.background, undefined);
+
+  dms.dungeon.tier = 1; DMS.applyDerivedState(dms);
+  const room = DMS.controlledGenerationContext(dms, "Room", { definition: "material-works", tier: 1 });
+  assert.equal(room.resourceDefinition.name, "Graveglass");
+  assert.equal(room.room.function, DMS.ROOM_DEFINITIONS["material-works"].function);
+  assert.equal(room.capabilities, undefined);
+
+  const classInput = DMS.controlledGenerationContext(dms, "Class", { target: "thronebound", tier: 1 });
+  assert.equal(classInput.capabilities, generatedSections()[3].Capabilities);
+  assert.equal(classInput.aptitudes["Cinder Sovereignty"], "SSS");
+  assert.deepEqual(classInput.growthPreferences, dms.thronebound.growthPreferences);
+
+  const quest = DMS.controlledGenerationContext(dms, "Quest", { category: "Personal", relatedFacts: ["The Throne Room is under repair."] });
+  assert.equal(quest.category, "Personal");
+  assert.deepEqual(quest.relatedFacts, ["The Throne Room is under repair."]);
+  assert.deepEqual(DMS.CONTEXT_INJECTION_TABLE.Dungeon, ["dungeon.description", "dungeon.manifestation"]);
+});
+
+test("the context lifecycle appends only deterministic location context, not inferred lore", () => {
+  global.storyCards.length = 0;
+  const dms = DMS.defaultState(); DMS.initializeFromScenarioVariables(dms, placeholders());
+  global.storyCards.push({ title: "Mara's Childhood", keys: "childhood, grief", entry: "An unrelated inferred biography block." });
+  global.state = { DMS: dms, memory: { context: "", authorsNote: "" } }; global.text = "Recent narration mentions grief, Graveglass, and an old memory."; global.stop = false;
+  global.DungeonManagement("context");
+  assert.match(global.text, /\[DMS AUTHORITATIVE LOCATION CONTEXT\][\s\S]*Dungeon Description:[\s\S]*Dungeon Manifestation:[\s\S]*Dungeon Room: Throne Room/);
+  assert.doesNotMatch(global.text, /unrelated inferred biography block|Collection:|Author's note:/i);
+});
+
+test("initialization canon, Thronebound Unique Attributes, affinity, and Throne Room survive recovery", () => {
   global.storyCards.length = 0;
   const dms = DMS.defaultState(); DMS.initializeFromScenarioVariables(dms, placeholders());
   dms.activity.mode = "System"; dms.activity.pace = "Timeless"; const manager = DMS.summonAdministrator(dms, "Veyra");
   DMS.refreshCards(dms); DMS.writeSaveCards(dms);
   const loaded = DMS.loadSaveCards(undefined, DMS.readSaveCards());
   assert.equal(loaded.onboarding.scenarioVariablesImported, true);
-  assert.deepEqual(loaded.dungeon.uniqueAttributes, dms.dungeon.uniqueAttributes);
+  assert.deepEqual(loaded.thronebound.attributes.unique, dms.thronebound.attributes.unique);
   assert.equal(loaded.administrators[manager.id].dungeonAttributeAffinity, manager.dungeonAttributeAffinity);
   assert.equal(loaded.thronebound.profile.background, dms.thronebound.profile.background);
   assert.equal(loaded.rooms["room-throne"].lore.appearance, generatedSections()[1]["Throne Room"]);
+  assert.equal(loaded.rooms["room-throne"].authorityAdministrator, manager.id);
 });
 
-test("schema migration relocates legacy Thronebound Unique Attributes to priority mechanics", () => {
+test("schema migration preserves legacy Thronebound and Dungeon Unique Attributes under the Thronebound", () => {
   const legacy = DMS.normalize({ dungeon: { theme: "Verdant clockwork" }, thronebound: { attributes: { unique: { Chronoflora: { description: "Living time rooted in brass vines.", aptitude: "S", value: 7 } } } } }, { updateQuests: false });
-  assert.equal(legacy.thronebound.attributes.unique, undefined);
-  assert.equal(legacy.dungeon.uniqueAttributes.Chronoflora.value, 7);
-  assert.equal(legacy.dungeon.uniqueAttributes.Chronoflora.priority, "Primary");
-  assert.equal(Object.keys(legacy.dungeon.uniqueAttributes).length, 1);
+  assert.equal(legacy.thronebound.attributes.unique.Chronoflora.value, 7);
+  assert.equal(legacy.thronebound.attributes.unique.Chronoflora.priority, "Primary");
+  assert.equal(legacy.dungeon.uniqueAttributes, undefined);
+  const legacyDungeon = DMS.normalize({ dungeon: { theme: "Verdant clockwork", uniqueAttributes: { Chronoflora: { description: "Living time rooted in brass vines.", aptitude: "S", value: 7 } } } }, { updateQuests: false });
+  assert.equal(legacyDungeon.thronebound.attributes.unique.Chronoflora.value, 7);
+  assert.equal(legacyDungeon.dungeon.uniqueAttributes, undefined);
 });
 
-test("the v2 adapter continues to accept a complete legacy v1 initialization", () => {
+test("the v3 adapter continues to accept a complete legacy v1 initialization", () => {
   const current = initialization(), legacy = {
     format: "DMS_INIT", version: 1,
     thronebound: { name: current.thronebound.name, race: current.thronebound.race, aptitudes: current.thronebound.aptitudes, growthPreferences: ["Might", "Endurance", "Command"] },
-    dungeon: { name: current.dungeon.name, theme: current.dungeon.theme, style: current.dungeon.style, population: current.dungeon.population, resources: current.dungeon.resources, uniqueAttributes: current.dungeon.uniqueAttributes.map((attribute, index) => ({ name: attribute.name, description: attribute.description, aptitude: attribute.aptitude, value: attribute.value, domain: DMS.LEGACY_DUNGEON_ATTRIBUTE_DOMAINS[index] })) },
+    dungeon: { name: current.dungeon.name, theme: current.dungeon.theme, style: current.dungeon.style, population: current.dungeon.population, resources: current.dungeon.resources, uniqueAttributes: current.thronebound.uniqueAttributes.map((attribute, index) => ({ name: attribute.name, description: attribute.description, aptitude: attribute.aptitude, value: attribute.value, domain: DMS.LEGACY_DUNGEON_ATTRIBUTE_DOMAINS[index] })) },
     homeworld: { name: current.homeworld.name, description: current.homeworld.description, anchor: current.homeworld.anchor, secondaryLocation: current.homeworld.region }
   };
   const parsed = DMS.parseInitializationJson(JSON.stringify(legacy));
-  assert.equal(parsed.version, 2);
-  assert.deepEqual(parsed.dungeon.uniqueAttributes.map(attribute => attribute.priority), ["Primary", "Secondary"]);
+  assert.equal(parsed.version, 3);
+  assert.deepEqual(parsed.thronebound.uniqueAttributes.map(attribute => attribute.priority), ["Primary", "Secondary"]);
 });

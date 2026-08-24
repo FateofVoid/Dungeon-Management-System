@@ -1538,5 +1538,65 @@
     "title": "DMS Quest — Main Dungeon — Complete Tier 10",
     "description": "Hidden until its prerequisites are satisfied.",
     "useForCharacterCreation": false
+  },
+  {
+    "isSpoiler": false,
+    "showInStoryCards": false,
+    "keys": "DMS_SYS_IDENTITY",
+    "value": "",
+    "type": "System — Identity",
+    "title": "DMS — Identity",
+    "description": "Hidden DMS identity and recovery mirror.",
+    "useForCharacterCreation": false
+  },
+  {
+    "isSpoiler": false,
+    "showInStoryCards": false,
+    "keys": "DMS_LORE_SCENARIO_GUIDANCE",
+    "value": "",
+    "type": "System — Scenario Guidance",
+    "title": "DMS — Scenario Guidance",
+    "description": "Hidden exact Generator policy and tag mirror.",
+    "useForCharacterCreation": false
+  },
+  {
+    "isSpoiler": false,
+    "showInStoryCards": false,
+    "keys": "DMS_LORE_THRONEBOUND_IDENTITY",
+    "value": "",
+    "type": "System — Thronebound Identity",
+    "title": "DMS — Thronebound Identity",
+    "description": "Hidden Thronebound identity and recovery mirror.",
+    "useForCharacterCreation": false
+  },
+  {
+    "isSpoiler": false,
+    "showInStoryCards": false,
+    "keys": "DMS_SYS_DUNGEON_RESOURCES",
+    "value": "",
+    "type": "System — Resources",
+    "title": "DMS — Dungeon Resources",
+    "description": "Hidden resource mechanics and recovery mirror.",
+    "useForCharacterCreation": false
+  },
+  {
+    "isSpoiler": false,
+    "showInStoryCards": false,
+    "keys": "DMS_SYS_DUNGEON_ATTRIBUTES",
+    "value": "",
+    "type": "System — Attributes",
+    "title": "DMS — Thronebound Unique Attributes",
+    "description": "Hidden Unique Attribute mechanics and recovery mirror.",
+    "useForCharacterCreation": false
+  },
+  {
+    "isSpoiler": false,
+    "showInStoryCards": false,
+    "keys": "DMS_SYS_ACTIVITY_STATUS",
+    "value": "",
+    "type": "System — Activity",
+    "title": "DMS — Activity",
+    "description": "Hidden authoritative Activity mirror.",
+    "useForCharacterCreation": false
   }
 ]

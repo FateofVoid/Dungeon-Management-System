@@ -1,10 +1,10 @@
 /**
  * Dungeon Management System (DMS)
- * Version: 0.6.0-dev
- * Runtime Schema: 11
+ * Version: 0.7.0-dev
+ * Runtime Schema: 12
  * Save Schema: 3
  * Verified Dungeon Tiers: 0-1
- * Development State: Dungeon Generator v2 and Tier 1 implemented; Tier 2 deployment sealed.
+ * Development State: Dungeon Generator adapter and Tier 1 implemented; deterministic context architecture active; Tier 2 deployment sealed.
  * Integrated Library: Toolbox, Inner Self, Auto-Cards, and DMS.
  * AI Dungeon format: all shared runtime code remains in this Library file.
  */
@@ -281,53 +281,8 @@ function normalizePersistedScriptEncoding() {
     }
 }
 
-// AI Dungeon can deliver slash commands directly, as a Do action, or wrapped
-// as quoted Say text. Canonicalize all three forms before routing to MASS.
-globalThis.AetheriaMassCommand = function AetheriaMassCommand(input) {
-    const match = String(input || "").match(/\n? ?(?:> You |> You say "|)\/(mass)( .*?)?['".]?\n?$/i);
-    return match ? `/mass${match[2] || ""}`.trim() : "";
-};
-
-// AI Dungeon rejects an empty onInput result and treats stop=true in the
-// context hook as a failed action. MASS commands therefore follow Toolbox's
-// proven three-hook transaction: resolve state from input, ask the model for a
-// minimal abort response in context, then replace that response in output.
-function runMassCommand(massCommand) {
-    state.MASSCommandTurn = true;
-    state.errorLog = [];
-    globalThis.MASS.input(massCommand);
-    const commandResult = String(state.MASS?.pendingMessage || "MASS command completed.").trim();
-    if (state.MASS) state.MASS.pendingMessage = "";
-    state.MASSCommandOutput = commandResult || "MASS command completed.";
-    state.runInnerSelf = false;
-    // A non-empty, filterable input prevents AI Dungeon's empty-input failure.
-    globalThis.text = `// MASS COMMAND: ${massCommand}`;
-}
-
-function massCommandOutputText(value) {
-    return String(value || "MASS command completed.")
-        .split(/\r?\n/)
-        .map(line => `> ◈ MASS — ${line}`)
-        .join("\n");
-}
-
-// Story actions are inserted directly between existing and generated prose.
-// Keep narrative replacements from touching either neighboring sentence.
-function wrapMassStoryInsertion(value) {
-    const narrative = String(value || "").trim();
-    return narrative ? `\n\n${narrative}\n\n` : "";
-}
-
 // Manages control flow in the input phase.
 function handleToolboxInput() {
-    // MASS owns every /mass command. Keep this defensive route inside Toolbox
-    // as well as in the unified dispatcher so an older Input hook cannot let
-    // Toolbox misclassify /mass as an unknown Toolbox command.
-    const massCommand = globalThis.AetheriaMassCommand(globalThis.text);
-    if (massCommand && globalThis.MASS) {
-        runMassCommand(massCommand);
-        return;
-    }
     try{
         // We need to know if an input happened this turn
         state.inputOccurred = true;
@@ -397,11 +352,6 @@ function handleToolboxInput() {
 
 // Manages control flow in the context phase.
 function handleToolboxContext() {
-    if (state.MASSCommandTurn) {
-        globalThis.stop = false;
-        globalThis.text = ABORT_OUTPUT;
-        return;
-    }
     try{
         // AI Dungeon is odd and doesn't create the stop parameter on its own,
         // and will also throw an error if one is not created.
@@ -464,12 +414,6 @@ function handleToolboxContext() {
 
 // Manages control flow in the output phase.
 function handleToolboxOutput() {
-    if (state.MASSCommandTurn) {
-        globalThis.text = massCommandOutputText(state.MASSCommandOutput);
-        delete state.MASSCommandOutput;
-        state.MASSCommandTurn = false;
-        return;
-    }
     // If an error occurred in input or context, handle it here.
     if (state.errorLog.length > 0) {
         globalThis.text = handleErrors();
@@ -1720,7 +1664,7 @@ function linesFromText(text, isCard) {
         "> Help - Toolbox Help - \u00e2\u203a\u201d Erase After Reading \u00e2\u203a\u201d",
         "> \u00e2\u203a\u201d Error"
     ];
-    const filters = ["//", "> ◈ MASS", "> ⛔ Error", ">>>", "/AC", ...legacyToolPrefixes]
+    const filters = ["//", "> ⛔ Error", ">>>", "/AC", ...legacyToolPrefixes]
         .concat(
             state.TOOLS
                 .map(f => f.sym)              // Extract symbol from each tool
@@ -11202,9 +11146,9 @@ function AutoCards(inHook, inText, inStop) {
 (function installDungeonManagement(global) {
   "use strict";
 
-  const DMS_VERSION = "0.6.0-dev";
-  const DMS_DEVELOPMENT_STATE = "Dungeon Generator v2 and Tier 1 implemented; Tier 2 deployment sealed";
-  const SCHEMA = 11;
+  const DMS_VERSION = "0.7.0-dev";
+  const DMS_DEVELOPMENT_STATE = "Dungeon Generator adapter and Tier 1 implemented; deterministic context architecture active; Tier 2 deployment sealed";
+  const SCHEMA = 12;
   const SAVE_SCHEMA = 3;
   const SAVE_CARD_TARGET = 1500;
   const SAVE_CARD_MAX = 1800;
@@ -11214,13 +11158,26 @@ function AutoCards(inHook, inText, inStop) {
   const SAVE_CARD_TITLES = Object.freeze({ core: `${SAVE_CARD_PREFIX}Core`, progression: `${SAVE_CARD_PREFIX}Progression`, operations: `${SAVE_CARD_PREFIX}Operations`, world: `${SAVE_CARD_PREFIX}World` });
   const RESOURCE_ROLES = Object.freeze(["construction", "sustenance", "development", "energy"]);
   const DMS_INITIALIZATION_FORMAT = "DMS_INIT";
-  const DMS_INITIALIZATION_VERSION = 2;
+  const DMS_INITIALIZATION_VERSION = 3;
   const DMS_INITIALIZATION_QUESTION = "Paste the complete DMS Initialization JSON String produced by the Dungeon Generator.";
   const SCENARIO_QUESTIONS = Object.freeze({ initializationJson: DMS_INITIALIZATION_QUESTION });
   const DUNGEON_ATTRIBUTE_PRIORITIES = Object.freeze(["Primary", "Secondary", "Tertiary"]);
   const LEGACY_DUNGEON_ATTRIBUTE_DOMAINS = Object.freeze(["Production", "Administration", "Defense"]);
   const DMS_PLOT_ESSENTIALS_PATTERN = /\n?\[DMS PLOT ESSENTIALS\][\s\S]*?\[\/DMS PLOT ESSENTIALS\]\n?/gi;
   const DMS_ACTIVITY_STATE_PATTERN = /\n?\[DMS ACTIVITY STATE\][\s\S]*?\[\/DMS ACTIVITY STATE\]\n?/gi;
+  const DMS_AUTHOR_NOTE_PATTERN = /\n?\[DMS AUTHOR'S NOTE\][\s\S]*?\[\/DMS AUTHOR'S NOTE\]\n?/gi;
+  const CONTEXT_INJECTION_TABLE = Object.freeze({
+    Dungeon: Object.freeze(["dungeon.description", "dungeon.manifestation"]),
+    Homeworld: Object.freeze(["homeworld.description", "homeworld.region", "homeworld.timePeriod", "homeworld.currentCircumstances"]),
+    Lustria: Object.freeze(["lustria.locationFoundation"]),
+    DungeonRoom: Object.freeze(["room.currentContext"]),
+    HomeworldPrimaryAnchor: Object.freeze(["homeworld.primaryAnchor"]),
+    HomeworldResidence: Object.freeze(["homeworld.residence"]),
+    AdministratorGeneration: Object.freeze(["theme", "style", "population", "populationAppearance", "uniqueAttributeDescriptions", "role", "rank", "roomFunction"]),
+    RoomGeneration: Object.freeze(["theme", "style", "manifestation", "uniqueAttributeDescriptions", "roomFunction", "resourceDefinition", "tier"]),
+    ClassGeneration: Object.freeze(["capabilities", "classLineage", "theme", "uniqueAttributeDescriptions", "aptitudes", "growthPreferences", "tier"]),
+    QuestGeneration: Object.freeze(["category", "location", "progression", "relatedFacts"])
+  });
   const LOCATIONS = Object.freeze(["Dungeon", "Lustria", "Homeworld", "Secondary"]);
   const MODES = Object.freeze(["Idle", "Travel", "Survey", "Construction", "Administration", "Production", "Training", "Bond", "Recruitment", "Defense", "Exploration", "Exploitation", "System"]);
   const PACES = Object.freeze({ Timeless: 0, Slow: 0.25, Standard: 1 / 3, Fast: 0.5, Immediate: 1 });
@@ -11663,7 +11620,7 @@ function AutoCards(inHook, inText, inStop) {
   ]);
 
   const ROOM_DEFINITIONS = Object.freeze({
-    "throne-room": Object.freeze({ name: "Throne Room", unlockTier: 0, kind: "core", function: "Houses the indestructible throne-core, anchors the Thronebound bond, enables System Mode, and performs the first summons and Class Selection.", job: "Throne Attendant", uniqueWorker: true, baseCost: 0, administratorRoles: ["Manager"] }),
+    "throne-room": Object.freeze({ name: "Throne Room", unlockTier: 0, kind: "core", function: "Serves as the Thronebound's seat of power and active Dungeon Core chamber, the primary Dungeon System access location, the Administrator summoning nexus, and the Dungeon Tier advancement nexus.", job: "Throne Attendant", baseCost: 0, administratorRoles: ["Manager"] }),
     "material-works": Object.freeze({ name: "Material Works", unlockTier: 1, kind: "production", function: "Collects or produces the dungeon's construction resource.", job: "Material Gatherer", resource: "construction", jobs: 4, baseProduction: 3, baseCost: 15 }),
     "sustenance-works": Object.freeze({ name: "Sustenance Works", unlockTier: 1, kind: "production", function: "Collects or produces the resource that sustains the dungeon population.", job: "Sustenance Tender", resource: "sustenance", jobs: 4, baseProduction: 3, baseCost: 15 }),
     "worker-habitat": Object.freeze({ name: "Worker Habitat", unlockTier: 1, kind: "residence", function: "Provides default residences for Worker cohorts, reducing their Sustenance burden and improving efficiency and recovery without creating a population cap.", job: "Habitat Keeper", uniqueWorker: true, workerHousing: 12, housingUpkeepDiscount: 0.25, housingEfficiencyBonus: 0.05, recoveryRate: 10, baseCost: 20 }),
@@ -11767,7 +11724,7 @@ function AutoCards(inHook, inText, inStop) {
     name: clean(name) || "Unnamed", race: clean(race) || "Undefined", level: 1,
     profile: { gender: "", appearance: "", personality: "", background: "", capabilities: "", values: "", voicePattern: "" },
     experience: 0, class: { name: clean(className) || "Classless", description: "No Class has been selected.", tier: 0, lineage: [], skills: [], traits: [] },
-    attributes: { combat: attributeSet(ATTRIBUTE_TEMPLATES.combat), support: attributeSet(ATTRIBUTE_TEMPLATES.support) }
+    attributes: { combat: attributeSet(ATTRIBUTE_TEMPLATES.combat), support: attributeSet(ATTRIBUTE_TEMPLATES.support), unique: {} }
   });
   const tierRules = tier => ({ tier, administratorCapacity: 1 + tier * 2, roomTierLimit: Math.max(1, tier), classTierLimit: tier, veinTargetLimit: Math.max(1, Math.floor(Math.max(1, tier) / 2)), upgradeCost: { construction: 50 * Math.max(1, tier) * Math.max(1, tier), energy: 30 * Math.max(1, tier) * Math.max(1, tier) } });
 
@@ -11778,9 +11735,8 @@ function AutoCards(inHook, inText, inStop) {
       thronebound: { ...characterBase("Unnamed Thronebound", "Undefined", "Classless"), growthPreferences: [] },
       dungeon: {
         name: "Unnamed Dungeon", theme: "Unformed", style: "Undefined", tier: 0, power: 0,
-        tags: [], concept: "", lore: { description: "", manifestation: "", throneRoom: "" }, contentPolicy: { sexual: "None", kink: "None" },
+        tags: [], tagsText: "", concept: "", lore: { description: "", manifestation: "", throneRoom: "" }, contentPolicy: { sexual: "None", kink: "None" },
         resources: Object.fromEntries(RESOURCE_ROLES.map(role => [role, resourceTemplate(role)])),
-        uniqueAttributes: {},
         administratorCapacity: 1, roomTierLimit: 1, classTierLimit: 0
       },
       currencies: { marks: 0 }, reservations: {},
@@ -11826,8 +11782,8 @@ function AutoCards(inHook, inText, inStop) {
     const oldThronebound = value.thronebound || value.tronebound || {};
     const dms = {
       ...base, ...value,
-      thronebound: { ...base.thronebound, ...oldThronebound, profile: { ...base.thronebound.profile, ...(oldThronebound.profile || {}) }, class: { ...base.thronebound.class, ...(oldThronebound.class || {}), lineage: Array.isArray(oldThronebound.class?.lineage) ? oldThronebound.class.lineage : [] }, attributes: { ...base.thronebound.attributes, ...(oldThronebound.attributes || {}) } },
-      dungeon: { ...base.dungeon, ...(value.dungeon || {}), tags: unique(Array.isArray(value.dungeon?.tags) ? value.dungeon.tags : []), lore: { ...base.dungeon.lore, ...(value.dungeon?.lore || {}) }, contentPolicy: { ...base.dungeon.contentPolicy, ...(value.dungeon?.contentPolicy || {}) }, resources: { ...base.dungeon.resources, ...((value.dungeon || {}).resources || {}) }, uniqueAttributes: { ...base.dungeon.uniqueAttributes, ...((value.dungeon || {}).uniqueAttributes || {}) } },
+      thronebound: { ...base.thronebound, ...oldThronebound, profile: { ...base.thronebound.profile, ...(oldThronebound.profile || {}) }, class: { ...base.thronebound.class, ...(oldThronebound.class || {}), lineage: Array.isArray(oldThronebound.class?.lineage) ? oldThronebound.class.lineage : [] }, attributes: { combat: { ...base.thronebound.attributes.combat, ...(oldThronebound.attributes?.combat || {}) }, support: { ...base.thronebound.attributes.support, ...(oldThronebound.attributes?.support || {}) }, unique: { ...(oldThronebound.attributes?.unique || {}) } } },
+      dungeon: { ...base.dungeon, ...(value.dungeon || {}), tags: unique(Array.isArray(value.dungeon?.tags) ? value.dungeon.tags : []), tagsText: clean(value.dungeon?.tagsText) || (Array.isArray(value.dungeon?.tags) ? value.dungeon.tags.map(clean).filter(Boolean).join(", ") : ""), lore: { ...base.dungeon.lore, ...(value.dungeon?.lore || {}) }, contentPolicy: { ...base.dungeon.contentPolicy, ...(value.dungeon?.contentPolicy || {}) }, resources: { ...base.dungeon.resources, ...((value.dungeon || {}).resources || {}) } },
       population: { ...base.population, ...(value.population || {}), workers: { ...base.population.workers, ...((value.population || {}).workers || {}) }, soldiers: { ...base.population.soldiers, ...((value.population || {}).soldiers || {}) } },
       activity: { ...base.activity, ...(value.activity || {}), location: { ...base.activity.location, ...((value.activity || {}).location || {}) } },
       onboarding: { ...base.onboarding, ...(value.onboarding || {}), aptitudesDefined: unique(Array.isArray(value.onboarding?.aptitudesDefined) ? value.onboarding.aptitudesDefined : []) },
@@ -11847,12 +11803,13 @@ function AutoCards(inHook, inText, inStop) {
     dms.population.appearance = clean(value.population?.appearance) || unique([legacyWorkerAppearance, legacySoldierAppearance]).join("; ") || base.population.appearance;
     delete dms.population.workerDescription;
     delete dms.population.soldierDescription;
-    const legacyUniqueAttributes = oldThronebound.attributes?.unique && typeof oldThronebound.attributes.unique === "object" ? oldThronebound.attributes.unique : {};
-    const migratedUniqueAttributes = Object.keys(dms.dungeon.uniqueAttributes).length ? dms.dungeon.uniqueAttributes : legacyUniqueAttributes;
+    const throneboundUniqueAttributes = oldThronebound.attributes?.unique && typeof oldThronebound.attributes.unique === "object" ? oldThronebound.attributes.unique : {};
+    const legacyDungeonUniqueAttributes = value.dungeon?.uniqueAttributes && typeof value.dungeon.uniqueAttributes === "object" ? value.dungeon.uniqueAttributes : {};
+    const migratedUniqueAttributes = Object.keys(throneboundUniqueAttributes).length ? throneboundUniqueAttributes : legacyDungeonUniqueAttributes;
     const legacyIdentityNeedsDungeonAttributes = value.dungeon && clean(value.dungeon.theme) && !/^Unformed$/i.test(clean(value.dungeon.theme));
-    dms.dungeon.uniqueAttributes = Object.keys(migratedUniqueAttributes).length || legacyIdentityNeedsDungeonAttributes ? completeDungeonAttributes(migratedUniqueAttributes, dms.dungeon.theme) : {};
-    if (dms.thronebound.attributes) delete dms.thronebound.attributes.unique;
-    dms.thronebound.growthPreferences = unique(Array.isArray(oldThronebound.growthPreferences) ? oldThronebound.growthPreferences : []).filter(name => aptitudeNames(dms).some(attributeName => attributeName.toLowerCase() === name.toLowerCase())).slice(0, 5).map(name => aptitudeNames(dms).find(attributeName => attributeName.toLowerCase() === name.toLowerCase()));
+    dms.thronebound.attributes.unique = Object.keys(migratedUniqueAttributes).length || legacyIdentityNeedsDungeonAttributes ? completeDungeonAttributes(migratedUniqueAttributes, dms.dungeon.theme) : {};
+    delete dms.dungeon.uniqueAttributes;
+    dms.thronebound.growthPreferences = unique(Array.isArray(oldThronebound.growthPreferences) ? oldThronebound.growthPreferences : []).filter(name => growthPreferenceNames(dms).some(attributeName => attributeName.toLowerCase() === name.toLowerCase())).slice(0, 5).map(name => growthPreferenceNames(dms).find(attributeName => attributeName.toLowerCase() === name.toLowerCase()));
     for (const role of RESOURCE_ROLES) {
       const template = resourceTemplate(role), current = dms.dungeon.resources[role] || {};
       dms.dungeon.resources[role] = { ...template, ...current };
@@ -11876,7 +11833,7 @@ function AutoCards(inHook, inText, inStop) {
     dms.population.soldiers.cohorts = Array.isArray(dms.population.soldiers.cohorts) ? dms.population.soldiers.cohorts : [];
     for (const administrator of Object.values(dms.administrators)) if (administrator?.class) administrator.class.lineage = Array.isArray(administrator.class.lineage) ? administrator.class.lineage : [];
     dms.world.lustria.inventoryGrades = dms.world.lustria.inventoryGrades && typeof dms.world.lustria.inventoryGrades === "object" ? dms.world.lustria.inventoryGrades : {};
-    for (const category of ["combat", "support"]) for (const [name, current] of Object.entries(dms.thronebound.attributes[category] || {})) {
+    for (const category of ["combat", "support", "unique"]) for (const [name, current] of Object.entries(dms.thronebound.attributes[category] || {})) {
       if (typeof current !== "object") dms.thronebound.attributes[category][name] = { aptitude: "C", value: Number(current) || 0 };
       else delete current.preference;
     }
@@ -11913,20 +11870,22 @@ function AutoCards(inHook, inText, inStop) {
   function resourceReady(resource) { return resource && !/^Undefined\b/i.test(resource.name) && clean(resource.description) && clean(resource.collection) && clean(resource.use); }
   function resourcesReady(dms) { return RESOURCE_ROLES.every(role => resourceReady(dms.dungeon.resources[role])); }
   function aptitudeNames(dms) { return [...Object.keys(dms.thronebound.attributes.combat || {}), ...Object.keys(dms.thronebound.attributes.support || {})]; }
-  function growthPreferenceNames(dms) { return [...aptitudeNames(dms), ...Object.keys(dms.dungeon.uniqueAttributes || {})]; }
+  function throneboundUniqueAttributes(dms) { return dms.thronebound.attributes.unique || (dms.thronebound.attributes.unique = {}); }
+  function growthPreferenceNames(dms) { return [...aptitudeNames(dms), ...Object.keys(throneboundUniqueAttributes(dms))]; }
   function aptitudesReady(dms) { const selected = new Set(dms.onboarding.aptitudesDefined.map(value => clean(value).toLowerCase())); return aptitudeNames(dms).every(name => selected.has(name.toLowerCase())); }
   function growthPreferencesReady(dms) { return Array.isArray(dms.thronebound.growthPreferences) && dms.thronebound.growthPreferences.length >= 1 && dms.thronebound.growthPreferences.length <= 5 && dms.thronebound.growthPreferences.every(name => growthPreferenceNames(dms).includes(name)); }
-  function dungeonAttributesReady(dms) {
-    const attributes = Object.values(dms.dungeon.uniqueAttributes || {});
+  function uniqueAttributesReady(dms) {
+    const attributes = Object.values(throneboundUniqueAttributes(dms));
     return attributes.length >= 1 && attributes.length <= DUNGEON_ATTRIBUTE_PRIORITIES.length
       && new Set(attributes.map(attribute => attribute.priority)).size === attributes.length
       && attributes.some(attribute => attribute.priority === "Primary")
       && attributes.every(attribute => clean(attribute.description) && APTITUDE_OUTCOMES[attribute.aptitude] && Number.isFinite(Number(attribute.value)) && Number(attribute.value) >= 0);
   }
+  function dungeonAttributesReady(dms) { return uniqueAttributesReady(dms); }
   function populationDescription(dms) { return `${dms.population.nature}. ${dms.population.appearance}`.replace(/\.\s*\./g, "."); }
   function coreIdentityReady(dms) {
     const defined = value => clean(value) && !/^(?:Undefined|Unnamed|Unformed)(?:\b|$)/i.test(clean(value));
-    return defined(dms.thronebound.name) && defined(dms.thronebound.race) && defined(dms.dungeon.name) && defined(dms.dungeon.theme) && defined(dms.dungeon.style) && defined(dms.population.nature) && defined(dms.population.appearance) && defined(dms.world.homeworld) && defined(dms.world.homeworldDescription) && defined(dms.world.homeworldAnchor) && aptitudesReady(dms) && growthPreferencesReady(dms) && dungeonAttributesReady(dms);
+    return defined(dms.thronebound.name) && defined(dms.thronebound.race) && defined(dms.dungeon.name) && defined(dms.dungeon.theme) && defined(dms.dungeon.style) && defined(dms.population.nature) && defined(dms.population.appearance) && defined(dms.world.homeworld) && defined(dms.world.homeworldDescription) && defined(dms.world.homeworldAnchor) && aptitudesReady(dms) && growthPreferencesReady(dms) && uniqueAttributesReady(dms);
   }
   function identityReady(dms) {
     return coreIdentityReady(dms) && resourcesReady(dms);
@@ -11959,7 +11918,7 @@ function AutoCards(inHook, inText, inStop) {
     return clean(String(value == null ? "" : value).split("//")[0]);
   }
   function generatorSectionKey(value) {
-    return generatorField(value).toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "");
+    return generatorField(value).toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "").replace(/^[0-9]+/, "");
   }
   function adaptGeneratorStoryBible(value) {
     const container = initializationJsonObject(value);
@@ -11978,16 +11937,16 @@ function AutoCards(inHook, inText, inStop) {
     const aptitudes = Object.fromEntries(aptitudeNames(defaultState()).map(name => [name, field(aptitudeSource, name.toLowerCase()).toUpperCase()]));
     return {
       format: DMS_INITIALIZATION_FORMAT, version: DMS_INITIALIZATION_VERSION,
-      overview: { tags: field(overview, "tags").split(",").map(clean).filter(Boolean), concept: field(overview, "concept"), contentPolicy: { sexual: field(overview, "sexual_content") || "None", kink: field(overview, "kink_content") || "None" } },
-      thronebound: { name: throneboundName, race: field(thronebound, "race"), gender: field(thronebound, "gender"), appearance: field(thronebound, "appearance"), personality: field(thronebound, "personality"), background: field(thronebound, "background"), capabilities: field(thronebound, "capabilities"), values: field(thronebound, "values"), voicePattern: field(thronebound, "voice_pattern"), aptitudes, growthPreferences: field(growthSource, "favored_attributes").split(",").map(clean).filter(Boolean) },
-      dungeon: { name: dungeonName, theme: field(dungeon, "theme"), style: field(dungeon, "style"), description: field(dungeon, "description"), manifestation: field(dungeon, "manifestation"), throneRoom: field(dungeon, "throne_room"), population: { nature: field(dungeon, "population"), appearance: field(dungeon, "population_appearance") }, resources: Object.fromEntries(RESOURCE_ROLES.map(role => [role, resource(role)])), uniqueAttributes },
+      overview: { tags: field(overview, "tags").split(",").map(clean).filter(Boolean), tagsText: field(overview, "tags"), concept: field(overview, "concept"), contentPolicy: { sexual: field(overview, "sexual_content") || "None", kink: field(overview, "kink_content") || field(overview, "fetish_content") || "None" } },
+      thronebound: { name: throneboundName, race: field(thronebound, "race"), gender: field(thronebound, "gender"), appearance: field(thronebound, "appearance"), personality: field(thronebound, "personality"), background: field(thronebound, "background"), capabilities: field(thronebound, "capabilities"), values: field(thronebound, "values"), voicePattern: field(thronebound, "voice_pattern"), aptitudes, uniqueAttributes, growthPreferences: field(growthSource, "favored_attributes").split(",").map(clean).filter(Boolean) },
+      dungeon: { name: dungeonName, theme: field(dungeon, "theme"), style: field(dungeon, "style"), description: field(dungeon, "description"), manifestation: field(dungeon, "manifestation"), throneRoom: field(dungeon, "throne_room"), population: { nature: field(dungeon, "population"), appearance: field(dungeon, "population_appearance") }, resources: Object.fromEntries(RESOURCE_ROLES.map(role => [role, resource(role)])) },
       homeworld: { name: field(overview, "homeworld"), description: field(homeworldSource, "description"), region: field(homeworldSource, "region"), anchor: field(homeworldSource, "primary_anchor"), residence: field(homeworldSource, "residence"), timePeriod: field(homeworldSource, "time_period"), currentCircumstances: field(homeworldSource, "current_circumstances"), secondaryLocation: field(homeworldSource, "secondary_location") }
     };
   }
   function parseInitializationJson(value) {
     const input = initializationJsonObject(value), source = input.format === DMS_INITIALIZATION_FORMAT ? input : adaptGeneratorStoryBible(input);
     if (source.format !== DMS_INITIALIZATION_FORMAT) throw new Error(`Initialization format must be ${DMS_INITIALIZATION_FORMAT}.`);
-    const sourceVersion = Number(source.version); if (![1, DMS_INITIALIZATION_VERSION].includes(sourceVersion)) throw new Error(`Initialization version must be 1 or ${DMS_INITIALIZATION_VERSION}.`);
+    const sourceVersion = Number(source.version); if (![1, 2, DMS_INITIALIZATION_VERSION].includes(sourceVersion)) throw new Error(`Initialization version must be 1, 2, or ${DMS_INITIALIZATION_VERSION}.`);
     const requiredText = (value, label) => { const result = clean(value); if (!result) throw new Error(`${label} is required.`); return result; };
     const textForVersion = (value, label, fallback) => sourceVersion >= 2 ? requiredText(value, label) : clean(value) || fallback;
     const thronebound = source.thronebound || {}, dungeon = source.dungeon || {}, population = dungeon.population || source.population || {}, homeworld = source.homeworld || {}, overview = source.overview || {}, aptitudes = thronebound.aptitudes || {};
@@ -11995,27 +11954,29 @@ function AutoCards(inHook, inText, inStop) {
     for (const name of aptitudeNames(defaultState())) { const aptitude = clean(aptitudes[name]).toUpperCase(); if (!APTITUDE_OUTCOMES[aptitude]) throw new Error(`${name} Aptitude must be F, E, D, C, B, A, S, SS, or SSS.`); canonicalAptitudes[name] = aptitude; }
     const resources = {};
     for (const role of RESOURCE_ROLES) { const resource = dungeon.resources?.[role] || {}; resources[role] = { name: requiredText(resource.name, `${title(role)} Resource name`), description: requiredText(resource.description, `${title(role)} Resource description`), collection: requiredText(resource.collection, `${title(role)} Resource collection`), use: requiredText(resource.use, `${title(role)} Resource use`) }; }
-    if (!Array.isArray(dungeon.uniqueAttributes) || dungeon.uniqueAttributes.length < 1 || dungeon.uniqueAttributes.length > 3) throw new Error("Initialization requires one to three Unique Dungeon Attributes, including a Primary Attribute.");
-    const usedNames = new Set(), usedPriorities = new Set();
-    const uniqueAttributes = dungeon.uniqueAttributes.map((attribute, index) => {
-      const name = requiredText(attribute?.name, `Unique Dungeon Attribute ${index + 1} name`), description = requiredText(attribute?.description, `${name} description`), aptitude = clean(attribute?.aptitude).toUpperCase();
+    const sourceUniqueAttributes = Array.isArray(thronebound.uniqueAttributes) ? thronebound.uniqueAttributes : dungeon.uniqueAttributes;
+    if (!Array.isArray(sourceUniqueAttributes) || sourceUniqueAttributes.length < 1 || sourceUniqueAttributes.length > 3) throw new Error("Initialization requires one to three Thronebound Unique Attributes, including a Primary Attribute.");
+    const usedNames = new Set(), usedPriorities = new Set(), standardAttributeNames = aptitudeNames(defaultState());
+    const uniqueAttributes = sourceUniqueAttributes.map((attribute, index) => {
+      const name = requiredText(attribute?.name, `Thronebound Unique Attribute ${index + 1} name`), description = requiredText(attribute?.description, `${name} description`), aptitude = clean(attribute?.aptitude).toUpperCase();
       const legacyDomainIndex = LEGACY_DUNGEON_ATTRIBUTE_DOMAINS.findIndex(item => item.toLowerCase() === clean(attribute?.domain).toLowerCase());
       const priority = DUNGEON_ATTRIBUTE_PRIORITIES.find(item => item.toLowerCase() === clean(attribute?.priority).toLowerCase()) || (legacyDomainIndex >= 0 ? DUNGEON_ATTRIBUTE_PRIORITIES[legacyDomainIndex] : DUNGEON_ATTRIBUTE_PRIORITIES[index]);
       if (!APTITUDE_OUTCOMES[aptitude]) throw new Error(`${name} Aptitude must be F, E, D, C, B, A, S, SS, or SSS.`);
-      if (usedNames.has(name.toLowerCase())) throw new Error(`Duplicate Unique Dungeon Attribute: ${name}.`);
-      if (!priority || usedPriorities.has(priority)) throw new Error(`Unique Dungeon Attribute priorities must be unique: ${DUNGEON_ATTRIBUTE_PRIORITIES.join(", ")}.`);
+      if (standardAttributeNames.some(standardName => standardName.toLowerCase() === name.toLowerCase())) throw new Error(`${name} duplicates a standard Attribute. Thronebound Unique Attributes must not duplicate Might, Agility, Endurance, Arcana, Command, Logistics, Insight, or Craft.`);
+      if (usedNames.has(name.toLowerCase())) throw new Error(`Duplicate Thronebound Unique Attribute: ${name}.`);
+      if (!priority || usedPriorities.has(priority)) throw new Error(`Unique Attribute priorities must be unique: ${DUNGEON_ATTRIBUTE_PRIORITIES.join(", ")}.`);
       usedNames.add(name.toLowerCase()); usedPriorities.add(priority);
       return { name, description, priority, aptitude, value: clamp(attribute?.value == null ? 1 : attribute.value, 0, 100000) };
     });
-    if (!usedPriorities.has("Primary")) throw new Error("A Primary Unique Dungeon Attribute is required.");
-    const preferenceState = defaultState(); preferenceState.dungeon.uniqueAttributes = Object.fromEntries(uniqueAttributes.map(attribute => [attribute.name, attribute]));
+    if (!usedPriorities.has("Primary")) throw new Error("A Primary Thronebound Unique Attribute is required.");
+    const preferenceState = defaultState(); preferenceState.thronebound.attributes.unique = Object.fromEntries(uniqueAttributes.map(attribute => [attribute.name, attribute]));
     const growthPreferences = parseGrowthPreferences(thronebound.growthPreferences, preferenceState);
     const tags = unique(Array.isArray(overview.tags) ? overview.tags : clean(overview.tags).split(",")).slice(0, 10);
     return {
       format: DMS_INITIALIZATION_FORMAT, version: DMS_INITIALIZATION_VERSION,
-      overview: { tags, concept: textForVersion(overview.concept, "Scenario concept", `${clean(dungeon.theme)} binds ${clean(thronebound.name)} to ${clean(dungeon.name)}.`), contentPolicy: { sexual: clean(overview.contentPolicy?.sexual) || "None", kink: clean(overview.contentPolicy?.kink) || "None" } },
-      thronebound: { name: requiredText(thronebound.name, "Thronebound name"), race: requiredText(thronebound.race, "Thronebound Race"), gender: textForVersion(thronebound.gender, "Thronebound Gender", "Unspecified"), appearance: textForVersion(thronebound.appearance, "Thronebound Appearance", `${clean(thronebound.race)} Thronebound.`), personality: textForVersion(thronebound.personality, "Thronebound Personality", "Defined through play."), background: textForVersion(thronebound.background, "Thronebound Background", "Bound to the newly awakened Dungeon."), capabilities: textForVersion(thronebound.capabilities, "Thronebound Capabilities", "No established pre-Dungeon capabilities."), values: textForVersion(thronebound.values, "Thronebound Values", "Defined through play."), voicePattern: textForVersion(thronebound.voicePattern, "Thronebound Voice Pattern", "Natural and direct."), aptitudes: canonicalAptitudes, growthPreferences },
-      dungeon: { name: requiredText(dungeon.name, "Dungeon name"), theme: requiredText(dungeon.theme, "Dungeon Theme"), style: requiredText(dungeon.style, "Dungeon Style"), description: textForVersion(dungeon.description, "Dungeon Description", `${clean(dungeon.theme)} expressed through ${clean(dungeon.style)}.`), manifestation: textForVersion(dungeon.manifestation, "Dungeon Manifestation", `${clean(dungeon.theme)} shapes every Dungeon manifestation.`), throneRoom: textForVersion(dungeon.throneRoom, "Throne Room description", `The first chamber of ${clean(dungeon.name)}.`), population: { nature: requiredText(population.nature, "Population nature"), appearance: requiredText(population.appearance, "Population appearance") }, resources, uniqueAttributes },
+      overview: { tags, tagsText: clean(overview.tagsText) || tags.join(", "), concept: textForVersion(overview.concept, "Scenario concept", `${clean(dungeon.theme)} binds ${clean(thronebound.name)} to ${clean(dungeon.name)}.`), contentPolicy: { sexual: clean(overview.contentPolicy?.sexual) || "None", kink: clean(overview.contentPolicy?.kink) || "None" } },
+      thronebound: { name: requiredText(thronebound.name, "Thronebound name"), race: requiredText(thronebound.race, "Thronebound Race"), gender: textForVersion(thronebound.gender, "Thronebound Gender", "Unspecified"), appearance: textForVersion(thronebound.appearance, "Thronebound Appearance", `${clean(thronebound.race)} Thronebound.`), personality: textForVersion(thronebound.personality, "Thronebound Personality", "Defined through play."), background: textForVersion(thronebound.background, "Thronebound Background", "Bound to the newly awakened Dungeon."), capabilities: textForVersion(thronebound.capabilities, "Thronebound Capabilities", "No established pre-Dungeon capabilities."), values: textForVersion(thronebound.values, "Thronebound Values", "Defined through play."), voicePattern: textForVersion(thronebound.voicePattern, "Thronebound Voice Pattern", "Natural and direct."), aptitudes: canonicalAptitudes, uniqueAttributes, growthPreferences },
+      dungeon: { name: requiredText(dungeon.name, "Dungeon name"), theme: requiredText(dungeon.theme, "Dungeon Theme"), style: requiredText(dungeon.style, "Dungeon Style"), description: textForVersion(dungeon.description, "Dungeon Description", `${clean(dungeon.theme)} expressed through ${clean(dungeon.style)}.`), manifestation: textForVersion(dungeon.manifestation, "Dungeon Manifestation", `${clean(dungeon.theme)} shapes every Dungeon manifestation.`), throneRoom: textForVersion(dungeon.throneRoom, "Throne Room description", `The first chamber of ${clean(dungeon.name)}.`), population: { nature: requiredText(population.nature, "Population nature"), appearance: requiredText(population.appearance, "Population appearance") }, resources },
       homeworld: { name: requiredText(homeworld.name, "Homeworld name"), description: requiredText(homeworld.description, "Homeworld description"), region: textForVersion(homeworld.region, "Homeworld Region", clean(homeworld.secondaryLocation) || "Unspecified region"), anchor: requiredText(homeworld.anchor, "Homeworld return anchor"), residence: clean(homeworld.residence), timePeriod: textForVersion(homeworld.timePeriod, "Homeworld Time Period", "Unspecified era"), currentCircumstances: textForVersion(homeworld.currentCircumstances, "Homeworld Current Circumstances", "No special current circumstances established."), secondaryLocation: clean(homeworld.secondaryLocation) }
     };
   }
@@ -12036,7 +11997,7 @@ function AutoCards(inHook, inText, inStop) {
     if (!setup.ready) return false;
     const initialization = setup.initialization, { thronebound, dungeon, homeworld } = initialization;
     dms.thronebound.name = thronebound.name; dms.thronebound.race = thronebound.race; dms.thronebound.profile = { gender: thronebound.gender, appearance: thronebound.appearance, personality: thronebound.personality, background: thronebound.background, capabilities: thronebound.capabilities, values: thronebound.values, voicePattern: thronebound.voicePattern };
-    dms.dungeon.name = dungeon.name; dms.dungeon.theme = dungeon.theme; dms.dungeon.style = dungeon.style; dms.dungeon.tags = initialization.overview.tags; dms.dungeon.concept = initialization.overview.concept; dms.dungeon.contentPolicy = initialization.overview.contentPolicy; dms.dungeon.lore = { description: dungeon.description, manifestation: dungeon.manifestation, throneRoom: dungeon.throneRoom };
+    dms.dungeon.name = dungeon.name; dms.dungeon.theme = dungeon.theme; dms.dungeon.style = dungeon.style; dms.dungeon.tags = initialization.overview.tags; dms.dungeon.tagsText = initialization.overview.tagsText; dms.dungeon.concept = initialization.overview.concept; dms.dungeon.contentPolicy = initialization.overview.contentPolicy; dms.dungeon.lore = { description: dungeon.description, manifestation: dungeon.manifestation, throneRoom: dungeon.throneRoom };
     dms.population.nature = dungeon.population.nature; dms.population.appearance = dungeon.population.appearance;
     dms.world.homeworld = homeworld.name; dms.world.homeworldDescription = homeworld.description; dms.world.homeworldRegion = homeworld.region; dms.world.homeworldAnchor = homeworld.anchor; dms.world.homeworldResidence = homeworld.residence; dms.world.homeworldTimePeriod = homeworld.timePeriod; dms.world.homeworldCircumstances = homeworld.currentCircumstances; dms.world.secondaryLocation = homeworld.secondaryLocation;
     for (const role of RESOURCE_ROLES) {
@@ -12046,13 +12007,13 @@ function AutoCards(inHook, inText, inStop) {
       const group = Object.hasOwn(dms.thronebound.attributes.combat, name) ? "combat" : "support";
       dms.thronebound.attributes[group][name].aptitude = aptitude;
     }
-    dms.dungeon.uniqueAttributes = Object.fromEntries(dungeon.uniqueAttributes.map(attribute => [attribute.name, { description: attribute.description, value: attribute.value, aptitude: attribute.aptitude, priority: attribute.priority }]));
+    dms.thronebound.attributes.unique = Object.fromEntries(thronebound.uniqueAttributes.map(attribute => [attribute.name, { description: attribute.description, value: attribute.value, aptitude: attribute.aptitude, priority: attribute.priority }]));
     dms.thronebound.growthPreferences = thronebound.growthPreferences;
     dms.onboarding.aptitudesDefined = aptitudeNames(dms);
     dms.onboarding.scenarioVariablesImported = true;
     dms.onboarding.scenarioVariableSignature = String(stableNumber(JSON.stringify(initialization)));
     dms.initialized = identityReady(dms);
-    ensureThroneRoom(dms); if (dms.rooms["room-throne"]) dms.rooms["room-throne"].lore.appearance = dungeon.throneRoom; applyDerivedState(dms); updateQuests(dms); record(dms, `Imported Tier 0 identity and resources for ${dms.dungeon.name} from Dungeon Generator JSON.`);
+    ensureThroneRoom(dms); if (dms.rooms["room-throne"]) dms.rooms["room-throne"].lore = throneRoomLore(dms, dms.dungeon.tier, { baseAppearance: dungeon.throneRoom }); applyDerivedState(dms); updateQuests(dms); record(dms, `Imported Tier 0 identity and resources for ${dms.dungeon.name} from Dungeon Generator JSON.`);
     return true;
   }
   function defineResource(dms, role, specification) {
@@ -12071,6 +12032,9 @@ function AutoCards(inHook, inText, inStop) {
     dms.dungeon.name = clean(spec.name) || dms.dungeon.name;
     dms.dungeon.theme = clean(spec.theme) || dms.dungeon.theme;
     dms.dungeon.style = clean(spec.style) || dms.dungeon.style;
+    dms.dungeon.lore.description = clean(spec.description) || dms.dungeon.lore.description || `${dms.dungeon.name} expresses ${dms.dungeon.theme} through ${dms.dungeon.style}.`;
+    dms.dungeon.lore.manifestation = clean(spec.manifestation) || dms.dungeon.lore.manifestation || `${dms.dungeon.theme} manifests through the structures, population, objects, powers, and environment of ${dms.dungeon.name}.`;
+    dms.dungeon.lore.throneRoom = clean(spec.throneRoom) || dms.dungeon.lore.throneRoom || `The first manifested chamber of ${dms.dungeon.name}.`;
     const legacyAppearance = unique([spec.workerDescription, spec.soldierDescription]).join("; ");
     dms.population.nature = clean(spec.populationNature) || (legacyAppearance ? "Dungeon-created population" : dms.population.nature);
     dms.population.appearance = clean(spec.populationAppearance) || legacyAppearance || dms.population.appearance;
@@ -12078,8 +12042,9 @@ function AutoCards(inHook, inText, inStop) {
     dms.world.homeworldDescription = clean(spec.homeworldDescription) || (clean(spec.homeworld) ? `${clean(spec.homeworld)} is the Thronebound's established world of origin; its fuller description remains editable.` : dms.world.homeworldDescription);
     dms.world.homeworldAnchor = clean(spec.homeworldAnchor) || (clean(spec.homeworld) ? `${clean(spec.homeworld)} Return Anchor` : dms.world.homeworldAnchor);
     dms.world.secondaryLocation = clean(spec.secondaryLocation) || dms.world.secondaryLocation;
-    if (Array.isArray(spec.dungeonAttributes)) dms.dungeon.uniqueAttributes = completeDungeonAttributes(Object.fromEntries(spec.dungeonAttributes.map(attribute => [clean(attribute.name), attribute])), spec.theme || dms.dungeon.theme);
-    if (!Object.keys(dms.dungeon.uniqueAttributes).length && clean(spec.theme)) { const themeName = title(clean(spec.theme).split(/\s+/)[0] || "Dungeon"); dms.dungeon.uniqueAttributes = { [`${themeName} Essence`]: { description: `The strongest defining expression of the ${clean(spec.theme)} Dungeon Theme.`, value: 0, aptitude: "C", priority: "Primary" } }; }
+    const configuredUniqueAttributes = spec.uniqueAttributes || spec.dungeonAttributes;
+    if (Array.isArray(configuredUniqueAttributes)) dms.thronebound.attributes.unique = completeDungeonAttributes(Object.fromEntries(configuredUniqueAttributes.map(attribute => [clean(attribute.name), attribute])), spec.theme || dms.dungeon.theme);
+    if (!Object.keys(throneboundUniqueAttributes(dms)).length && clean(spec.theme)) { const themeName = title(clean(spec.theme).split(/\s+/)[0] || "Dungeon"); dms.thronebound.attributes.unique = { [`${themeName} Essence`]: { description: `The Thronebound's strongest defining expression of the ${clean(spec.theme)} Dungeon Theme, influencing linked Dungeon systems.`, value: 0, aptitude: "C", priority: "Primary" } }; }
     if (spec.growthPreferences) dms.thronebound.growthPreferences = parseGrowthPreferences(Array.isArray(spec.growthPreferences) ? spec.growthPreferences.join(",") : spec.growthPreferences, dms);
     else if (legacyAppearance && !dms.thronebound.growthPreferences.length) dms.thronebound.growthPreferences = aptitudeNames(dms).slice(0, 5);
     dms.initialized = identityReady(dms);
@@ -12087,11 +12052,21 @@ function AutoCards(inHook, inText, inStop) {
   }
 
   function roomLore(dms, definition, tier) {
+    if (definition === ROOM_DEFINITIONS["throne-room"]) return throneRoomLore(dms, tier);
     const worker = populationDescription(dms);
     return {
       appearance: `A Tier ${tier} ${definition.name} expressed through ${dms.dungeon.style} architecture and the ${dms.dungeon.theme} theme. Its materials, atmosphere, fixtures, and spatial character visibly belong to ${dms.dungeon.name}.`,
       function: `${definition.function} In this dungeon, the function is expressed through ${dms.dungeon.resources[definition.resource]?.name || dms.dungeon.theme}.`,
       job: `${definition.job}: the title used for ${worker} assigned to operate or maintain this room.`
+    };
+  }
+  function throneRoomLore(dms, tier, existing = {}) {
+    const baseAppearance = clean(existing.baseAppearance || dms.dungeon.lore.throneRoom || existing.appearance) || `The first manifested chamber of ${dms.dungeon.name}.`;
+    return {
+      baseAppearance,
+      appearance: tier > 0 ? `${baseAppearance} Its established form has expanded with ${dms.dungeon.name} to Dungeon Tier ${tier} without erasing the original chamber.` : baseAppearance,
+      function: ROOM_DEFINITIONS["throne-room"].function,
+      job: existing.job || `${ROOM_DEFINITIONS["throne-room"].job}: a later theme-defined cohort may serve the throne when a mechanically relevant system unlocks it.`
     };
   }
   function roomDefinitionKey(reference) {
@@ -12114,13 +12089,14 @@ function AutoCards(inHook, inText, inStop) {
     const reservation = free ? null : reserveResources(dms, { construction: cost, energy: Math.ceil(cost / 2) }, `build-room:${id}`, taskId);
     if (definitionKey !== "throne-room") dms.generation.roomSequence = sequence;
     const initialTier = definitionKey === "throne-room" ? 0 : Math.max(1, definition.unlockTier);
-    const room = { id, definition: definitionKey, name: definition.name, tier: initialTier, expansion: 1, state: free ? "Active" : "Constructing", assignedWorkers: 0, jobPopulation: 0, targetedVeins: [], assignedAdministrator: "", lore: roomLore(dms, definition, initialTier) };
+    const room = { id, definition: definitionKey, name: definition.name, tier: initialTier, expansion: 1, state: free ? "Active" : "Constructing", assignedWorkers: 0, jobPopulation: 0, targetedVeins: [], assignedAdministrator: "", authorityAdministrator: "", lore: roomLore(dms, definition, initialTier) };
     dms.rooms[id] = room; if (!free) dms.tasks.push({ id: taskId, type: "build-room", roomId: id, remaining: Math.max(1, definition.unlockTier), reservationId: reservation.id }); if (dms.dungeon.tier >= 1) tierOneMilestone(dms, `constructed.${definitionKey}`, true); applyDerivedState(dms); updateQuests(dms); record(dms, `${free ? "Established" : "Began construction of"} ${definition.name} (${id}).`); return room;
   }
   function ensureThroneRoom(dms) { if (!dms.rooms["room-throne"] && dms.dungeon.theme !== "Unformed") createRoom(dms, "throne-room", true); }
   function upgradeRoom(dms, roomId) {
     const room = roomByReference(dms, roomId);
     if (!room) throw new Error("Unknown room.");
+    if (room.definition === "throne-room") throw new Error("The Throne Room always equals Dungeon Tier and cannot be upgraded independently.");
     if (room.tier >= dms.dungeon.roomTierLimit) throw new Error(`Room Tier is limited by Dungeon Tier ${dms.dungeon.tier}.`);
     const definition = ROOM_DEFINITIONS[room.definition], next = room.tier + 1, cost = Math.max(20, definition.baseCost) * next;
     if (room.state !== "Active") throw new Error(`${room.name} already has work in progress.`);
@@ -12140,7 +12116,7 @@ function AutoCards(inHook, inText, inStop) {
     if (!systemAvailable(dms)) throw new Error("Dungeon Tier Up requires System Mode within the Throne Room.");
     if (Object.keys(dms.administrators).length < dms.dungeon.administratorCapacity) throw new Error(`Fill Administrator Capacity ${Object.keys(dms.administrators).length}/${dms.dungeon.administratorCapacity} before Tier ${next}.`);
     if (current === 0 && !identityReady(dms)) throw new Error("Define the complete dungeon identity, Aptitudes, and four resources before Tier 1.");
-    spend(dms, requirements); dms.dungeon.tier = next; const dungeonAttributeGains = growDungeonAttributes(dms); const throne = dms.rooms["room-throne"]; if (throne && throne.tier < next) { throne.tier = next; throne.lore = roomLore(dms, ROOM_DEFINITIONS[throne.definition], next); if (next === 1) tierOneMilestone(dms, "tieredFacility", throne.id); } applyDerivedState(dms); updateQuests(dms); record(dms, `Dungeon advanced to Tier ${next}. Unique Dungeon Attribute growth: ${Object.entries(dungeonAttributeGains).map(([name, gain]) => `${name} +${gain}`).join(", ")}.`);
+    spend(dms, requirements); dms.dungeon.tier = next; const throne = dms.rooms["room-throne"]; if (throne && throne.tier < next) { throne.tier = next; throne.lore = throneRoomLore(dms, next, throne.lore); if (next === 1) tierOneMilestone(dms, "tieredFacility", throne.id); } applyDerivedState(dms); updateQuests(dms); record(dms, `Dungeon advanced to Tier ${next}; the Throne Room advanced with it.`);
     if (next === 1) { if (dms.thronebound.class.tier === 0) generateClassPreviews(dms, "thronebound"); for (const administrator of Object.values(dms.administrators)) if (administrator.class.tier === 0) generateClassPreviews(dms, administrator.id); }
     return { tier: next, rules: tierRules(next), unlockedRooms: Object.entries(ROOM_DEFINITIONS).filter(([, definition]) => definition.unlockTier === next).map(([key, definition]) => ({ key, name: definition.name })) };
   }
@@ -12300,7 +12276,7 @@ function AutoCards(inHook, inText, inStop) {
   function administratorAssignmentEffectiveness(dms, administrator) {
     if (!administrator) return 1;
     const named = dms.residences.named[administrator.id], residenceMultiplier = named?.bonus === "Efficiency" ? 1.05 : 1;
-    const affinity = dms.dungeon.uniqueAttributes?.[administrator.dungeonAttributeAffinity], affinityMultiplier = 1 + Math.max(0, Number(affinity?.value) || 0) / 200;
+    const affinity = throneboundUniqueAttributes(dms)[administrator.dungeonAttributeAffinity], affinityMultiplier = 1 + Math.max(0, Number(affinity?.value) || 0) / 200;
     return Number((administrator.effectiveness * residenceMultiplier * dungeonAttributeMultiplier(dms, "Administration") * affinityMultiplier).toFixed(4));
   }
   function applyDerivedState(dms) {
@@ -12325,6 +12301,8 @@ function AutoCards(inHook, inText, inStop) {
     dms.population.workers.cohorts = cohorts;
     delete dms.population.workers.capacity; delete dms.population.soldiers.capacity; dms.population.workers.current = workers;
     dms.population.soldiers.current = dms.population.soldiers.cohorts.reduce((sum, cohort) => sum + Number(cohort.count || 0), 0);
+    const throne = dms.rooms["room-throne"], manager = Object.values(dms.administrators).find(administrator => administrator.role === "Manager");
+    if (throne) throne.authorityAdministrator = manager?.id || "";
     dms.dungeon.power = combatPower(dms); dms.dungeon.defense = defensePower(dms);
   }
   function disruptWorkerCohort(dms, cohortId, amount) {
@@ -12413,8 +12391,8 @@ function AutoCards(inHook, inText, inStop) {
     const rankPool = ["F", "F", "E", "E", "D", "D", "C", "C", "B", "A", "S", "SS", "SSS"], rank = choose(rankPool, `${dms.dungeon.name}|administrator-rank|${sequence}`);
     const specialization = /Warden|Marshal|Combat|Gate|Scout/i.test(role) ? "combat" : "support";
     const administrator = characterBase(requestedName || `${title(dms.dungeon.theme.split(/\s+/)[0])} ${role} ${sequence}`, requestedRace || dms.population.nature, role);
-    administrator.id = id; administrator.role = role; administrator.rank = rank; administrator.appearance = administratorAppearance(dms, role, rank); administrator.effectiveness = ADMINISTRATOR_RANK_MULTIPLIERS[rank]; administrator.attributeSpecialization = specialization; administrator.attributes = { [specialization]: attributeSet(ATTRIBUTE_TEMPLATES[specialization]) }; administrator.dungeonAttributeAffinity = choose(Object.keys(dms.dungeon.uniqueAttributes), `${dms.dungeon.name}|administrator-affinity|${sequence}`); administrator.assignedRooms = []; administrator.status = "Active"; administrator.bond = { value: 0, completedEvents: [] };
-    dms.administrators[id] = administrator; registerInnerSelfAdministrator(dms, administrator); if (dms.dungeon.tier >= 1) generateClassPreviews(dms, id); updateQuests(dms); record(dms, `Summoned ${administrator.name}, Rank ${rank} ${role}.`); return administrator;
+    administrator.id = id; administrator.role = role; administrator.rank = rank; administrator.appearance = administratorAppearance(dms, role, rank); administrator.effectiveness = ADMINISTRATOR_RANK_MULTIPLIERS[rank]; administrator.attributeSpecialization = specialization; administrator.attributes = { [specialization]: attributeSet(ATTRIBUTE_TEMPLATES[specialization]) }; administrator.dungeonAttributeAffinity = choose(Object.keys(throneboundUniqueAttributes(dms)), `${dms.dungeon.name}|administrator-affinity|${sequence}`); administrator.assignedRooms = []; administrator.status = "Active"; administrator.bond = { value: 0, completedEvents: [] };
+    dms.administrators[id] = administrator; if (sequence === 1 && dms.rooms["room-throne"]) dms.rooms["room-throne"].authorityAdministrator = id; registerInnerSelfAdministrator(dms, administrator); if (dms.dungeon.tier >= 1) generateClassPreviews(dms, id); updateQuests(dms); record(dms, `Summoned ${administrator.name}, Rank ${rank} ${role}.`); return administrator;
   }
   function createAdministrator(dms, spec = {}) { return summonAdministrator(dms, spec.name, spec.race); }
   function roleCompatible(administrator, room) { return administratorRoles({ rooms: { [room.id]: room } }).includes(administrator.role) || administrator.role === "Manager"; }
@@ -12500,14 +12478,15 @@ function AutoCards(inHook, inText, inStop) {
     throw new Error("Direct player-priced ability purchasing is disabled. Construct a General Skill Hall or General Trait Archive and buy a fixed-price shop entry.");
   }
   function defineUniqueAttribute(dms, name, description, value = 1, aptitude = "C", priority = "Primary") {
-    if (dms.initialized && !systemAvailable(dms)) throw new Error("Unique Dungeon Attributes can only be defined in System Mode within the Throne Room.");
-    if (!clean(name) || !clean(description)) throw new Error("A Unique Dungeon Attribute requires a name and theme-derived description.");
+    if (dms.initialized && !systemAvailable(dms)) throw new Error("Thronebound Unique Attributes can only be defined in System Mode within the Throne Room.");
+    if (!clean(name) || !clean(description)) throw new Error("A Thronebound Unique Attribute requires a name and theme-derived Dungeon influence description.");
     const canonicalPriority = DUNGEON_ATTRIBUTE_PRIORITIES.find(item => item.toLowerCase() === clean(priority).toLowerCase());
     if (!canonicalPriority) throw new Error(`Dungeon Attribute priority must be ${DUNGEON_ATTRIBUTE_PRIORITIES.join(", ")}.`);
-    if (Object.keys(dms.dungeon.uniqueAttributes).length >= 3 && !dms.dungeon.uniqueAttributes[name]) throw new Error("The Dungeon can track up to three theme-defined Unique Attributes.");
-    if (Object.entries(dms.dungeon.uniqueAttributes).some(([currentName, attribute]) => currentName !== clean(name) && attribute.priority === canonicalPriority)) throw new Error(`${canonicalPriority} already has a Unique Dungeon Attribute.`);
+    const uniqueAttributes = throneboundUniqueAttributes(dms);
+    if (Object.keys(uniqueAttributes).length >= 3 && !uniqueAttributes[name]) throw new Error("The Thronebound can track up to three theme-defined Unique Attributes.");
+    if (Object.entries(uniqueAttributes).some(([currentName, attribute]) => currentName !== clean(name) && attribute.priority === canonicalPriority)) throw new Error(`${canonicalPriority} already has a Thronebound Unique Attribute.`);
     aptitude = clean(aptitude).toUpperCase(); if (!APTITUDE_OUTCOMES[aptitude]) throw new Error(`Aptitude must be ${Object.keys(APTITUDE_OUTCOMES).join(", ")}.`);
-    dms.dungeon.uniqueAttributes[clean(name)] = { value: clamp(value, 0, 100000), description: clean(description), aptitude, priority: canonicalPriority }; dms.initialized = identityReady(dms); record(dms, `Defined ${canonicalPriority} Unique Dungeon Attribute ${clean(name)} [${aptitude}].`); return dms.dungeon.uniqueAttributes[clean(name)];
+    uniqueAttributes[clean(name)] = { value: clamp(value, 0, 100000), description: clean(description), aptitude, priority: canonicalPriority }; dms.initialized = identityReady(dms); record(dms, `Defined ${canonicalPriority} Thronebound Unique Attribute ${clean(name)} [${aptitude}].`); return uniqueAttributes[clean(name)];
   }
 
   function canonicalLocation(dms, major) {
@@ -12583,11 +12562,11 @@ function AutoCards(inHook, inText, inStop) {
     record(dms, `${sector.name} was ${conquest ? "brought under dungeon control" : "secured for exploration and collection"}.`); return sector;
   }
 
-  function dungeonAttributeStrength(dms) { const weights = { Primary: 1, Secondary: 0.6, Tertiary: 0.35 }; return Object.values(dms.dungeon.uniqueAttributes || {}).reduce((sum, attribute) => sum + Math.max(0, Number(attribute.value) || 0) * (weights[attribute.priority] || 0), 0); }
+  function dungeonAttributeStrength(dms) { const weights = { Primary: 1, Secondary: 0.6, Tertiary: 0.35 }; return Object.values(throneboundUniqueAttributes(dms)).reduce((sum, attribute) => sum + Math.max(0, Number(attribute.value) || 0) * (weights[attribute.priority] || 0), 0); }
   function dungeonAttributeMultiplier(dms, purpose = "Theme") { return Number((1 + dungeonAttributeStrength(dms) / 100).toFixed(4)); }
   function growDungeonAttributes(dms) {
     const gains = {}, favored = new Set((dms.thronebound.growthPreferences || []).map(name => name.toLowerCase()));
-    for (const [name, attribute] of Object.entries(dms.dungeon.uniqueAttributes || {})) { const outcomes = APTITUDE_OUTCOMES[attribute.aptitude] || APTITUDE_OUTCOMES.C, gain = choose(outcomes, `${dms.dungeon.name}|${name}|dungeon-tier|${dms.dungeon.tier}`) + (favored.has(name.toLowerCase()) ? 1 : 0); attribute.value += gain; gains[name] = gain; }
+    for (const [name, attribute] of Object.entries(throneboundUniqueAttributes(dms))) { const outcomes = APTITUDE_OUTCOMES[attribute.aptitude] || APTITUDE_OUTCOMES.C, gain = choose(outcomes, `${dms.thronebound.name}|${dms.dungeon.name}|${name}|unique-growth|${dms.thronebound.level}`) + (favored.has(name.toLowerCase()) ? 1 : 0); attribute.value += gain; gains[name] = gain; }
     return gains;
   }
   function productionMultiplier(dms) { const facilityMultiplier = 1 + Object.values(dms.rooms).filter(room => room.state === "Active").reduce((sum, room) => sum + (ROOM_DEFINITIONS[room.definition]?.productivityMultiplier || 0) * room.tier, 0); return Number((facilityMultiplier * dungeonAttributeMultiplier(dms, "Production")).toFixed(4)); }
@@ -12734,7 +12713,7 @@ function AutoCards(inHook, inText, inStop) {
   function confirmAptitudes(dms) { if (dms.initialized && !systemAvailable(dms)) throw new Error("Established Aptitudes can only be confirmed in System Mode within the Throne Room."); dms.onboarding.aptitudesDefined = aptitudeNames(dms); dms.initialized = identityReady(dms); updateQuests(dms); record(dms, "Confirmed all current Thronebound Aptitudes."); return dms.thronebound.attributes; }
   function levelThreshold(level) { return 100 * level; }
   function growAttributes(dms) {
-    const entries = [...Object.entries(dms.thronebound.attributes.combat), ...Object.entries(dms.thronebound.attributes.support)];
+    const entries = [...Object.entries(dms.thronebound.attributes.combat), ...Object.entries(dms.thronebound.attributes.support), ...Object.entries(throneboundUniqueAttributes(dms))];
     const favored = new Set((dms.thronebound.growthPreferences || []).map(name => name.toLowerCase())), gains = {};
     for (const [name, attribute] of entries) { const outcomes = APTITUDE_OUTCOMES[attribute.aptitude] || APTITUDE_OUTCOMES.C, base = choose(outcomes, `${dms.thronebound.name}|${dms.dungeon.name}|${name}|level|${dms.thronebound.level}`), bonus = favored.has(name.toLowerCase()) ? 1 : 0, gain = base + bonus; attribute.value += gain; gains[name] = gain; }
     return gains;
@@ -12758,7 +12737,7 @@ function AutoCards(inHook, inText, inStop) {
   }
   function completeQuest(dms, questId) { const quest = dms.quests.records[clean(questId)]; if (!quest) throw new Error("Unknown Quest."); if (!questPrerequisitesMet(dms, quest)) throw new Error("Quest prerequisites are not cleared."); if (quest.status === "locked") quest.status = "active"; if (quest.status !== "active") throw new Error("Unknown or inactive Quest."); quest.status = "cleared"; const levels = awardQuest(dms, quest); for (const candidate of Object.values(dms.quests.records)) if (candidate.status === "locked" && questPrerequisitesMet(dms, candidate)) candidate.status = "active"; record(dms, `Completed ${quest.category || "Dungeon"} Quest: ${quest.title}.`); return { quest, levels }; }
   function trainAttribute(dms, attributeName, energy = 10) {
-    const all = { ...dms.thronebound.attributes.combat, ...dms.thronebound.attributes.support }, key = Object.keys(all).find(name => name.toLowerCase() === clean(attributeName).toLowerCase()); if (!key) throw new Error("Unknown Thronebound Attribute.");
+    const all = { ...dms.thronebound.attributes.combat, ...dms.thronebound.attributes.support, ...throneboundUniqueAttributes(dms) }, key = Object.keys(all).find(name => name.toLowerCase() === clean(attributeName).toLowerCase()); if (!key) throw new Error("Unknown Thronebound Attribute.");
     const hall = Object.values(dms.rooms).find(room => room.definition === "attribute-training-hall" && room.state === "Active"); if (!hall) throw new Error("An active Attribute Training Hall is required."); energy = clamp(Math.floor(energy), 1, 10000); spend(dms, { energy }, "attribute-training"); const attribute = all[key], outcomes = APTITUDE_OUTCOMES[attribute.aptitude] || APTITUDE_OUTCOMES.C, gain = choose(outcomes, `${key}|training|${dms.activity.cycle}|${energy}`) + Math.floor(energy / 50); attribute.value += gain; return { attribute: key, gain, value: attribute.value };
   }
   function trainSkill(dms, target, skillName, amount = 10) {
@@ -12873,7 +12852,7 @@ function AutoCards(inHook, inText, inStop) {
       `Dungeon: ${dms.dungeon.name} | Tier ${dms.dungeon.tier} | Combat Power ${dms.dungeon.power} | Defense Power ${dms.dungeon.defense}`,
       `DMS: ${DMS_VERSION} | ${DMS_DEVELOPMENT_STATE}`,
       `Identity: ${dms.dungeon.theme} / ${dms.dungeon.style}`,
-      `Unique Dungeon Attributes: ${Object.entries(dms.dungeon.uniqueAttributes).map(([name, attribute]) => `${attribute.priority} ${name} [${attribute.aptitude}] ${attribute.value}`).join(" | ") || "Not defined"}`,
+      `Thronebound Unique Attributes: ${Object.entries(throneboundUniqueAttributes(dms)).map(([name, attribute]) => `${name} [${attribute.aptitude}] ${attribute.value}`).join(" | ") || "Not defined"}`,
       `Dungeon Signature: ${signature.state} | Strength ${signature.strength} | ${signature.externallyDetectable ? "Externally Detectable" : "Externally Undetectable"}`,
       `Administrators: ${Object.keys(dms.administrators).length}/${dms.dungeon.administratorCapacity} required for next Tier | Facilities: ${Object.keys(dms.rooms).length} constructed`,
       `Aptitudes Defined: ${dms.onboarding.aptitudesDefined.length}/${aptitudeNames(dms).length}`,
@@ -12901,25 +12880,49 @@ function AutoCards(inHook, inText, inStop) {
   function discoveryStatus(dms) { const sectors = Object.values(dms.world.lustria.sectors); return sectors.length ? sectors.map(sector => `${sector.id} [${sector.status}] ${sector.name}; Threat ${sector.threat}; ${sector.veins.map(id => { const vein = dms.world.lustria.veins[id]; return `${id} ${vein?.name || "Unknown Site"} [${vein?.grade || "Basic"}, ${vein?.status || "Unknown"}, ${vein?.remaining ?? 0} remaining]`; }).join("; ") || "No resource Sites"}`).join("\n") : "No Lustrian Sectors or resource Sites have been discovered."; }
   function tierRequirementsStatus(dms, observe = false) { if (observe) observeOnboarding(dms, "tierRequirementsRead"); if (dms.dungeon.tier >= 10) return "Dungeon Tier 10 is the current maximum."; const next = dms.dungeon.tier + 1, requirements = tierRules(next).upgradeCost, gate = next > VERIFIED_DUNGEON_TIER ? ` Tier ${next} requirements remain sealed for entry: Release A is verified through Dungeon Tier ${VERIFIED_DUNGEON_TIER}. The reserve can still be prepared while its deployment gate is verified.` : " Tier Up must be performed in System Mode within the Throne Room."; return `Tier ${next} requires Administrator Capacity ${Object.keys(dms.administrators).length}/${dms.dungeon.administratorCapacity} filled; ${requirements.construction} Basic ${dms.dungeon.resources.construction.name}; ${requirements.energy} ${dms.dungeon.resources.energy.name}.${gate}`; }
   function signatureStatus(dms) { const signature = dungeonSignature(dms); return `Dungeon Signature: ${signature.state}; Strength ${signature.strength}; ${signature.externallyDetectable ? "externally detectable" : "too weak for external detection"}; Theme ${signature.theme}.`; }
+  function roomContext(dms, room) {
+    if (!room) return "";
+    const definition = ROOM_DEFINITIONS[room.definition], authority = dms.administrators[room.authorityAdministrator]?.name, assigned = dms.administrators[room.assignedAdministrator]?.name;
+    return `Dungeon Room: ${room.name}. State: ${room.state}. Tier: ${room.tier}. Expansion: ${room.expansion || 1}. Appearance: ${clean(room.lore?.appearance)} Function: ${clean(room.lore?.function || definition?.function)} Job: ${clean(room.lore?.job).split(":")[0] || definition?.job || "None"}. Throne Authority: ${authority || "None"}. Work Assignment: ${assigned || "Unassigned"}.`;
+  }
+  function secondaryMatches(value, label, exactValue) { const requested = clean(value).toLowerCase(); return requested && (requested === clean(label).toLowerCase() || requested === clean(exactValue).toLowerCase()); }
   function contextGuidance(dms) {
     const location = dms.activity.location;
-    const excerpt = (value, limit) => { const result = clean(value); return result.length > limit ? `${result.slice(0, Math.max(0, limit - 1)).trimEnd()}…` : result; };
-    const identity = identityReady(dms) ? `Theme: ${dms.dungeon.theme}; Style: ${dms.dungeon.style}; Population: ${populationDescription(dms)}.` : "The dungeon identity is incomplete; do not invent missing permanent definitions.";
-    const locationContext = location.major === "Homeworld"
-      ? `The Thronebound is away from both Lustria and the Dungeon on ${dms.world.homeworld}. Homeworld description: ${excerpt(dms.world.homeworldDescription, 700)} Region: ${excerpt(dms.world.homeworldRegion, 350)}. The return gate is anchored to ${excerpt(dms.world.homeworldAnchor, 350)}${dms.world.homeworldResidence ? `; residence: ${excerpt(dms.world.homeworldResidence, 220)}` : ""}. Current circumstances: ${excerpt(dms.world.homeworldCircumstances, 700)}`
-      : location.major === "Lustria"
-        ? "The Thronebound is within Lustria but currently away from the Dungeon. Use Lustria's foundational world context and the selected local Site or Sector; do not apply Homeworld context."
-        : location.major === "Dungeon"
-          ? `The Thronebound is within ${dms.dungeon.name}, their active Dungeon in Lustria. Use both Dungeon-specific context and Lustria's foundational world context; do not apply Homeworld context.`
-          : `The Thronebound is at the configured secondary world location ${dms.world.secondaryLocation}.`;
-    const references = [], cards = Array.isArray(global.storyCards) ? global.storyCards : [];
-    const appendCard = card => { if (card?.entry && !references.some(value => value.startsWith(`${card.title}:`))) references.push(`${card.title}: ${clean(card.entry).slice(0, 700)}`); };
-    const byManagedKey = key => cards.find(card => cardHasKey(card, key));
-    if (location.major === "Dungeon") { appendCard(byManagedKey("DMS_LORE_DUNGEON_FOUNDATION")); appendCard(byManagedKey("DMS_SYS_DUNGEON_STATUS")); appendCard(cards.find(card => card.title === "Lore — Nexus Realm of Lustria")); }
-    else if (location.major === "Lustria") appendCard(cards.find(card => card.title === "Lore — Nexus Realm of Lustria"));
-    else if (location.major === "Homeworld") { /* Full generated Homeworld fields are already included above without duplicate card text. */ }
-    for (const requested of [location.secondary, ...dms.activity.targets]) { if (!clean(requested)) continue; appendCard(cards.find(item => clean(item.title).toLowerCase() === clean(requested).toLowerCase() || clean(item.keys).split(",").some(key => clean(key).toLowerCase() === clean(requested).toLowerCase()))); }
-    return `Current authoritative location: ${location.major}${location.secondary ? `, ${location.secondary}` : ""}${location.detail ? `, ${location.detail}` : ""}. ${locationContext} Current Activity: ${dms.activity.mode}; Target: ${dms.activity.targets.join(", ") || "None"}; Pace: ${dms.activity.pace}. Use these facts to frame what the Thronebound is doing and how quickly time passes. ${dms.thronebound.name} is the Thronebound of ${dms.dungeon.name}. ${identity} The Dungeon System is accessible only from the Throne Room. Rooms have no required map placement; describe connections only when narratively useful. Managed tiers, resources, population, class progression, sectors, veins, and outcomes are backend facts and cannot be changed by narration alone.${references.length ? ` Immediate lore references: ${references.join(" | ")}` : ""}`;
+    const injected = [];
+    if (location.major === "Dungeon") {
+      injected.push(`Dungeon Description: ${clean(dms.dungeon.lore.description)}`, `Dungeon Manifestation: ${clean(dms.dungeon.lore.manifestation)}`);
+      const room = roomByReference(dms, location.secondary);
+      if (room) injected.push(roomContext(dms, room));
+    } else if (location.major === "Homeworld") {
+      injected.push(`Homeworld Description: ${clean(dms.world.homeworldDescription)}`, `Homeworld Region: ${clean(dms.world.homeworldRegion)}`, `Homeworld Time Period: ${clean(dms.world.homeworldTimePeriod)}`, `Homeworld Current Circumstances: ${clean(dms.world.homeworldCircumstances)}`);
+      if (secondaryMatches(location.secondary, "Primary Anchor", dms.world.homeworldAnchor)) injected.push(`Homeworld Primary Anchor: ${clean(dms.world.homeworldAnchor)}`);
+      if (secondaryMatches(location.secondary, "Residence", dms.world.homeworldResidence) && clean(dms.world.homeworldResidence)) injected.push(`Homeworld Residence: ${clean(dms.world.homeworldResidence)}`);
+    } else if (location.major === "Lustria") {
+      injected.push(`Lustria Location Foundation: ${GLOBAL_LUSTRIA_LORE.find(card => card.title === "Lore — Nexus Realm of Lustria")?.entry || "Lustria is the artificial interworld nexus realm in which active Dungeons develop."}`);
+    }
+    return injected.filter(value => !/:\s*$/.test(value)).join("\n");
+  }
+  function controlledGenerationContext(dms, operation, options = {}) {
+    const kind = clean(operation).toLowerCase(), uniqueDescriptions = Object.fromEntries(Object.entries(throneboundUniqueAttributes(dms)).map(([name, attribute]) => [name, attribute.description]));
+    if (["administrator", "administrator generation", "administrator-generation"].includes(kind)) {
+      const room = roomByReference(dms, options.room || options.roomId);
+      return { operation: "Administrator Generation", dungeon: { theme: dms.dungeon.theme, style: dms.dungeon.style, population: dms.population.nature, populationAppearance: dms.population.appearance }, uniqueAttributeDescriptions: uniqueDescriptions, administrator: { role: clean(options.role), rank: clean(options.rank) }, room: room ? { name: room.name, function: room.lore.function } : null };
+    }
+    if (["room", "room generation", "room-generation"].includes(kind)) {
+      const room = roomByReference(dms, options.room || options.roomId), definitionKey = room?.definition || roomDefinitionKey(options.definition), definition = ROOM_DEFINITIONS[definitionKey], resource = definition?.resource ? dms.dungeon.resources[definition.resource] : null;
+      if (!definition) throw new Error("Controlled room generation requires a known room definition or constructed room.");
+      return { operation: "Room Generation", dungeon: { theme: dms.dungeon.theme, style: dms.dungeon.style, manifestation: dms.dungeon.lore.manifestation }, uniqueAttributeDescriptions: uniqueDescriptions, room: { name: room?.name || definition.name, function: definition.function, tier: room?.tier || clamp(options.tier || definition.unlockTier, 0, dms.dungeon.tier) }, resourceDefinition: resource ? { role: definition.resource, name: resource.name, description: resource.description, collection: resource.collection, use: resource.use } : null };
+    }
+    if (["class", "class generation", "class-generation"].includes(kind)) {
+      const character = resolveCharacter(dms, options.target || "thronebound"); if (!character) throw new Error("Controlled Class generation requires a linked character.");
+      const aptitudes = character.id ? Object.fromEntries(Object.entries(character.attributes[character.attributeSpecialization] || {}).map(([name, attribute]) => [name, attribute.aptitude])) : Object.fromEntries([...Object.entries(dms.thronebound.attributes.combat), ...Object.entries(dms.thronebound.attributes.support), ...Object.entries(throneboundUniqueAttributes(dms))].map(([name, attribute]) => [name, attribute.aptitude]));
+      return { operation: "Class Generation", capabilities: character.profile?.capabilities || "", classLineage: (character.class.lineage || []).map(item => ({ tier: item.tier, className: item.className, description: item.description })), dungeonTheme: dms.dungeon.theme, uniqueAttributeDescriptions: uniqueDescriptions, aptitudes, growthPreferences: character.id ? [] : [...dms.thronebound.growthPreferences], tier: clamp(options.tier || character.class.tier + 1, 1, dms.dungeon.tier) };
+    }
+    if (["quest", "quest generation", "quest-generation"].includes(kind)) {
+      const category = QUEST_CATEGORIES.find(value => value.toLowerCase() === clean(options.category).toLowerCase()) || "Personal";
+      return { operation: "Quest Generation", category, location: { ...dms.activity.location }, progression: { dungeonTier: dms.dungeon.tier, throneboundLevel: dms.thronebound.level, class: dms.thronebound.class.name, classTier: dms.thronebound.class.tier, activeQuestIds: Object.entries(dms.quests.records).filter(([, quest]) => quest.status === "active").map(([id]) => id) }, relatedFacts: Array.isArray(options.relatedFacts) ? options.relatedFacts.map(clean).filter(Boolean) : [] };
+    }
+    throw new Error("Controlled generation operation must be Administrator, Room, Class, or Quest.");
   }
 
 
@@ -12942,6 +12945,10 @@ function AutoCards(inHook, inText, inStop) {
   function managedPlotBlock(existing, pattern, block) {
     return [String(existing || "").replace(pattern, "\n").trim(), block].filter(Boolean).join("\n\n");
   }
+  function managedAuthorNote(existing, block) {
+    const preserved = String(existing || "").replace(DMS_AUTHOR_NOTE_PATTERN, "\n").replace(DMS_ACTIVITY_STATE_PATTERN, "\n").trim();
+    return [preserved, block].filter(Boolean).join("\n\n");
+  }
   function plotEssentialsText(dms) {
     const resourceLines = RESOURCE_ROLES.map(role => {
       const resource = dms.dungeon.resources[role]; syncResource(resource);
@@ -12950,18 +12957,24 @@ function AutoCards(inHook, inText, inStop) {
     }).join("\n");
     const skillNames = dms.thronebound.class.skills.map(skill => skill.name).join(", ") || "None", traitNames = dms.thronebound.class.traits.map(trait => trait.name).join(", ") || "None";
     const lineage = (dms.thronebound.class.lineage || []).map(item => `Tier ${item.tier} ${item.className}`).join(" → ") || "None";
-    const activeFacilities = Object.values(dms.rooms).filter(room => room.state === "Active").length;
-    return `[DMS PLOT ESSENTIALS]\n\nTHRONEBOUND STATUS\nName: ${dms.thronebound.name}\nRace: ${dms.thronebound.race}\nGender: ${dms.thronebound.profile.gender || "Unspecified"}\nLevel: ${dms.thronebound.level} — Experience ${dms.thronebound.experience}/${levelThreshold(dms.thronebound.level)}\nClass: ${dms.thronebound.class.name} — Tier ${dms.thronebound.class.tier}\nClass Lineage: ${lineage}\nGrowth Preferences: ${(dms.thronebound.growthPreferences || []).join(", ") || "None"}\nCombat Attributes: ${formatAttributes(dms.thronebound.attributes.combat)}\nSupport Attributes: ${formatAttributes(dms.thronebound.attributes.support)}\nSkills: ${skillNames}\nTraits: ${traitNames}\n\nDUNGEON STATUS\nName: ${dms.dungeon.name}\nTier: ${dms.dungeon.tier}\nTheme: ${dms.dungeon.theme}\nStyle: ${dms.dungeon.style}\nUnique Attributes: ${Object.entries(dms.dungeon.uniqueAttributes).map(([name, attribute]) => `${attribute.priority} — ${name} [${attribute.aptitude}]: ${attribute.value}`).join("; ") || "None"}\nPopulation Nature: ${dms.population.nature}\nPopulation Appearance: ${dms.population.appearance}\nAdministrators: ${Object.keys(dms.administrators).length}/${dms.dungeon.administratorCapacity}\nFacilities: ${activeFacilities} Active / ${Object.keys(dms.rooms).length} Constructed\nPopulation: ${dms.population.workers.current} Workers / ${dms.population.soldiers.current} Soldiers\nHomeworld: ${dms.world.homeworld} — Return Anchor: ${dms.world.homeworldAnchor}\n\nRESOURCES\n${resourceLines}\n- Lustrian Marks: ${dms.currencies.marks} ungraded\n\n[/DMS PLOT ESSENTIALS]`;
+    const attributeLines = attributes => Object.entries(attributes || {}).map(([name, attribute]) => `- ${name} (${attribute.aptitude || "C"}): ${attribute.value ?? attribute}`).join("\n") || "- None";
+    const facilities = Object.values(dms.rooms), activeFacilities = facilities.filter(room => room.state === "Active").length;
+    const facilityState = facilities.map(room => `${room.name} [${room.state}, Tier ${room.tier}, Expansion ${room.expansion || 1}]`).join("; ") || "None";
+    const signature = dungeonSignature(dms);
+    return `[DMS PLOT ESSENTIALS]\n\nTHRONEBOUND IDENTITY\nName: ${dms.thronebound.name}\nRace: ${dms.thronebound.race}\nGender: ${dms.thronebound.profile.gender || "Unspecified"}\nAppearance: ${dms.thronebound.profile.appearance}\nVoice Pattern: ${dms.thronebound.profile.voicePattern}\n\nTHRONEBOUND PROGRESSION\nLevel: ${dms.thronebound.level} — Experience ${dms.thronebound.experience}/${levelThreshold(dms.thronebound.level)}\nClass: ${dms.thronebound.class.name} — Tier ${dms.thronebound.class.tier}\nClass Lineage: ${lineage}\nGrowth Preferences: ${(dms.thronebound.growthPreferences || []).join(", ") || "None"}\nSkills: ${skillNames}\nTraits: ${traitNames}\n\nCOMBAT ATTRIBUTES\n${attributeLines(dms.thronebound.attributes.combat)}\n\nSUPPORT ATTRIBUTES\n${attributeLines(dms.thronebound.attributes.support)}\n\nUNIQUE ATTRIBUTES\n${attributeLines(throneboundUniqueAttributes(dms))}\n\nDUNGEON IDENTITY\nName: ${dms.dungeon.name}\nTheme: ${dms.dungeon.theme}\nStyle: ${dms.dungeon.style}\nPopulation: ${dms.population.nature}\nHomeworld: ${dms.world.homeworld}\nConcept: ${dms.dungeon.concept}\n\nDUNGEON MECHANICS\nTier: ${dms.dungeon.tier}\nAdministrators: ${Object.keys(dms.administrators).length}/${dms.dungeon.administratorCapacity}\nPopulation: ${dms.population.workers.current} Workers / ${dms.population.soldiers.current} Soldiers\nDungeon Signature: ${signature.state}; Strength ${signature.strength}; ${signature.externallyDetectable ? "Externally Detectable" : "Externally Undetectable"}\nFacilities: ${activeFacilities} Active / ${facilities.length} Constructed\nFacility State: ${facilityState}\n\nRESOURCES\n${resourceLines}\n- Lustrian Marks: ${dms.currencies.marks} ungraded\n\n[/DMS PLOT ESSENTIALS]`;
   }
   function activityStateText(dms) {
     const location = dms.activity.location;
-    return `[DMS ACTIVITY STATE]\nLocation: ${location.major}${location.secondary ? ` — ${location.secondary}` : ""}${location.detail ? ` — ${location.detail}` : ""}\nMode: ${dms.activity.mode}\nTargets: ${dms.activity.targets.join(", ") || "None"}\nPace: ${dms.activity.pace}\nCycle: ${dms.activity.cycle} (${Math.round(dms.activity.progress * 100)}%)\n[/DMS ACTIVITY STATE]`;
+    return `[DMS ACTIVITY STATE]\nMajor Location: ${location.major}\nSecondary Location: ${location.secondary || "None"}\nLocation Detail: ${location.detail || "None"}\nActivity Mode: ${dms.activity.mode}\nTargets: ${dms.activity.targets.join(", ") || "None"}\nPace: ${dms.activity.pace}\nCycle: ${dms.activity.cycle} (${Math.round(dms.activity.progress * 100)}%)\n[/DMS ACTIVITY STATE]`;
+  }
+  function authorNoteText(dms) {
+    return `[DMS AUTHOR'S NOTE]\nSexual Content: ${dms.dungeon.contentPolicy.sexual || "None"}\nKink Content: ${dms.dungeon.contentPolicy.kink || "None"}\nTags: ${dms.dungeon.tagsText || (dms.dungeon.tags || []).join(", ") || "None"}\n\n${activityStateText(dms)}\n[/DMS AUTHOR'S NOTE]`;
   }
   function syncScenarioPlot(dms) {
     if (!global.state || !dms) return false;
     global.state.memory ||= {};
     global.state.memory.context = managedPlotBlock(global.state.memory.context, DMS_PLOT_ESSENTIALS_PATTERN, plotEssentialsText(dms));
-    global.state.memory.authorsNote = managedPlotBlock(global.state.memory.authorsNote, DMS_ACTIVITY_STATE_PATTERN, activityStateText(dms));
+    global.state.memory.authorsNote = managedAuthorNote(global.state.memory.authorsNote, authorNoteText(dms));
     return true;
   }
   function savePayload(card) {
@@ -12974,13 +12987,13 @@ function AutoCards(inHook, inText, inStop) {
     return { sv: SAVE_SCHEMA, rev: dms.persistence.revision, schema: dms.schema, idv: 2, parts, identity, tier: dms.dungeon.tier, cycle: dms.activity.cycle, progress: dms.activity.progress, res: Object.fromEntries(RESOURCE_ROLES.map(role => [role, role === "energy" ? syncResource(dms.dungeon.resources[role]) : stocks(dms.dungeon.resources[role])])), marks: dms.currencies.marks, gen: dms.generation, activity: { mode: dms.activity.mode, pace: dms.activity.pace, targets: dms.activity.targets, location: dms.activity.location, lastTurnKey: dms.activity.lastTurnKey || "" }, onboarding: [dms.onboarding.statusRead ? 1 : 0, dms.onboarding.resourcesRead ? 1 : 0, dms.onboarding.systemEntered ? 1 : 0, dms.onboarding.tierRequirementsRead ? 1 : 0, dms.onboarding.aptitudesDefined, dms.onboarding.scenarioVariablesImported ? 1 : 0, dms.onboarding.scenarioVariableSignature || ""], commandKey: dms.persistence.lastCommandKey || "" };
   }
   function compactProgressionSave(dms) {
-    const attrs = Object.fromEntries(["combat", "support"].map(group => [group, Object.fromEntries(Object.entries(dms.thronebound.attributes[group] || {}).map(([name, value]) => [name, { value: value.value, aptitude: value.aptitude }]))]));
+    const attrs = Object.fromEntries(["combat", "support", "unique"].map(group => [group, Object.fromEntries(Object.entries(dms.thronebound.attributes[group] || {}).map(([name, value]) => [name, { value: value.value, aptitude: value.aptitude, ...(group === "unique" ? { description: value.description, priority: value.priority } : {}) }]))]));
     const abilities = list => list.map(item => [item.name, item.mastery || 0, item.grade || 1, item.gradeName || "Basic", item.tier || 1, item.category || "", item.source || ""]);
     const lineage = list => (list || []).map(item => [item.tier, item.className, item.description || "", item.combatSkill || "", item.managementSkill || "", item.trait || "", item.acceptedCycle || 0]);
-    return { sv: SAVE_SCHEMA, rev: dms.persistence.revision, dattrs: dms.dungeon.uniqueAttributes, tb: { level: dms.thronebound.level, xp: dms.thronebound.experience, attrs, growth: dms.thronebound.growthPreferences, classTier: dms.thronebound.class.tier, className: dms.thronebound.class.name, lineage: lineage(dms.thronebound.class.lineage), skills: abilities(dms.thronebound.class.skills), traits: abilities(dms.thronebound.class.traits) }, admins: Object.fromEntries(Object.entries(dms.administrators).map(([id, a]) => [id, { level: a.level, xp: a.experience, role: a.role, rank: a.rank, effectiveness: a.effectiveness, specialization: a.attributeSpecialization, affinity: a.dungeonAttributeAffinity || "", bond: a.bond, assignedRooms: a.assignedRooms, name: a.name, race: a.race, classTier: a.class?.tier || 0, className: a.class?.name || a.role, lineage: lineage(a.class?.lineage), attrs: a.attributes, skills: abilities(a.class?.skills || []), traits: abilities(a.class?.traits || []) }])), quests: Object.fromEntries(Object.entries(dms.quests.records).map(([id, q]) => [id, [q.status, q.rewarded ? 1 : 0, q.tier, q.category, q.prerequisites || []]])), previews: dms.classPreviews };
+    return { sv: SAVE_SCHEMA, rev: dms.persistence.revision, tb: { level: dms.thronebound.level, xp: dms.thronebound.experience, attrs, growth: dms.thronebound.growthPreferences, classTier: dms.thronebound.class.tier, className: dms.thronebound.class.name, lineage: lineage(dms.thronebound.class.lineage), skills: abilities(dms.thronebound.class.skills), traits: abilities(dms.thronebound.class.traits) }, admins: Object.fromEntries(Object.entries(dms.administrators).map(([id, a]) => [id, { level: a.level, xp: a.experience, role: a.role, rank: a.rank, effectiveness: a.effectiveness, specialization: a.attributeSpecialization, affinity: a.dungeonAttributeAffinity || "", bond: a.bond, assignedRooms: a.assignedRooms, name: a.name, race: a.race, classTier: a.class?.tier || 0, className: a.class?.name || a.role, lineage: lineage(a.class?.lineage), attrs: a.attributes, skills: abilities(a.class?.skills || []), traits: abilities(a.class?.traits || []) }])), quests: Object.fromEntries(Object.entries(dms.quests.records).map(([id, q]) => [id, [q.status, q.rewarded ? 1 : 0, q.tier, q.category, q.prerequisites || []]])), previews: dms.classPreviews };
   }
   function compactOperationsSave(dms) {
-    return { sv: SAVE_SCHEMA, rev: dms.persistence.revision, rooms: Object.fromEntries(Object.entries(dms.rooms).map(([id, room]) => [id, { definition: room.definition, tier: room.tier, expansion: room.expansion || 1, state: room.state, assignedAdministrator: room.assignedAdministrator || "", targetedVeins: room.targetedVeins || [] }])), tasks: dms.tasks, reservations: dms.reservations, workers: Object.fromEntries((dms.population.workers.cohorts || []).map(cohort => [cohort.id, Number(cohort.disruption) || 0])), soldiers: dms.population.soldiers.cohorts, residences: dms.residences, milestones: dms.milestones, research: dms.shops.research, equipment: dms.equipment };
+    return { sv: SAVE_SCHEMA, rev: dms.persistence.revision, rooms: Object.fromEntries(Object.entries(dms.rooms).map(([id, room]) => [id, { definition: room.definition, tier: room.tier, expansion: room.expansion || 1, state: room.state, assignedAdministrator: room.assignedAdministrator || "", authorityAdministrator: room.authorityAdministrator || "", targetedVeins: room.targetedVeins || [] }])), tasks: dms.tasks, reservations: dms.reservations, workers: Object.fromEntries((dms.population.workers.cohorts || []).map(cohort => [cohort.id, Number(cohort.disruption) || 0])), soldiers: dms.population.soldiers.cohorts, residences: dms.residences, milestones: dms.milestones, research: dms.shops.research, equipment: dms.equipment };
   }
   function compactWorldSave(dms) { return { sv: SAVE_SCHEMA, rev: dms.persistence.revision, lustria: { sectors: dms.world.lustria.sectors, veins: dms.world.lustria.veins, inventory: dms.world.lustria.inventory, inventoryGrades: dms.world.lustria.inventoryGrades, controlledSectors: dms.world.lustria.controlledSectors }, portals: dms.portals }; }
   function subsystemCardTitle(key, index = 0) { return index ? `${SAVE_CARD_TITLES[key]} ${index + 1}` : SAVE_CARD_TITLES[key]; }
@@ -13062,9 +13075,9 @@ function AutoCards(inHook, inText, inStop) {
     const throne = managedCardByKey("DMS_SYS_THRONEBOUND_STATUS") || saveCardByTitle("DMS — Thronebound"), first = String(throne?.entry || "").split("\n")[0].split(/\s+[—-]\s+/); if (first.length >= 2) { dms.thronebound.name = clean(first[0]); dms.thronebound.race = clean(first.slice(1).join(" — ")); }
     const throneIdentity = managedCardByKey("DMS_LORE_THRONEBOUND_IDENTITY") || saveCardByTitle("DMS — Thronebound Identity"); if (throneIdentity) { dms.thronebound.profile.gender = cardField(throneIdentity, "Gender") || dms.thronebound.profile.gender; dms.thronebound.profile.appearance = cardField(throneIdentity, "Appearance") || dms.thronebound.profile.appearance; dms.thronebound.profile.voicePattern = cardField(throneIdentity, "Voice Pattern") || dms.thronebound.profile.voicePattern; }
     const throneCharacter = managedCardByKey("DMS_LORE_THRONEBOUND_CHARACTER") || saveCardByTitle("DMS — Thronebound Character"); if (throneCharacter) for (const [fieldName, stateName] of [["Personality", "personality"], ["Background", "background"], ["Capabilities", "capabilities"], ["Values", "values"]]) dms.thronebound.profile[stateName] = cardField(throneCharacter, fieldName) || dms.thronebound.profile[stateName];
-    const dungeonLore = managedCardByKey("DMS_LORE_DUNGEON_FOUNDATION") || saveCardByTitle("DMS — Dungeon Foundation"); if (dungeonLore) { dms.dungeon.concept = cardField(dungeonLore, "Concept") || dms.dungeon.concept; dms.dungeon.lore.description = cardField(dungeonLore, "Description") || dms.dungeon.lore.description; dms.dungeon.lore.manifestation = cardField(dungeonLore, "Manifestation") || dms.dungeon.lore.manifestation; }
-    const guidance = managedCardByKey("DMS_LORE_SCENARIO_GUIDANCE") || saveCardByTitle("DMS — Scenario Guidance"); if (guidance) { dms.dungeon.tags = unique(cardField(guidance, "Tags").split(",")); dms.dungeon.contentPolicy.sexual = cardField(guidance, "Sexual Content") || "None"; dms.dungeon.contentPolicy.kink = cardField(guidance, "Kink Content") || "None"; }
-    const worldIdentity = managedCardByKey("DMS_SYS_IDENTITY") || saveCardByTitle("DMS — Identity"); if (worldIdentity) { dms.population.nature = cardField(worldIdentity, "Population Nature") || dms.population.nature; dms.population.appearance = cardField(worldIdentity, "Population Appearance") || cardField(worldIdentity, "Workers") || cardField(worldIdentity, "Soldiers") || dms.population.appearance; dms.world.homeworld = cardField(worldIdentity, "Homeworld") || dms.world.homeworld; dms.world.homeworldDescription = cardField(worldIdentity, "Homeworld Description") || dms.world.homeworldDescription; dms.world.homeworldAnchor = cardField(worldIdentity, "Homeworld Anchor") || dms.world.homeworldAnchor; dms.world.secondaryLocation = cardField(worldIdentity, "Secondary") || dms.world.secondaryLocation; }
+    const dungeonLore = managedCardByKey("DMS_LORE_DUNGEON_FOUNDATION") || saveCardByTitle("DMS — Dungeon Foundation"); if (dungeonLore) { dms.dungeon.concept = cardField(dungeonLore, "Concept") || dms.dungeon.concept; dms.dungeon.lore.description = cardField(dungeonLore, "Description") || dms.dungeon.lore.description; dms.dungeon.lore.manifestation = cardField(dungeonLore, "Manifestation") || dms.dungeon.lore.manifestation; dms.population.appearance = cardField(dungeonLore, "Population Appearance") || dms.population.appearance; }
+    const guidance = managedCardByKey("DMS_LORE_SCENARIO_GUIDANCE") || saveCardByTitle("DMS — Scenario Guidance"); if (guidance) { dms.dungeon.tagsText = cardField(guidance, "Tags"); dms.dungeon.tags = unique(dms.dungeon.tagsText.split(",")); dms.dungeon.contentPolicy.sexual = cardField(guidance, "Sexual Content") || "None"; dms.dungeon.contentPolicy.kink = cardField(guidance, "Kink Content") || "None"; }
+    const worldIdentity = managedCardByKey("DMS_SYS_IDENTITY") || saveCardByTitle("DMS — Identity"); if (worldIdentity) { dms.thronebound.profile.gender = cardField(worldIdentity, "Gender") || dms.thronebound.profile.gender; dms.thronebound.profile.appearance = cardField(worldIdentity, "Appearance") || dms.thronebound.profile.appearance; dms.thronebound.profile.voicePattern = cardField(worldIdentity, "Voice Pattern") || dms.thronebound.profile.voicePattern; dms.dungeon.theme = cardField(worldIdentity, "Theme") || dms.dungeon.theme; dms.dungeon.style = cardField(worldIdentity, "Style") || dms.dungeon.style; dms.dungeon.concept = cardField(worldIdentity, "Concept") || dms.dungeon.concept; dms.population.nature = cardField(worldIdentity, "Population Nature") || dms.population.nature; dms.population.appearance = cardField(worldIdentity, "Population Appearance") || cardField(worldIdentity, "Workers") || cardField(worldIdentity, "Soldiers") || dms.population.appearance; dms.dungeon.lore.throneRoom = cardField(worldIdentity, "Throne Room") || dms.dungeon.lore.throneRoom; dms.world.homeworld = cardField(worldIdentity, "Homeworld") || dms.world.homeworld; dms.world.homeworldDescription = cardField(worldIdentity, "Homeworld Description") || dms.world.homeworldDescription; dms.world.homeworldAnchor = cardField(worldIdentity, "Homeworld Anchor") || dms.world.homeworldAnchor; dms.world.secondaryLocation = cardField(worldIdentity, "Secondary") || dms.world.secondaryLocation; }
     const homeworldFoundation = managedCardByKey("DMS_LORE_HOMEWORLD_FOUNDATION") || saveCardByTitle("DMS — Homeworld Foundation"); if (homeworldFoundation) { dms.world.homeworldDescription = cardField(homeworldFoundation, "Description") || dms.world.homeworldDescription; dms.world.homeworldRegion = cardField(homeworldFoundation, "Region") || dms.world.homeworldRegion; dms.world.homeworldTimePeriod = cardField(homeworldFoundation, "Time Period") || dms.world.homeworldTimePeriod; }
     const homeworldAnchor = managedCardByKey("DMS_LORE_HOMEWORLD_ANCHOR") || saveCardByTitle("DMS — Homeworld Anchor"); if (homeworldAnchor) { dms.world.homeworldAnchor = cardField(homeworldAnchor, "Primary Anchor") || dms.world.homeworldAnchor; dms.world.homeworldResidence = cardField(homeworldAnchor, "Residence") || dms.world.homeworldResidence; dms.world.homeworldCircumstances = cardField(homeworldAnchor, "Current Circumstances") || dms.world.homeworldCircumstances; }
     const resources = managedCardByKey("DMS_SYS_DUNGEON_RESOURCES") || saveCardByTitle("DMS — Dungeon Resources");
@@ -13105,14 +13118,15 @@ function AutoCards(inHook, inText, inStop) {
     dms.generation = { ...dms.generation, ...(core.gen || {}) }; if (core.activity) dms.activity = { ...dms.activity, ...core.activity, location: { ...dms.activity.location, ...(core.activity.location || {}) } };
     if (Array.isArray(core.onboarding)) dms.onboarding = { statusRead: !!core.onboarding[0], resourcesRead: !!core.onboarding[1], systemEntered: !!core.onboarding[2], tierRequirementsRead: !!core.onboarding[3], aptitudesDefined: unique(Array.isArray(core.onboarding[4]) ? core.onboarding[4] : []), scenarioVariablesImported: !!core.onboarding[5], scenarioVariableSignature: clean(core.onboarding[6]) };
     else if (core.onboarding && typeof core.onboarding === "object") dms.onboarding = { ...dms.onboarding, ...core.onboarding, aptitudesDefined: unique(core.onboarding.aptitudesDefined || []) };
-    const tb = progression.tb || {}, throneCard = saveCardByTitle("DMS — Thronebound"); dms.thronebound.level = Math.max(1, Number(tb.level) || dms.thronebound.level); dms.thronebound.experience = Math.max(0, Number(tb.xp) || 0); dms.thronebound.growthPreferences = unique(Array.isArray(tb.growth) ? tb.growth : []).slice(0, 5); dms.thronebound.class.tier = Math.max(0, Number(tb.classTier) || 0); const throneClass = String(throneCard?.entry || "").match(/^Class:\s*(.+?),\s*Tier/im); dms.thronebound.class.name = clean(tb.className) || (throneClass ? clean(throneClass[1]) : dms.thronebound.class.name); dms.thronebound.class.description = cardField(throneCard, "Class Description") || dms.thronebound.class.description; dms.thronebound.class.lineage = restoreClassLineage(tb.lineage); dms.thronebound.class.skills = restoreSavedAbilities(tb.skills, throneAbilityLore(tb.skills)); dms.thronebound.class.traits = restoreSavedAbilities(tb.traits, throneAbilityLore(tb.traits)); dms.dungeon.uniqueAttributes = completeDungeonAttributes(progression.dattrs || tb.unique || dms.dungeon.uniqueAttributes, dms.dungeon.theme);
-    for (const group of ["combat", "support"]) for (const [name, value] of Object.entries(tb.attrs?.[group] || {})) if (dms.thronebound.attributes[group]?.[name]) { dms.thronebound.attributes[group][name] = { ...dms.thronebound.attributes[group][name], ...value }; delete dms.thronebound.attributes[group][name].preference; }
+    const tb = progression.tb || {}, throneCard = saveCardByTitle("DMS — Thronebound"); dms.thronebound.level = Math.max(1, Number(tb.level) || dms.thronebound.level); dms.thronebound.experience = Math.max(0, Number(tb.xp) || 0); dms.thronebound.class.tier = Math.max(0, Number(tb.classTier) || 0); const throneClass = String(throneCard?.entry || "").match(/^Class:\s*(.+?),\s*Tier/im); dms.thronebound.class.name = clean(tb.className) || (throneClass ? clean(throneClass[1]) : dms.thronebound.class.name); dms.thronebound.class.description = cardField(throneCard, "Class Description") || dms.thronebound.class.description; dms.thronebound.class.lineage = restoreClassLineage(tb.lineage); dms.thronebound.class.skills = restoreSavedAbilities(tb.skills, throneAbilityLore(tb.skills)); dms.thronebound.class.traits = restoreSavedAbilities(tb.traits, throneAbilityLore(tb.traits)); dms.thronebound.attributes.unique = completeDungeonAttributes(tb.attrs?.unique || progression.dattrs || tb.unique || throneboundUniqueAttributes(dms), dms.dungeon.theme);
+    for (const group of ["combat", "support", "unique"]) for (const [name, value] of Object.entries(tb.attrs?.[group] || {})) if (dms.thronebound.attributes[group]?.[name]) { dms.thronebound.attributes[group][name] = { ...dms.thronebound.attributes[group][name], ...value }; delete dms.thronebound.attributes[group][name].preference; }
+    dms.thronebound.growthPreferences = unique(Array.isArray(tb.growth) ? tb.growth : []).filter(name => growthPreferenceNames(dms).includes(name)).slice(0, 5);
     if (!dms.thronebound.growthPreferences.length) { const legacyPreferences = [...Object.entries(tb.attrs?.combat || {}), ...Object.entries(tb.attrs?.support || {})].sort((left, right) => (Number(right[1]?.preference) || 0) - (Number(left[1]?.preference) || 0)).slice(0, 5).map(([name]) => name); dms.thronebound.growthPreferences = legacyPreferences.length ? legacyPreferences : aptitudeNames(dms).slice(0, 5); }
-    dms.rooms = {}; for (const [id, saved] of Object.entries(operations.rooms || {})) { const definition = ROOM_DEFINITIONS[saved.definition]; if (!definition) continue; const restoredTier = saved.definition === "throne-room" ? Math.max(0, Number(saved.tier) || 0) : Math.max(1, Number(saved.tier) || definition.unlockTier || 1), lore = roomLore(dms, definition, restoredTier), roomCard = managedCardByKey(`DMS_ROOM_${id.toUpperCase().replace(/\W/g, "_")}`); lore.appearance = cardField(roomCard, "Appearance") || lore.appearance; dms.rooms[id] = { id, definition: saved.definition, name: definition.name, tier: restoredTier, expansion: Math.max(1, Number(saved.expansion) || 1), state: saved.state || "Active", assignedWorkers: 0, jobPopulation: 0, targetedVeins: Array.isArray(saved.targetedVeins) ? saved.targetedVeins : [], assignedAdministrator: saved.assignedAdministrator || "", lore }; }
+    dms.rooms = {}; for (const [id, saved] of Object.entries(operations.rooms || {})) { const definition = ROOM_DEFINITIONS[saved.definition]; if (!definition) continue; const restoredTier = saved.definition === "throne-room" ? Math.max(0, Number(saved.tier) || 0) : Math.max(1, Number(saved.tier) || definition.unlockTier || 1), roomCard = managedCardByKey(`DMS_ROOM_${id.toUpperCase().replace(/\W/g, "_")}`), recoveredAppearance = cardField(roomCard, "Appearance"), lore = saved.definition === "throne-room" ? throneRoomLore(dms, restoredTier, { baseAppearance: dms.dungeon.lore.throneRoom || recoveredAppearance }) : roomLore(dms, definition, restoredTier); if (recoveredAppearance) lore.appearance = recoveredAppearance; dms.rooms[id] = { id, definition: saved.definition, name: definition.name, tier: restoredTier, expansion: Math.max(1, Number(saved.expansion) || 1), state: saved.state || "Active", assignedWorkers: 0, jobPopulation: 0, targetedVeins: Array.isArray(saved.targetedVeins) ? saved.targetedVeins : [], assignedAdministrator: saved.assignedAdministrator || "", authorityAdministrator: saved.authorityAdministrator || "", lore }; }
     dms.tasks = Array.isArray(operations.tasks) ? operations.tasks : []; dms.reservations = operations.reservations && typeof operations.reservations === "object" ? operations.reservations : {}; dms.population.workers.cohorts = Object.entries(operations.workers || {}).map(([id, disruption]) => ({ id, disruption: Math.max(0, Number(disruption) || 0) })); dms.population.soldiers.cohorts = Array.isArray(operations.soldiers) ? operations.soldiers : []; dms.residences = { ...dms.residences, ...(operations.residences || {}), assignments: { ...dms.residences.assignments, ...((operations.residences || {}).assignments || {}) }, named: { ...dms.residences.named, ...((operations.residences || {}).named || {}) }, stays: { ...dms.residences.stays, ...((operations.residences || {}).stays || {}) }, detainments: { ...dms.residences.detainments, ...((operations.residences || {}).detainments || {}) } }; dms.milestones = { ...dms.milestones, ...(operations.milestones || {}), tier1: { ...dms.milestones.tier1, ...((operations.milestones || {}).tier1 || {}), produced: { ...dms.milestones.tier1.produced, ...(((operations.milestones || {}).tier1 || {}).produced || {}) }, constructed: { ...dms.milestones.tier1.constructed, ...(((operations.milestones || {}).tier1 || {}).constructed || {}) }, completedConstruction: { ...dms.milestones.tier1.completedConstruction, ...(((operations.milestones || {}).tier1 || {}).completedConstruction || {}) } } }; dms.classPreviews = progression.previews && typeof progression.previews === "object" ? progression.previews : {}; dms.shops.research = operations.research || {}; dms.equipment = { ...dms.equipment, ...(operations.equipment || {}), previews: { ...dms.equipment.previews, ...((operations.equipment || {}).previews || {}) }, items: { ...dms.equipment.items, ...((operations.equipment || {}).items || {}) } };
     dms.world.lustria = { ...dms.world.lustria, ...(world.lustria || {}) }; dms.world.lustria.inventoryGrades ||= {}; dms.portals = { ...dms.portals, ...(world.portals || {}), anchors: { ...dms.portals.anchors, ...((world.portals || {}).anchors || {}) }, routes: { ...dms.portals.routes, ...((world.portals || {}).routes || {}) } };
     for (const [id, rawSaved] of Object.entries(progression.quests || {})) { const saved = Array.isArray(rawSaved) ? { status: rawSaved[0], rewarded: !!rawSaved[1], tier: rawSaved[2], category: rawSaved[3], prerequisites: rawSaved[4] || [] } : rawSaved; if (dms.quests.records[id]) Object.assign(dms.quests.records[id], saved); else { const card = Array.isArray(global.storyCards) ? global.storyCards.find(item => clean(item.keys).split(",").includes(`DMS_QUEST_${id.toUpperCase().replace(/\W/g, "_")}`)) : null; dms.quests.records[id] = { category: saved.category || "Personal", tier: saved.tier ?? dms.dungeon.tier, title: clean(String(card?.title || "").replace(/^DMS Quest — /, "")) || id, status: saved.status || "locked", objective: cardField(card, "Objective"), rewards: (() => { try { return JSON.parse(cardField(card, "Rewards") || "{}"); } catch { return {}; } })(), prerequisites: saved.prerequisites || [], rewarded: !!saved.rewarded }; } }
-    dms.administrators = {}; for (const [id, saved] of Object.entries(progression.admins || {})) { const card = managedCardByKey(`DMS_ADMIN_${id.toUpperCase().replace(/\W/g, "_")}`) || saveCardByTitle(`DMS Administrator — ${saved.name || ""}`); const line = String(card?.entry || "").split("\n")[0].split(/\s+[—-]\s+/), admin = characterBase(clean(saved.name) || clean(line[0]) || id, clean(saved.race) || clean(line.slice(1).join(" — ")) || dms.population.nature, saved.role || "Manager"); admin.id = id; admin.role = saved.role || "Manager"; admin.rank = saved.rank || "F"; admin.appearance = cardField(card, "Appearance") || administratorAppearance(dms, admin.role, admin.rank); admin.effectiveness = Number(saved.effectiveness) || ADMINISTRATOR_RANK_MULTIPLIERS[admin.rank] || 1; admin.attributeSpecialization = saved.specialization || "support"; admin.attributes = saved.attrs || { [admin.attributeSpecialization]: attributeSet(ATTRIBUTE_TEMPLATES[admin.attributeSpecialization]) }; admin.dungeonAttributeAffinity = clean(saved.affinity) || choose(Object.keys(dms.dungeon.uniqueAttributes), `${dms.dungeon.name}|administrator-affinity|${id}`); const adminClass = String(card?.entry || "").match(/^Class:\s*(.+?),\s*Tier/im); admin.class.name = clean(saved.className) || (adminClass ? clean(adminClass[1]) : admin.class.name); admin.class.description = cardField(card, "Class Description") || admin.class.description; admin.class.lineage = restoreClassLineage(saved.lineage); const skillLore = jsonCardField(card, "Skill Details"), traitLore = jsonCardField(card, "Trait Details"); admin.class.skills = restoreSavedAbilities(saved.skills, skillLore); admin.class.traits = restoreSavedAbilities(saved.traits, traitLore); admin.level = Math.max(1, Number(saved.level) || 1); admin.experience = Math.max(0, Number(saved.xp) || 0); admin.bond = saved.bond || { value: 0, completedEvents: [] }; admin.assignedRooms = saved.assignedRooms || []; admin.class.tier = Math.max(0, Number(saved.classTier) || 0); admin.status = "Active"; dms.administrators[id] = admin; }
+    dms.administrators = {}; for (const [id, saved] of Object.entries(progression.admins || {})) { const card = managedCardByKey(`DMS_ADMIN_${id.toUpperCase().replace(/\W/g, "_")}`) || saveCardByTitle(`DMS Administrator — ${saved.name || ""}`); const line = String(card?.entry || "").split("\n")[0].split(/\s+[—-]\s+/), admin = characterBase(clean(saved.name) || clean(line[0]) || id, clean(saved.race) || clean(line.slice(1).join(" — ")) || dms.population.nature, saved.role || "Manager"); admin.id = id; admin.role = saved.role || "Manager"; admin.rank = saved.rank || "F"; admin.appearance = cardField(card, "Appearance") || administratorAppearance(dms, admin.role, admin.rank); admin.effectiveness = Number(saved.effectiveness) || ADMINISTRATOR_RANK_MULTIPLIERS[admin.rank] || 1; admin.attributeSpecialization = saved.specialization || "support"; admin.attributes = saved.attrs || { [admin.attributeSpecialization]: attributeSet(ATTRIBUTE_TEMPLATES[admin.attributeSpecialization]) }; admin.dungeonAttributeAffinity = clean(saved.affinity) || choose(Object.keys(throneboundUniqueAttributes(dms)), `${dms.dungeon.name}|administrator-affinity|${id}`); const adminClass = String(card?.entry || "").match(/^Class:\s*(.+?),\s*Tier/im); admin.class.name = clean(saved.className) || (adminClass ? clean(adminClass[1]) : admin.class.name); admin.class.description = cardField(card, "Class Description") || admin.class.description; admin.class.lineage = restoreClassLineage(saved.lineage); const skillLore = jsonCardField(card, "Skill Details"), traitLore = jsonCardField(card, "Trait Details"); admin.class.skills = restoreSavedAbilities(saved.skills, skillLore); admin.class.traits = restoreSavedAbilities(saved.traits, traitLore); admin.level = Math.max(1, Number(saved.level) || 1); admin.experience = Math.max(0, Number(saved.xp) || 0); admin.bond = saved.bond || { value: 0, completedEvents: [] }; admin.assignedRooms = saved.assignedRooms || []; admin.class.tier = Math.max(0, Number(saved.classTier) || 0); admin.status = "Active"; dms.administrators[id] = admin; }
     dms.persistence = { saveSchema: SAVE_SCHEMA, revision: snapshot.revision, cacheRevision: snapshot.revision, lastSavedRevision: snapshot.revision, lastCommandKey: clean(core.commandKey) };
     dms.initialized = identityReady(dms); applyDerivedState(dms); updateQuests(dms); dms.persistence.revision = snapshot.revision; dms.persistence.cacheRevision = snapshot.revision; return dms;
   }
@@ -13188,24 +13202,34 @@ function AutoCards(inHook, inText, inStop) {
     const update = storyCardApi("update"); if (!Array.isArray(global.storyCards) || !update) return;
     global.storyCards.forEach((card, index) => { if (card?.__dmsManaged && predicate(card)) update(index, clean(card.keys), String(card.entry || ""), clean(card.type || "System Cards")); });
   }
+  function naturalKeyVariants(value) {
+    const exact = clean(value); if (!exact) return [];
+    return unique([exact, exact.replace(/[’']/g, ""), exact.replace(/[^a-z0-9]+/gi, " ").trim()]).filter(item => item.length >= 2);
+  }
+  function setNaturalLoreCard(card, managedKey, typeName, ...keyValues) {
+    if (!card) return null;
+    card.keys = unique([managedKey, ...keyValues.flatMap(naturalKeyVariants)]).join(", "); card.type = typeName; setStoryCardPresentation(card, true, false); return card;
+  }
   function refreshCards(dms) {
     cardRegistryState = dms;
     for (const definition of GLOBAL_LUSTRIA_LORE) {
       const lore = ensureCard(definition.title, definition.keys);
       if (lore) { lore.keys = definition.keys; lore.type = "Global Lore"; lore.description = "Setting-wide Lustria foundation shared by every dungeon; scenario-specific worlds, characters, and named dungeons are excluded."; lore.entry = definition.entry; }
     }
-    const dungeonCard = ensureCard("DMS — Dungeon", "DMS_SYS_DUNGEON_STATUS"); if (dungeonCard) { dungeonCard.entry = status(dms); setStoryCardPresentation(dungeonCard, true, false); }
-    const identityCard = ensureCard("DMS — Identity", "DMS_SYS_IDENTITY"); if (identityCard) { identityCard.entry = `Population Nature: ${dms.population.nature}\nPopulation Appearance: ${dms.population.appearance}\nHomeworld: ${dms.world.homeworld}\nHomeworld Description: ${dms.world.homeworldDescription}\nHomeworld Anchor: ${dms.world.homeworldAnchor}\nSecondary: ${dms.world.secondaryLocation}`; setStoryCardPresentation(identityCard, false, false); }
-    const scenarioGuidance = ensureCard("DMS — Scenario Guidance", "DMS_LORE_SCENARIO_GUIDANCE"); if (scenarioGuidance) { scenarioGuidance.type = "Story"; scenarioGuidance.entry = `Tags: ${(dms.dungeon.tags || []).join(", ") || "None"}\nConcept: ${dms.dungeon.concept}\nSexual Content: ${dms.dungeon.contentPolicy.sexual || "None"}\nKink Content: ${dms.dungeon.contentPolicy.kink || "None"}`; }
-    const dungeonFoundation = ensureCard("DMS — Dungeon Foundation", "DMS_LORE_DUNGEON_FOUNDATION"); if (dungeonFoundation) { dungeonFoundation.type = "Dungeon Lore"; dungeonFoundation.entry = `Dungeon: ${dms.dungeon.name}\nTheme: ${dms.dungeon.theme}\nStyle: ${dms.dungeon.style}\nConcept: ${dms.dungeon.concept}\nDescription: ${dms.dungeon.lore.description}\nManifestation: ${dms.dungeon.lore.manifestation}`; }
-    const throneIdentity = ensureCard("DMS — Thronebound Identity", "DMS_LORE_THRONEBOUND_IDENTITY"); if (throneIdentity) { throneIdentity.type = "Character"; throneIdentity.entry = `Name: ${dms.thronebound.name}\nRace: ${dms.thronebound.race}\nGender: ${dms.thronebound.profile.gender}\nAppearance: ${dms.thronebound.profile.appearance}\nVoice Pattern: ${dms.thronebound.profile.voicePattern}`; }
-    const throneCharacter = ensureCard("DMS — Thronebound Character", "DMS_LORE_THRONEBOUND_CHARACTER"); if (throneCharacter) { throneCharacter.type = "Character"; throneCharacter.entry = `Personality: ${dms.thronebound.profile.personality}\nBackground: ${dms.thronebound.profile.background}\nCapabilities: ${dms.thronebound.profile.capabilities}\nValues: ${dms.thronebound.profile.values}`; }
-    const homeworldFoundation = ensureCard("DMS — Homeworld Foundation", "DMS_LORE_HOMEWORLD_FOUNDATION"); if (homeworldFoundation) { homeworldFoundation.type = "World Lore"; homeworldFoundation.entry = `Homeworld: ${dms.world.homeworld}\nDescription: ${dms.world.homeworldDescription}\nRegion: ${dms.world.homeworldRegion}\nTime Period: ${dms.world.homeworldTimePeriod}`; }
-    const homeworldAnchor = ensureCard("DMS — Homeworld Anchor", "DMS_LORE_HOMEWORLD_ANCHOR"); if (homeworldAnchor) { homeworldAnchor.type = "Location"; homeworldAnchor.entry = `Homeworld: ${dms.world.homeworld}\nPrimary Anchor: ${dms.world.homeworldAnchor}\nResidence: ${dms.world.homeworldResidence || "None"}\nCurrent Circumstances: ${dms.world.homeworldCircumstances}`; }
-    const resources = ensureCard("DMS — Dungeon Resources", "DMS_SYS_DUNGEON_RESOURCES"); if (resources) resources.entry = `${RESOURCE_ROLES.map(role => { const resource = dms.dungeon.resources[role]; syncResource(resource); return `[${title(role)}] ${resource.name}: ${resource.description}\nCollection: ${resource.collection}\nUse: ${resource.use}\nStored: ${resource.graded ? RESOURCE_GRADES.map(grade => `${grade.name} ${resource.grades[grade.name]}`).join("; ") : `${resource.amount} (ungraded)`}`; }).join("\n\n")}\n\n[Lustrian Marks] ${dms.currencies.marks} (ungraded)`;
-    const dungeonAttributes = ensureCard("DMS — Unique Dungeon Attributes", "DMS_SYS_DUNGEON_ATTRIBUTES"); if (dungeonAttributes) dungeonAttributes.entry = Object.entries(dms.dungeon.uniqueAttributes).map(([name, attribute]) => `${attribute.priority} — ${name} [${attribute.aptitude}]: ${attribute.value}\nTheme Weight: ${attribute.priority === "Primary" ? "Full" : attribute.priority === "Secondary" ? "Moderate" : "Minor"}\nDescription: ${attribute.description}`).join("\n\n") + `\n\nCombined Dungeon Theme Effect: ×${dungeonAttributeMultiplier(dms)} to production, Administrator assignments, and defense.`;
-    const character = ensureCard("DMS — Thronebound", "DMS_SYS_THRONEBOUND_STATUS"); if (character) character.entry = `${dms.thronebound.name} — ${dms.thronebound.race}\nClass: ${dms.thronebound.class.name}, Tier ${dms.thronebound.class.tier}; Level ${dms.thronebound.level}; Experience ${dms.thronebound.experience}/${levelThreshold(dms.thronebound.level)}\nClass Description: ${dms.thronebound.class.description}\nClass Lineage: ${(dms.thronebound.class.lineage || []).map(item => `Tier ${item.tier} ${item.className}`).join(" → ") || "None"}\nGrowth Preferences: ${(dms.thronebound.growthPreferences || []).join(", ") || "None"}\nCombat Attributes: ${formatAttributes(dms.thronebound.attributes.combat)}\nSupport Attributes: ${formatAttributes(dms.thronebound.attributes.support)}\nSkills: ${dms.thronebound.class.skills.map(skill => `${skill.name} [${skill.gradeName || "Basic"}] ${skill.mastery || 0}%`).join(", ") || "None"}\nTraits: ${dms.thronebound.class.traits.map(trait => `${trait.name} [${trait.gradeName || "Basic"}] ${trait.mastery || 0}%`).join(", ") || "None"}`;
-    const activity = ensureCard("DMS — Activity", "DMS_SYS_ACTIVITY_STATUS"); if (activity) activity.entry = `[DMS ACTIVITY]\nLocation: ${dms.activity.location.major}\nSecondary: ${dms.activity.location.secondary}\nDetail: ${dms.activity.location.detail}\nMode: ${dms.activity.mode}\nTargets: ${dms.activity.targets.join(", ")}\nPace: ${dms.activity.pace}\nCycle: ${dms.activity.cycle}\nProgress: ${Math.round(dms.activity.progress * 100)}%`;
+    const dungeonCard = ensureCard("DMS — Dungeon", "DMS_SYS_DUNGEON_STATUS"); if (dungeonCard) { dungeonCard.type = "System — Status"; dungeonCard.entry = status(dms); setStoryCardPresentation(dungeonCard, true, false); }
+    const identityCard = ensureCard("DMS — Identity", "DMS_SYS_IDENTITY"); if (identityCard) { identityCard.entry = `Thronebound: ${dms.thronebound.name}\nRace: ${dms.thronebound.race}\nGender: ${dms.thronebound.profile.gender}\nAppearance: ${dms.thronebound.profile.appearance}\nVoice Pattern: ${dms.thronebound.profile.voicePattern}\nDungeon: ${dms.dungeon.name}\nTheme: ${dms.dungeon.theme}\nStyle: ${dms.dungeon.style}\nConcept: ${dms.dungeon.concept}\nPopulation Nature: ${dms.population.nature}\nPopulation Appearance: ${dms.population.appearance}\nThrone Room: ${dms.dungeon.lore.throneRoom}\nHomeworld: ${dms.world.homeworld}\nHomeworld Description: ${dms.world.homeworldDescription}\nHomeworld Anchor: ${dms.world.homeworldAnchor}\nSecondary: ${dms.world.secondaryLocation}`; identityCard.type = "System — Identity"; setStoryCardPresentation(identityCard, false, false); }
+    const scenarioGuidance = ensureCard("DMS — Scenario Guidance", "DMS_LORE_SCENARIO_GUIDANCE"); if (scenarioGuidance) { scenarioGuidance.type = "System — Scenario Guidance"; scenarioGuidance.entry = `Tags: ${dms.dungeon.tagsText || (dms.dungeon.tags || []).join(", ") || "None"}\nConcept: ${dms.dungeon.concept}\nSexual Content: ${dms.dungeon.contentPolicy.sexual || "None"}\nKink Content: ${dms.dungeon.contentPolicy.kink || "None"}`; setStoryCardPresentation(scenarioGuidance, false, false); }
+    const dungeonFoundation = setNaturalLoreCard(ensureCard("DMS — Dungeon Foundation", "DMS_LORE_DUNGEON_FOUNDATION"), "DMS_LORE_DUNGEON_FOUNDATION", "Dungeon Lore", dms.dungeon.name, dms.population.nature, dms.dungeon.theme); if (dungeonFoundation) dungeonFoundation.entry = `Description: ${dms.dungeon.lore.description}\nManifestation: ${dms.dungeon.lore.manifestation}\nPopulation Appearance: ${dms.population.appearance}`;
+    const throneIdentity = ensureCard("DMS — Thronebound Identity", "DMS_LORE_THRONEBOUND_IDENTITY"); if (throneIdentity) { throneIdentity.type = "System — Thronebound Identity"; throneIdentity.entry = `Name: ${dms.thronebound.name}\nRace: ${dms.thronebound.race}\nGender: ${dms.thronebound.profile.gender}\nAppearance: ${dms.thronebound.profile.appearance}\nVoice Pattern: ${dms.thronebound.profile.voicePattern}`; setStoryCardPresentation(throneIdentity, false, false); }
+    const throneCharacter = setNaturalLoreCard(ensureCard("DMS — Thronebound Character", "DMS_LORE_THRONEBOUND_CHARACTER"), "DMS_LORE_THRONEBOUND_CHARACTER", "Character Lore", dms.thronebound.name); if (throneCharacter) throneCharacter.entry = `Personality: ${dms.thronebound.profile.personality}\nBackground: ${dms.thronebound.profile.background}\nCapabilities: ${dms.thronebound.profile.capabilities}\nValues: ${dms.thronebound.profile.values}`;
+    const homeworldFoundation = setNaturalLoreCard(ensureCard("DMS — Homeworld Foundation", "DMS_LORE_HOMEWORLD_FOUNDATION"), "DMS_LORE_HOMEWORLD_FOUNDATION", "World Lore", dms.world.homeworld, dms.world.homeworldRegion); if (homeworldFoundation) homeworldFoundation.entry = `Description: ${dms.world.homeworldDescription}\nRegion: ${dms.world.homeworldRegion}\nTime Period: ${dms.world.homeworldTimePeriod}`;
+    const homeworldAnchor = setNaturalLoreCard(ensureCard("DMS — Homeworld Anchor", "DMS_LORE_HOMEWORLD_ANCHOR"), "DMS_LORE_HOMEWORLD_ANCHOR", "Location Lore", dms.world.homeworldAnchor, dms.world.homeworldResidence); if (homeworldAnchor) homeworldAnchor.entry = `Primary Anchor: ${dms.world.homeworldAnchor}\nResidence: ${dms.world.homeworldResidence || "None"}\nCurrent Circumstances: ${dms.world.homeworldCircumstances}`;
+    for (const role of RESOURCE_ROLES) { const resource = dms.dungeon.resources[role], managedKey = `DMS_LORE_RESOURCE_${role.toUpperCase()}`, resourceCard = setNaturalLoreCard(ensureCard(`DMS — ${title(role)} Resource — ${resource.name}`, managedKey), managedKey, "Dungeon Resource Lore", resource.name); if (resourceCard) resourceCard.entry = `Name: ${resource.name}\nDescription: ${resource.description}\nCollection: ${resource.collection}\nUse: ${resource.use}`; }
+    const resources = ensureCard("DMS — Dungeon Resources", "DMS_SYS_DUNGEON_RESOURCES"); if (resources) { resources.type = "System — Resources"; resources.entry = `${RESOURCE_ROLES.map(role => { const resource = dms.dungeon.resources[role]; syncResource(resource); return `[${title(role)}] ${resource.name}: ${resource.description}\nCollection: ${resource.collection}\nUse: ${resource.use}\nStored: ${resource.graded ? RESOURCE_GRADES.map(grade => `${grade.name} ${resource.grades[grade.name]}`).join("; ") : `${resource.amount} (ungraded)`}`; }).join("\n\n")}\n\n[Lustrian Marks] ${dms.currencies.marks} (ungraded)`; setStoryCardPresentation(resources, false, false); }
+    const uniqueAttributeLore = setNaturalLoreCard(ensureCard("DMS — Unique Attribute Lore", "DMS_LORE_UNIQUE_ATTRIBUTES"), "DMS_LORE_UNIQUE_ATTRIBUTES", "Character Lore", ...Object.keys(throneboundUniqueAttributes(dms))); if (uniqueAttributeLore) uniqueAttributeLore.entry = Object.entries(throneboundUniqueAttributes(dms)).map(([name, attribute]) => `${name}: ${attribute.description}`).join("\n") || "No Thronebound Unique Attributes are defined.";
+    const dungeonAttributes = ensureCard("DMS — Thronebound Unique Attributes", "DMS_SYS_DUNGEON_ATTRIBUTES"); if (dungeonAttributes) { dungeonAttributes.type = "System — Attributes"; dungeonAttributes.entry = Object.entries(throneboundUniqueAttributes(dms)).map(([name, attribute]) => `${attribute.priority} — ${name} [${attribute.aptitude}]: ${attribute.value}\nDescription: ${attribute.description}`).join("\n\n") + `\n\nCombined Dungeon-facing Effect: ×${dungeonAttributeMultiplier(dms)} to production, Administrator assignments, and defense.`; setStoryCardPresentation(dungeonAttributes, false, false); }
+    const character = ensureCard("DMS — Thronebound", "DMS_SYS_THRONEBOUND_STATUS"); if (character) { character.type = "System — Status"; character.entry = `${dms.thronebound.name} — ${dms.thronebound.race}\nClass: ${dms.thronebound.class.name}, Tier ${dms.thronebound.class.tier}; Level ${dms.thronebound.level}; Experience ${dms.thronebound.experience}/${levelThreshold(dms.thronebound.level)}\nClass Description: ${dms.thronebound.class.description}\nClass Lineage: ${(dms.thronebound.class.lineage || []).map(item => `Tier ${item.tier} ${item.className}`).join(" → ") || "None"}\nGrowth Preferences: ${(dms.thronebound.growthPreferences || []).join(", ") || "None"}\nCombat Attributes: ${formatAttributes(dms.thronebound.attributes.combat)}\nSupport Attributes: ${formatAttributes(dms.thronebound.attributes.support)}\nUnique Attributes: ${formatAttributes(throneboundUniqueAttributes(dms))}\nSkills: ${dms.thronebound.class.skills.map(skill => `${skill.name} [${skill.gradeName || "Basic"}] ${skill.mastery || 0}%`).join(", ") || "None"}\nTraits: ${dms.thronebound.class.traits.map(trait => `${trait.name} [${trait.gradeName || "Basic"}] ${trait.mastery || 0}%`).join(", ") || "None"}`; setStoryCardPresentation(character, true, false); }
+    const activity = ensureCard("DMS — Activity", "DMS_SYS_ACTIVITY_STATUS"); if (activity) { activity.type = "System — Activity"; activity.entry = `[DMS ACTIVITY]\nLocation: ${dms.activity.location.major}\nSecondary: ${dms.activity.location.secondary}\nDetail: ${dms.activity.location.detail}\nMode: ${dms.activity.mode}\nTargets: ${dms.activity.targets.join(", ")}\nPace: ${dms.activity.pace}\nCycle: ${dms.activity.cycle}\nProgress: ${Math.round(dms.activity.progress * 100)}%`; setStoryCardPresentation(activity, false, false); }
     for (const [definitionKey, definition] of Object.entries(ROOM_DEFINITIONS)) {
       const key = `DMS_FACILITY_UNLOCK_${definitionKey.toUpperCase().replace(/\W/g, "_")}`, titleText = `DMS Facility Unlock — ${definition.name}`, constructed = Object.values(dms.rooms).some(room => room.definition === definitionKey);
       if (constructed) { if (hasLiveStoryCardApi()) removeManagedCard(dms, key); continue; }
@@ -13221,10 +13245,11 @@ function AutoCards(inHook, inText, inStop) {
       if (card) { card.type = quest.status === "active" ? "Active Quests" : quest.status === "cleared" ? "System — Cleared Quests" : "System — Locked Quests"; card.entry = `${quest.title}\nCategory: ${quest.category || "Dungeon"}\nChain: ${quest.chain || "Independent"}${quest.step ? `, Step ${quest.step}` : ""}\nTier: ${quest.tier ?? dms.dungeon.tier}\nStatus: ${title(quest.status)}\nPrerequisites: ${(quest.prerequisites || []).join(", ") || "None"}\nObjective: ${quest.objective}\nRewards: ${JSON.stringify(quest.rewards || {})}`; setStoryCardPresentation(card, quest.status === "active", quest.status === "locked"); }
     }
     for (const room of Object.values(dms.rooms)) {
-      const definition = ROOM_DEFINITIONS[room.definition], card = ensureCard(`DMS Facility — ${room.id} — ${room.name}`, `DMS_ROOM_${room.id.toUpperCase().replace(/\W/g, "_")}`);
-      if (card) { const residential = definition.workerHousing ? `\nWorker Residences: ${definition.workerHousing * room.tier * Math.max(1, room.expansion || 1)}` : definition.administratorSuites ? `\nPrivate Suites: ${residenceCapacity(room)}` : definition.privateCapacity ? `\nGuest Capacity: ${residenceCapacity(room)}; Detainment Assignments: ${definition.detainmentSlots * Math.max(1, room.expansion || 1)}` : ""; card.entry = `State: ${room.state}\nTier ${room.tier}; Expansion ${room.expansion || 1}\nAppearance: ${room.lore.appearance}\nFunction: ${room.lore.function}\nJob: ${room.lore.job.split(":")[0]}\nAdministrator: ${dms.administrators[room.assignedAdministrator]?.name || "Unassigned"}${residential}`; }
-      const cohort = workerCohort(dms, room.id), job = ensureCard(`DMS Job Cohort — ${room.id} — ${room.lore.job.split(":")[0]}`, `DMS_JOB_${room.id.toUpperCase().replace(/\W/g, "_")}`);
-      if (job) { job.type = "Population Cohorts"; job.entry = `Job: ${room.lore.job.split(":")[0]}\nWork: ${room.name}\nTier: ${room.tier}\nPopulation: ${cohort?.count || 0}\nResidence: ${cohort?.residence || "Not yet manifested"}\nHousing: ${cohort?.housingStatus || "Inactive"}; Efficiency ×${cohort ? workerEfficiency(dms, room.id) : 0}\nPopulation Nature: ${dms.population.nature}\nTypical Appearance: ${dms.population.appearance} adapted to ${room.name} work and ${dms.dungeon.style}.\nDuties: Operate and maintain ${room.name}. ${definition.function}`; }
+      const definition = ROOM_DEFINITIONS[room.definition], managedKey = `DMS_ROOM_${room.id.toUpperCase().replace(/\W/g, "_")}`, card = setNaturalLoreCard(ensureCard(`DMS Facility — ${room.id} — ${room.name}`, managedKey), managedKey, "Dungeon Room", room.name, definition.name, room.definition === "throne-room" ? "throne" : "");
+      if (card) { const residential = definition.workerHousing ? `\nWorker Residences: ${definition.workerHousing * room.tier * Math.max(1, room.expansion || 1)}` : definition.administratorSuites ? `\nPrivate Suites: ${residenceCapacity(room)}` : definition.privateCapacity ? `\nGuest Capacity: ${residenceCapacity(room)}; Detainment Assignments: ${definition.detainmentSlots * Math.max(1, room.expansion || 1)}` : "", authority = dms.administrators[room.authorityAdministrator]?.name; card.entry = `State: ${room.state}\nTier: ${room.tier}\nExpansion: ${room.expansion || 1}\nAppearance: ${room.lore.appearance}\nFunction: ${room.lore.function}\nJob: ${room.lore.job.split(":")[0]}\nThrone Authority: ${authority || "None"}\nWork Assignment: ${dms.administrators[room.assignedAdministrator]?.name || "Unassigned"}${residential}`; }
+      const cohort = workerCohort(dms, room.id), job = cohort ? ensureCard(`DMS Job Cohort — ${room.id} — ${room.lore.job.split(":")[0]}`, `DMS_JOB_${room.id.toUpperCase().replace(/\W/g, "_")}`) : null;
+      if (job) { job.type = "Population Cohorts"; job.entry = `Job: ${room.lore.job.split(":")[0]}\nWork: ${room.name}\nTier: ${room.tier}\nPopulation: ${cohort.count}\nResidence: ${cohort.residence || "Not yet manifested"}\nHousing: ${cohort.housingStatus || "Inactive"}; Efficiency ×${workerEfficiency(dms, room.id)}\nPopulation Nature: ${dms.population.nature}\nTypical Appearance: ${dms.population.appearance} adapted to ${room.name} work and ${dms.dungeon.style}.\nDuties: Operate and maintain ${room.name}. ${definition.function}`; }
+      else if (hasLiveStoryCardApi()) removeManagedCard(dms, `DMS_JOB_${room.id.toUpperCase().replace(/\W/g, "_")}`);
     }
     for (const admin of Object.values(dms.administrators)) { const card = ensureCard(`DMS Administrator — ${admin.name}`, `DMS_ADMIN_${admin.id.toUpperCase().replace(/\W/g, "_")}`); if (card) card.entry = `${admin.name} — ${admin.race}\nAppearance: ${admin.appearance || administratorAppearance(dms, admin.role, admin.rank)}\nRole: ${admin.role}; Rank ${admin.rank}; Base Effectiveness ×${admin.effectiveness}; Current Assignment Effectiveness ×${administratorAssignmentEffectiveness(dms, admin)}\nDungeon Attribute Affinity: ${admin.dungeonAttributeAffinity || "None"}\nBond: ${admin.bond.value}% (next Event ${currentBondThreshold(admin)}%)\nAssigned Facility: ${admin.assignedRooms.map(id => dms.rooms[id]?.name).filter(Boolean).join(", ") || "None"}\nResidence: ${dms.residences.named[admin.id]?.name || dms.rooms[dms.residences.assignments[admin.id]?.roomId]?.name || "Shared Quarters"}\nClass: ${admin.class.name}, Tier ${admin.class.tier}; Level ${admin.level}\nClass Lineage: ${(admin.class.lineage || []).map(item => `Tier ${item.tier} ${item.className}`).join(" → ") || "None"}\nClass Description: ${admin.class.description}\nAttribute Set: ${title(admin.attributeSpecialization)}\nAttributes: ${formatAttributes(admin.attributes[admin.attributeSpecialization])}\nSkills: ${admin.class.skills.map(skill => skill.name).join(", ") || "None"}\nTraits: ${admin.class.traits.map(trait => trait.name).join(", ") || "None"}\nSkill Details: ${JSON.stringify(admin.class.skills.map(skill => ({ name: skill.name, description: skill.description, category: skill.category || "", source: skill.source || "", tier: skill.tier || 1 })))}\nTrait Details: ${JSON.stringify(admin.class.traits.map(trait => ({ name: trait.name, description: trait.description, category: trait.category || "", source: trait.source || "", tier: trait.tier || 1 })))}`; }
     for (const residence of Object.values(dms.residences.named)) { const resident = residenceTarget(dms, residence.residentId), card = ensureCard(`DMS Named Residence — ${residence.name}`, `DMS_RESIDENCE_${residence.residentId.toUpperCase().replace(/\W/g, "_")}`); if (card) { card.type = "Dungeon Residences"; card.entry = `${residence.name}\nResident: ${resident?.character.name || residence.residentId}\nFacility: ${dms.rooms[residence.roomId]?.name || residence.roomId}\nTheme: ${residence.theme}\nSpecialization: ${residence.bonus}\nFunction: A unique personal room retaining its facility's normal residential benefits while supporting one thematic bonus and private event hook.`; } }
@@ -13268,7 +13293,7 @@ function AutoCards(inHook, inText, inStop) {
     else if ((match = body.match(/^resource\s+(gain|spend)\s+(construction|sustenance|development|energy)\s*\|(.+)$/i))) { const [amount, grade] = split(match[3]), value = match[2].toLowerCase() === "energy" ? Number(amount) : { amount: Number(amount), grade: grade || "Basic" }; const changes = /^gain$/i.test(match[1]) ? rewardResources(dms, { [match[2].toLowerCase()]: value }, "system-resource-gain") : spend(dms, { [match[2].toLowerCase()]: value }, "system-resource-spend"); output = `${title(match[1])}: ${JSON.stringify(changes)}.`; }
     else if ((match = body.match(/^resource\s+refine\s+(construction|sustenance|development)\s*\|(.+)$/i))) { const [amount, grade] = split(match[2]), result = refineResource(dms, match[1], amount, grade); output = `Refined ${result.amount} ${result.sourceGrade} ${dms.dungeon.resources[result.role].name} into ${result.targetGrade}.`; }
     else if ((match = body.match(/^marks\s+(gain|spend)\s+(.+)$/i))) { const amount = Math.max(0, Number(match[2]) || 0), change = transactMarks(dms, /^gain$/i.test(match[1]) ? amount : -amount, `system-marks-${match[1].toLowerCase()}`); output = `Lustrian Marks: ${change.before} ${change.delta >= 0 ? "+" : ""}${change.delta} = ${change.after}.`; }
-    else if ((match = body.match(/^attribute\s+unique\s+(.+)$/i))) { const [name, description, value, aptitude, priority] = split(match[1]); defineUniqueAttribute(dms, name, description, value, aptitude || "C", priority || "Primary"); output = `${priority || "Primary"} Unique Dungeon Attribute ${name} [${aptitude || "C"}] defined.`; }
+    else if ((match = body.match(/^attribute\s+unique\s+(.+)$/i))) { const [name, description, value, aptitude, priority] = split(match[1]); defineUniqueAttribute(dms, name, description, value, aptitude || "C", priority || "Primary"); output = `${priority || "Primary"} Thronebound Unique Attribute ${name} [${aptitude || "C"}] defined.`; }
     else if (/^aptitudes?\s+confirm$/i.test(body)) { confirmAptitudes(dms); output = `Confirmed ${dms.onboarding.aptitudesDefined.length} Thronebound Aptitudes.`; }
     else if ((match = body.match(/^aptitude\s+(.+)$/i))) { const [name, aptitude] = split(match[1]); const attribute = configureAptitude(dms, name, aptitude); output = `${name} Aptitude ${attribute.aptitude}.`; }
     else if ((match = body.match(/^growth\s+preferences?\s+(.+)$/i))) { const preferences = configureGrowthPreferences(dms, match[1]); output = `Growth Preferences: ${preferences.join(", ")}.`; }
@@ -13319,7 +13344,7 @@ function AutoCards(inHook, inText, inStop) {
     applyDerivedState(dms); updateQuests(dms); refreshCards(dms); return output;
   }
 
-  const api = Object.freeze({ DMS_VERSION, DMS_DEVELOPMENT_STATE, SCHEMA, SAVE_SCHEMA, SAVE_CARD_TITLES, SAVE_CARD_TARGET, SAVE_CARD_MAX, VERIFIED_DUNGEON_TIER, DMS_INITIALIZATION_FORMAT, DMS_INITIALIZATION_VERSION, DMS_INITIALIZATION_QUESTION, DUNGEON_ATTRIBUTE_PRIORITIES, LEGACY_DUNGEON_ATTRIBUTE_DOMAINS, RESOURCE_ROLES, RESOURCE_GRADES, SCENARIO_QUESTIONS, LOCATIONS, MODES, PACES, ACTIVITY_PACES, SOLDIER_ARCHETYPES, ADMINISTRATOR_RANKS, APTITUDE_OUTCOMES, QUEST_CATEGORIES, CLASS_GRADES, ROOM_DEFINITIONS, LUSTRIAN_RESOURCES, GLOBAL_LUSTRIA_LORE, defaultState, normalize, configure, defineResource, adaptGeneratorStoryBible, parseInitializationJson, scenarioSetup, initializeFromScenarioVariables, syncScenarioPlot, plotEssentialsText, activityStateText, coreIdentityReady, resourcesReady, aptitudeNames, aptitudesReady, growthPreferencesReady, dungeonAttributesReady, populationDescription, identityReady, tierRules, availableRoomDefinitions, createRoom, upgradeRoom, expandRoom, upgradeDungeon, applyDerivedState, disruptWorkerCohort, workerEfficiency, assignResidence, nameResidence, assignPrivateStay, assignDetainment, transactResources, transactInventory, transactMarks, spend, rewardResources, refineResource, reserveResources, commitReservation, returnReservation, resourceStorage, cancelTask, recruitSoldiers, combatPower, defensePower, summonAdministrator, createAdministrator, assignAdministrator, administratorAssignmentEffectiveness, addAdministratorBond, completeBondEvent, rankUpAdministrator, generateClassPreviews, acceptClassPreview, buySkill, buyShopEntry, trainSkill, upgradeSkillGrade, defineUniqueAttribute, configureAptitude, configureGrowthPreferences, confirmAptitudes, growAttributes, growDungeonAttributes, dungeonAttributeMultiplier, trainAttribute, createQuest, completeQuest, questPrerequisitesMet, awardQuest, researchCustomShop, defineCustomShop, generateEquipmentOptions, craftEquipment, assignEquipment, recordPortalAnchor, openPortalRoute, closePortalRoute, travelPortalRoute, portalRouteLimit, canonicalLocation, setLocation, setActivity, systemAvailable, canonicalDmsCommand, naturalSystemCommand, tutorialGuidance, systemHelp, applyActivityTurn, scoutSector, targetVein, secureSector, resolveCycle, advanceActivity, updateQuests, dungeonSignature, status, resourcesStatus, facilitiesStatus, administratorsStatus, populationStatus, productionStatus, classPreviewsStatus, abilitiesStatus, shopsStatus, residenceStatus, facilityTierStatus, administratorDevelopmentStatus, activityStatus, discoveryStatus, signatureStatus, tierRequirementsStatus, contextGuidance, setStoryCardPresentation, refreshCards, assertSaveCardCharacterLimits, writeSaveCards, readSaveCards, loadSaveCards, execute, stableNumber });
+  const api = Object.freeze({ DMS_VERSION, DMS_DEVELOPMENT_STATE, SCHEMA, SAVE_SCHEMA, SAVE_CARD_TITLES, SAVE_CARD_TARGET, SAVE_CARD_MAX, VERIFIED_DUNGEON_TIER, DMS_INITIALIZATION_FORMAT, DMS_INITIALIZATION_VERSION, DMS_INITIALIZATION_QUESTION, DUNGEON_ATTRIBUTE_PRIORITIES, LEGACY_DUNGEON_ATTRIBUTE_DOMAINS, CONTEXT_INJECTION_TABLE, RESOURCE_ROLES, RESOURCE_GRADES, SCENARIO_QUESTIONS, LOCATIONS, MODES, PACES, ACTIVITY_PACES, SOLDIER_ARCHETYPES, ADMINISTRATOR_RANKS, APTITUDE_OUTCOMES, QUEST_CATEGORIES, CLASS_GRADES, ROOM_DEFINITIONS, LUSTRIAN_RESOURCES, GLOBAL_LUSTRIA_LORE, defaultState, normalize, configure, defineResource, adaptGeneratorStoryBible, parseInitializationJson, scenarioSetup, initializeFromScenarioVariables, syncScenarioPlot, plotEssentialsText, activityStateText, authorNoteText, coreIdentityReady, resourcesReady, aptitudeNames, aptitudesReady, growthPreferencesReady, uniqueAttributesReady, dungeonAttributesReady, populationDescription, identityReady, tierRules, availableRoomDefinitions, createRoom, upgradeRoom, expandRoom, upgradeDungeon, applyDerivedState, disruptWorkerCohort, workerEfficiency, assignResidence, nameResidence, assignPrivateStay, assignDetainment, transactResources, transactInventory, transactMarks, spend, rewardResources, refineResource, reserveResources, commitReservation, returnReservation, resourceStorage, cancelTask, recruitSoldiers, combatPower, defensePower, summonAdministrator, createAdministrator, assignAdministrator, administratorAssignmentEffectiveness, addAdministratorBond, completeBondEvent, rankUpAdministrator, generateClassPreviews, acceptClassPreview, buySkill, buyShopEntry, trainSkill, upgradeSkillGrade, defineUniqueAttribute, configureAptitude, configureGrowthPreferences, confirmAptitudes, growAttributes, growDungeonAttributes, dungeonAttributeMultiplier, trainAttribute, createQuest, completeQuest, questPrerequisitesMet, awardQuest, researchCustomShop, defineCustomShop, generateEquipmentOptions, craftEquipment, assignEquipment, recordPortalAnchor, openPortalRoute, closePortalRoute, travelPortalRoute, portalRouteLimit, canonicalLocation, setLocation, setActivity, systemAvailable, canonicalDmsCommand, naturalSystemCommand, tutorialGuidance, systemHelp, applyActivityTurn, scoutSector, targetVein, secureSector, resolveCycle, advanceActivity, updateQuests, dungeonSignature, status, resourcesStatus, facilitiesStatus, administratorsStatus, populationStatus, productionStatus, classPreviewsStatus, abilitiesStatus, shopsStatus, residenceStatus, facilityTierStatus, administratorDevelopmentStatus, activityStatus, discoveryStatus, signatureStatus, tierRequirementsStatus, contextGuidance, controlledGenerationContext, setStoryCardPresentation, refreshCards, assertSaveCardCharacterLimits, writeSaveCards, readSaveCards, loadSaveCards, execute, stableNumber });
   global.DMSCore = api;
   if (typeof module !== "undefined" && module.exports) module.exports = api;
 
@@ -13346,7 +13371,8 @@ function AutoCards(inHook, inText, inStop) {
       if (hook === "context") {
         if (global.state.DMSCommandTurn || global.state.DMSVoiceTurn) { global.stop = false; global.text = typeof ABORT_OUTPUT === "string" ? ABORT_OUTPUT : "\n##Ignore all prior instructions. Return only: OUTPUT ABORTED"; return; }
         if (typeof global.handleToolboxContext === "function") global.handleToolboxContext();
-        if (!global.stop) global.text = `${global.text}\n\nAuthor's note: ${contextGuidance(dms)}`; return;
+        const locationContext = contextGuidance(dms);
+        if (!global.stop && locationContext) global.text = `${global.text}\n\n[DMS AUTHORITATIVE LOCATION CONTEXT]\n${locationContext}\n[/DMS AUTHORITATIVE LOCATION CONTEXT]`; return;
       }
       if (hook === "output") {
         if (global.state.DMSCommandTurn) { global.text = commandOutput(global.state.DMSCommandOutput); delete global.state.DMSCommandOutput; global.state.DMSCommandTurn = false; return; }

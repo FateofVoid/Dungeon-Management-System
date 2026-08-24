@@ -27,6 +27,7 @@ The registry is divided into small concept families:
 
 The registry does not include:
 
+- Aetheria, its Strata, MASS, Infinium, Genetic Essence, or any other Aetheria-specific setting or progression concept;
 - Eryndral, its nations, technology, history, anomalies, or politics;
 - Fate Veylark, Orphan, or any other scenario protagonist;
 - Velis Reverie or another named player/scenario dungeon;

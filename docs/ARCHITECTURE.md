@@ -1,6 +1,6 @@
 # Dungeon Management System architecture
 
-DMS uses the Aetheria AI Dungeon structure. The root `Library.js` contains Toolbox, Inner Self/Auto-Cards, and DMS Core. The three hook scripts only invoke the shared lifecycle. DMS Core is authoritative for the Thronebound, Dungeon, Administrators, facilities, population cohorts, Classes, quests, Activity, Cycles, and Lustria operations; narration can express those facts but cannot overwrite them.
+DMS uses the project's established AI Dungeon structure. The root `Library.js` contains Toolbox, Inner Self/Auto-Cards, and DMS Core. The three hook scripts only invoke the shared lifecycle. DMS Core is authoritative for the Thronebound, Dungeon, Administrators, facilities, population cohorts, Classes, quests, Activity, Cycles, and Lustria operations; narration can express those facts but cannot overwrite them. No unrelated scenario-specific domain subsystem is loaded into this runtime.
 
 ## What DMS tracks
 
@@ -87,9 +87,9 @@ Quest categories are Dungeon, Thronebound, Tutorial, Bond, Personal, Guild, and 
 
 The Main Dungeon chain has one managed step for every Tier from 0 through 10. Tutorials are divided into independent chains so Foundation, Facility, Class, and Lustrian lessons can advance concurrently through normal play.
 
-Quest experience raises Thronebound Level. Combat and Support Attributes are stored as `Attribute [Aptitude]: Value`. On every Level Up, all eight independently select one value from the five outcomes defined by their F–SSS Aptitude. For example, F uses `[0,0,0,0,1]` and SSS uses `[3,4,4,5,5]`. Favored standard Attributes receive +1 after that roll. Aptitude also affects training results.
+Quest experience raises Thronebound Level. Combat, Support, and Unique Attributes are stored as `Attribute (Aptitude): Value` in Plot Essentials. On every Level Up, every Thronebound Attribute independently selects one value from the five outcomes defined by its F–SSS Aptitude. For example, F uses `[0,0,0,0,1]` and SSS uses `[3,4,4,5,5]`. Favored Attributes receive +1 after that roll. Aptitude also affects training results.
 
-Unique Dungeon Attributes belong to the Dungeon rather than the Thronebound or population. The generator creates one required Primary Attribute and may create a Secondary and Tertiary Attribute. Priority weights how strongly each contributes to broad Dungeon results and the awakened Dungeon Signature; Administrators also receive a deterministic affinity to one of them. They use the same Aptitude outcome tables but grow only on Dungeon Tier Up, and a Unique Attribute named in the Thronebound's Growth Preferences receives an additional +1 at that time.
+Unique Attributes belong to the Thronebound, but their defined effects influence linked Dungeon systems rather than replacing personal Combat or Support Attributes. The generator creates one required Primary Attribute and may create a Secondary and Tertiary Attribute. Priority weights how strongly each contributes to broad Dungeon results and the awakened Dungeon Signature; Administrators also receive a deterministic affinity to one of them. They grow with Thronebound Level Ups and receive the normal favored-Attribute bonus when selected in Growth Preferences. Dungeon Tier Up does not independently roll them.
 
 ## Activity, Cycles, and context
 
@@ -97,12 +97,12 @@ Activity records:
 
 - major location: Dungeon, Lustria, Homeworld, or a later configured Secondary world/location;
 - immediate secondary location and detail;
-- Activity Mode and target Story Cards;
+- Activity Mode and mechanical targets;
 - permitted Pace: Timeless, Slow, Normal, or Fast.
 
-The Homeworld has its own persistent description and a primary return anchor, which becomes the default immediate destination whenever the Thronebound gates Homeworld. The context hook loads matching location and target lore so these fields affect the story as well as mechanics. Timed Paces accumulate Cycles; System Mode is Timeless and is required for Administrator summoning. Cycles progress construction, facility upgrades, expansions, production, extraction, upkeep, and research. Natural actions can add mode-specific benefits: construction help shortens tasks based on Craft and Logistics, production help adds Energy, Training advances a target, and Lustrian exploration can discover sectors.
+The Homeworld has its own persistent description and a primary return anchor, which becomes the default immediate destination whenever the Thronebound gates Homeworld. The context hook selects exact location fields only from authoritative Major and Secondary Location state. It never scans narration, activated-looking subjects, or Activity targets for Lore Cards. Timed Paces accumulate Cycles; System Mode is Timeless and is required for Administrator summoning. Cycles progress construction, facility upgrades, expansions, production, extraction, upkeep, and research. Natural actions can add mode-specific benefits: construction help shortens tasks based on Craft and Logistics, production help adds Energy, Training advances a target, and Lustrian exploration can discover sectors.
 
-DMS maintains two compact plot blocks. Plot Essentials lists the current Thronebound and Dungeon status, including only Skill and Trait names; individual ability cards retain their descriptions. Author's Note contains the authoritative Activity State. Managed delimiters allow both blocks to refresh without overwriting unrelated scenario-authored context.
+DMS maintains two continuous context blocks. Plot Essentials lists permanent identities and changing mechanical facts, including Appearance, Attributes, Class lineage, ability names, Dungeon Signature, current stocks, and facility state. Author's Note preserves the Generator's exact sexual-content value, kink-content value, and tags above the authoritative Activity State. Managed delimiters allow both blocks to refresh without overwriting unrelated scenario-authored context. Normal Lore Cards retain natural AI Dungeon triggers, while hidden System Cards optimize persistence, recovery, mechanics, and status UI. The explicit partition and injection table are defined in [CONTEXT_ARCHITECTURE.md](CONTEXT_ARCHITECTURE.md).
 
 ## Lustria boundary
 
