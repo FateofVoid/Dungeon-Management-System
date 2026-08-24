@@ -37,6 +37,8 @@ Import root `Library.js`, the three root hooks, and `DMS Scenario Setup Story Ca
 
 DMS accepts the Dungeon Generator's `story_bible` object directly, canonical `DMS_INIT` version `3`, and complete legacy version `1` or `2` objects. It validates the canonical result before mutation and imports only into pristine Tier 0 state. Invalid or incomplete JSON cannot partially initialize the Dungeon. The canonical object's stable hash is saved, so retries cannot duplicate initialization, rooms, quests, resources, or rewards.
 
+The pasted JSON is a one-use handoff rather than persistent Plot context. After a successful import, DMS replaces the entire character-creation field with its readable `[DMS PLOT ESSENTIALS]` status sheet. The raw JSON is not retained in Plot Essentials; its authoritative values live in runtime state, focused Lore/System Cards, Author's Note, and save cards according to the context architecture.
+
 Major Activity locations accept either their category or their configured proper name. `Homeworld` or the Homeworld name injects description, region, time period, and current circumstances; the Primary Anchor or Residence is added only when Secondary Location explicitly selects it. `Lustria` injects only the designated Nexus Realm location foundation. `Dungeon` or the Dungeon name injects the Dungeon description and manifestation, plus the current constructed room when Secondary Location resolves to one. No location path scans narration or Activity targets for apparently relevant Lore Cards.
 
 Long narrative details are written to separate compact Lore Cards rather than mechanical save cards. Natural cards preserve the Dungeon foundation, Thronebound character, individual resource definitions, Unique Attribute descriptions, Homeworld foundation and anchor, and constructed rooms. Identity and scenario guidance may be duplicated in hidden System Cards for recovery. Mechanical save cards retain only state that cannot otherwise be recovered.
@@ -55,6 +57,6 @@ Plot Essentials contains a readable status sheet, not the JSON or its long chara
 
 ## Regression fixture
 
-`test/fixtures/dungeon-generator-sample.json` is a complete, realistic Dungeon Generator output. It deliberately uses punctuation in the Dungeon and Thronebound names, the generator's `fetish_content` field, three nonstandard Unique Attributes, and every Homeworld context field.
+`test/fixtures/dungeon-generator-sample.json` is the frozen Queen's Vault compatibility output for all future scenario-generation testing. It deliberately uses punctuation in the Dungeon and Thronebound names, the generator's `fetish_content` field, three nonstandard Unique Attributes, and every Homeworld context field. Its checksum is asserted so the finalized Generator contract cannot drift accidentally.
 
 `test/dms-json-playthrough.test.cjs` imports that fixture through the same initialization adapter used by AI Dungeon, completes Tier 0 through natural System requests, develops the Tier 1 economy and facilities, fills Administrator Capacity, selects a Class, purchases abilities, earns the Tier 2 reserve through production, and verifies persistence recovery. It then invokes the Tier 2 upgrade boundary and confirms that Release A's verified-Tier deployment gate still prevents entry into unverified Tier 2 gameplay.

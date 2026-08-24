@@ -42,8 +42,8 @@ function placeholders(value = storyBibleOutput()) { return [{ question: DMS.DMS_
 
 test("the main scenario has one compact JSON handoff input matching the runtime", () => {
   const library = fs.readFileSync(path.join(__dirname, "..", "Library.js"), "utf8");
-  assert.match(library.slice(0, 900), /Version: 0\.7\.0-dev[\s\S]*Runtime Schema: 12[\s\S]*Verified Dungeon Tiers: 0-1/);
-  assert.equal(DMS.DMS_VERSION, "0.7.0-dev");
+  assert.match(library.slice(0, 900), /Version: 0\.7\.1-dev[\s\S]*Runtime Schema: 12[\s\S]*Verified Dungeon Tiers: 0-1/);
+  assert.equal(DMS.DMS_VERSION, "0.7.1-dev");
   const cards = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "DMS Scenario Setup Story Cards.json"), "utf8"));
   const setup = cards.find(card => card.keys === "DMS_SETUP_INITIALIZATION_JSON");
   assert.ok(setup.value.length <= 1000);
@@ -201,6 +201,7 @@ test("Plot Essentials and compact lore cards expose readable generated state", (
   const dms = DMS.defaultState(); DMS.initializeFromScenarioVariables(dms, placeholders());
   global.state = { memory: { context: "Keep this plot fact.", authorsNote: "Write in close second person." } };
   assert.equal(DMS.syncScenarioPlot(dms), true); DMS.refreshCards(dms);
+  assert.doesNotMatch(global.state.memory.context, /Keep this plot fact/);
   assert.match(global.state.memory.context, /THRONEBOUND IDENTITY\nName: Mara\nRace: Voidkin\nGender: Woman\nAppearance:/);
   assert.match(global.state.memory.context, /Voice Pattern: Mara speaks formally/);
   assert.match(global.state.memory.context, /UNIQUE ATTRIBUTES\n- Cinder Sovereignty \(SSS\): 1/);

@@ -1,6 +1,6 @@
 /**
  * Dungeon Management System (DMS)
- * Version: 0.7.0-dev
+ * Version: 0.7.1-dev
  * Runtime Schema: 12
  * Save Schema: 3
  * Verified Dungeon Tiers: 0-1
@@ -11146,7 +11146,7 @@ function AutoCards(inHook, inText, inStop) {
 (function installDungeonManagement(global) {
   "use strict";
 
-  const DMS_VERSION = "0.7.0-dev";
+  const DMS_VERSION = "0.7.1-dev";
   const DMS_DEVELOPMENT_STATE = "Dungeon Generator adapter and Tier 1 implemented; deterministic context architecture active; Tier 2 deployment sealed";
   const SCHEMA = 12;
   const SAVE_SCHEMA = 3;
@@ -12973,7 +12973,12 @@ function AutoCards(inHook, inText, inStop) {
   function syncScenarioPlot(dms) {
     if (!global.state || !dms) return false;
     global.state.memory ||= {};
-    global.state.memory.context = managedPlotBlock(global.state.memory.context, DMS_PLOT_ESSENTIALS_PATTERN, plotEssentialsText(dms));
+    const plot = plotEssentialsText(dms);
+    // The scenario JSON is a one-use handoff. Once imported, replace the
+    // character-creation field (including its raw JSON) with readable state.
+    global.state.memory.context = dms.onboarding.scenarioVariablesImported
+      ? plot
+      : managedPlotBlock(global.state.memory.context, DMS_PLOT_ESSENTIALS_PATTERN, plot);
     global.state.memory.authorsNote = managedAuthorNote(global.state.memory.authorsNote, authorNoteText(dms));
     return true;
   }

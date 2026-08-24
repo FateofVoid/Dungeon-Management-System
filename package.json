@@ -1,6 +1,6 @@
 {
   "name": "dungeon-management-system",
-  "version": "0.7.0-dev",
+  "version": "0.7.1-dev",
   "private": true,
   "description": "Theme-driven dungeon management for AI Dungeon, integrated with Toolbox and Inner Self.",
   "scripts": {

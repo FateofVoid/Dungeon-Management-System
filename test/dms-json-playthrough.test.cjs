@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const crypto = require("node:crypto");
 
 global.state = {};
 global.storyCards = [];
@@ -14,6 +15,7 @@ const DMS = require("../Library.js");
 
 const samplePath = path.join(__dirname, "fixtures", "dungeon-generator-sample.json");
 const sampleJson = fs.readFileSync(samplePath, "utf8");
+const sampleHash = "5e92ddb39227c4bd3c297d2158803d0941efb995608ea89ab3cc53d8d406a45c";
 
 function placeholders() {
   return [{ question: DMS.DMS_INITIALIZATION_QUESTION, answer: sampleJson }];
@@ -30,6 +32,17 @@ function build(dms, definition) {
   assert.equal(room.state, "Active");
   return room;
 }
+
+test("Queen's Vault remains the frozen Dungeon Generator compatibility fixture", () => {
+  assert.equal(crypto.createHash("sha256").update(sampleJson).digest("hex"), sampleHash);
+  const dms = DMS.defaultState();
+  assert.equal(DMS.initializeFromScenarioVariables(dms, placeholders()), true);
+  global.state = { memory: { context: `DMS Initialization JSON: ${sampleJson}`, authorsNote: "" } };
+  assert.equal(DMS.syncScenarioPlot(dms), true);
+  assert.equal(global.state.memory.context, DMS.plotEssentialsText(dms));
+  assert.doesNotMatch(global.state.memory.context, /DMS Initialization JSON|"story_bible"|"fetish_content"/);
+  assert.match(global.state.memory.context, /Name: Mara-Veil[\s\S]*Name: Queen's Vault/);
+});
 
 test("sample Dungeon Generator JSON plays from Tier 0 through the Tier 2 upgrade boundary", () => {
   global.storyCards.length = 0;
