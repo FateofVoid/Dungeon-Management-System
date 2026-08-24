@@ -1,11 +1,12 @@
 {
   "name": "dungeon-management-system",
-  "version": "0.3.0",
+  "version": "0.6.0-dev",
   "private": true,
   "description": "Theme-driven dungeon management for AI Dungeon, integrated with Toolbox and Inner Self.",
   "scripts": {
     "test": "node --test test/*.test.cjs",
-    "check": "node --check Library.js && node --check Input.js && node --check Context.js && node --check Output.js && npm test"
+    "cards:visibility": "node scripts/apply-story-card-presentation.cjs",
+    "check": "node --check Library.js && node --check Input.js && node --check Context.js && node --check Output.js && node --check dungeon-generator/Library.js && node --check dungeon-generator/Input.js && node --check dungeon-generator/Context.js && node --check dungeon-generator/Output.js && npm test"
   },
   "engines": {
     "node": ">=20"

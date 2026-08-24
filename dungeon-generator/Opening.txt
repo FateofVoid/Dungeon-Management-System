@@ -1,0 +1,5 @@
+DMS Player Input
+> Dungeon and Thronebound Details: ${Describe the Dungeon and Thronebound, including any details you want preserved about their theme, appearance, population, character, or origin world. Leave anything unspecified for the Dungeon Generator to create.}
+> Optional Tags: ${Optionally provide tags that should guide the Dungeon Generator, separated by commas. Leave blank to generate them.}
+> Sexual Content: ${Enter a number from 0 to 10 for the desired sexual-content level.}
+> Kink Content: ${Enter a number from 0 to 10 for the desired kink or fetish-content level.}

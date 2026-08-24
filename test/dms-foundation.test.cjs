@@ -1,5 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 
 global.state = {};
 global.storyCards = [];
@@ -12,7 +14,7 @@ const DMS = require("../Library.js");
 
 function configured() {
   const dms = DMS.defaultState();
-  DMS.configure(dms, { thronebound: "Mara", race: "Voidkin", name: "The Ashen Court", theme: "Volcanic necromancy", style: "Gothic basalt fortress", workerDescription: "masked ashbound skeletons", soldierDescription: "ember-wreathed revenants", homeworld: "Caelus", secondaryLocation: "The Crossroads" });
+  DMS.configure(dms, { thronebound: "Mara", race: "Voidkin", name: "The Ashen Court", theme: "Volcanic necromancy", style: "Gothic basalt fortress", populationNature: "Ashbound undead", populationAppearance: "Masked skeletons veined with ember light.", homeworld: "Caelus", homeworldDescription: "A storm-wrapped world of floating basalt kingdoms.", homeworldAnchor: "Mara's obsidian estate", growthPreferences: ["Might", "Endurance", "Command", "Logistics", "Insight"], secondaryLocation: "The Crossroads" });
   DMS.defineResource(dms, "construction", ["Graveglass", "Black volcanic crystal shot through with soul-light.", "Quarried from cooling ossuary flows.", "Shapes rooms and fortifications."]);
   DMS.defineResource(dms, "sustenance", ["Cinder Marrow", "Heat-rich spiritual biomass.", "Rendered from fungal char gardens.", "Sustains the dungeon population."]);
   DMS.defineResource(dms, "development", ["Sovereign Ichor", "Concentrated adaptive essence.", "Refined from resonance.", "Develops linked characters."]);
@@ -66,9 +68,65 @@ test("global Lustria cards stay compact, foundational, and scenario-neutral", ()
   assert.notEqual(global.storyCards.find(card => card.title === "Lore — Nexus Realm of Lustria").keys, "stale key");
 });
 
+test("managed Story Card presentation hides saves and unrevealed facilities", () => {
+  global.storyCards.length = 0;
+  const dms = configured();
+  DMS.refreshCards(dms);
+  const saveCards = global.storyCards.filter(card => String(card.keys).startsWith("DMS_SAVE_"));
+  assert.ok(saveCards.length > 0);
+  assert.ok(saveCards.every(card => card.showInStoryCards === false && card.isSpoiler === false));
+  const material = global.storyCards.find(card => card.keys === "DMS_FACILITY_UNLOCK_MATERIAL_WORKS");
+  assert.equal(material.showInStoryCards, false);
+  assert.equal(material.isSpoiler, true);
+  const identity = global.storyCards.find(card => card.keys === "DMS_SYS_IDENTITY");
+  const status = global.storyCards.find(card => card.keys === "DMS_SYS_DUNGEON_STATUS");
+  assert.equal(identity.showInStoryCards, false);
+  assert.equal(status.showInStoryCards, true);
+
+  dms.dungeon.tier = 1;
+  DMS.applyDerivedState(dms);
+  DMS.refreshCards(dms);
+  assert.equal(material.showInStoryCards, true);
+  assert.equal(material.isSpoiler, false);
+  const lockedTier2 = global.storyCards.find(card => card.keys === "DMS_FACILITY_UNLOCK_BARRACKS");
+  assert.equal(lockedTier2.showInStoryCards, false);
+  assert.equal(lockedTier2.isSpoiler, true);
+});
+
+test("the original scenario export contains the complete global Lustria registry", () => {
+  const exported = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "Lustria Story Cards.json"), "utf8"));
+  assert.equal(exported.length, DMS.GLOBAL_LUSTRIA_LORE.length);
+  assert.equal(new Set(exported.map(card => card.keys.toLowerCase())).size, exported.length);
+  assert.ok(exported.every(card => card.type === "Global Lore" && card.value.length <= 420));
+  for (const definition of DMS.GLOBAL_LUSTRIA_LORE) {
+    const card = exported.find(candidate => candidate.title === definition.title);
+    assert.ok(card, `missing exported card ${definition.title}`);
+    assert.equal(card.keys, definition.keys);
+    assert.equal(card.value, definition.entry);
+  }
+  const scenarioBundle = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "DMS Original Scenario Story Cards.json"), "utf8"));
+  const seededFacilities = Object.values(DMS.ROOM_DEFINITIONS).filter(definition => definition.unlockTier > 0).length;
+  const seededQuests = Object.keys(DMS.defaultState().quests.records).length;
+  assert.equal(scenarioBundle.length, exported.length + 1 + 64 + seededFacilities + seededQuests);
+  assert.equal(scenarioBundle.filter(card => card.keys === "DMS_SETUP_INITIALIZATION_JSON").length, 1);
+  assert.equal(scenarioBundle.filter(card => card.type === "Global Lore").length, exported.length);
+  assert.equal(scenarioBundle.filter(card => card.keys.startsWith("DMS_SAVE_RESERVE_") && card.showInStoryCards === false && card.isSpoiler === false).length, 64);
+  assert.equal(scenarioBundle.filter(card => card.keys.startsWith("DMS_FACILITY_UNLOCK_") && card.showInStoryCards === false && card.isSpoiler === true).length, seededFacilities);
+  assert.equal(scenarioBundle.filter(card => card.keys.startsWith("DMS_QUEST_") && card.showInStoryCards === false && card.isSpoiler === true).length, seededQuests - 2);
+});
+
+test("the recorded working save preserves derived player-presentation flags", () => {
+  const cards = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "save-states", "release-a-tier1-revision16-story-cards.json"), "utf8"));
+  const saves = cards.filter(card => String(card.keys).startsWith("DMS_SAVE_"));
+  assert.equal(saves.length, 17);
+  assert.ok(saves.every(card => card.showInStoryCards === false && card.isSpoiler === false));
+  assert.equal(cards.find(card => card.keys === "DMS_SYS_IDENTITY").showInStoryCards, false);
+  assert.ok(cards.filter(card => card.keys.startsWith("DMS_QUEST_") && card.showInStoryCards).every(card => /^Status:\s*Active/im.test(card.value)));
+});
+
 test("identity readiness rejects placeholder core identity even with complete resources", () => {
   const dms = DMS.defaultState();
-  DMS.configure(dms, { thronebound: "Mara", name: "The Ashen Court", theme: "Volcanic necromancy", style: "Gothic basalt fortress", workerDescription: "masked ashbound skeletons", soldierDescription: "ember-wreathed revenants", homeworld: "Caelus" });
+  DMS.configure(dms, { thronebound: "Mara", name: "The Ashen Court", theme: "Volcanic necromancy", style: "Gothic basalt fortress", populationNature: "Ashbound undead", populationAppearance: "Masked skeletons veined with ember light.", homeworld: "Caelus", homeworldDescription: "A storm-wrapped world of floating basalt kingdoms.", homeworldAnchor: "Mara's obsidian estate", growthPreferences: ["Might", "Endurance", "Command", "Logistics", "Insight"] });
   DMS.defineResource(dms, "construction", ["Graveglass", "Crystal.", "Quarried.", "Construction."]);
   DMS.defineResource(dms, "sustenance", ["Cinder Marrow", "Biomass.", "Cultivated.", "Sustenance."]);
   DMS.defineResource(dms, "development", ["Sovereign Ichor", "Essence.", "Refined.", "Development."]);

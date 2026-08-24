@@ -36,7 +36,8 @@ Recorded on 2026-08-23 after commit `3545349` installed the Release A runtime in
 - The duplicated adventure loaded revision 16 with `/dms load`; its following natural status response matched the authoritative adventure field for field.
 - The current save occupies 17 save-card chunks. The largest card is 1,224 characters, below the 1,500-character target and 1,800-character hard limit.
 - The historical live adventure contains 1,831 Story Cards because turns run before the managed-card registry fix had already created duplicates. After the fixed runtime initialized its durable registry, consecutive turns remained at exactly 1,831 cards.
-- A deduplicated restore export contains 181 unique Story Cards. It is retained locally as `DMS Release A Story Cards Restore.json` beside the Codex task workspace.
+- A deduplicated restore export contains 181 unique Story Cards. The exact reference snapshot is versioned as [`save-states/release-a-tier1-revision16-story-cards.json`](../save-states/release-a-tier1-revision16-story-cards.json), with its source and checksum recorded in the directory README.
+- The versioned reference snapshot now carries the derived player-presentation state: save chunks and internal identity data are hidden, active references remain visible, and unrevealed locked cards are marked as spoilers. Mechanical recovery never depends on these presentation flags.
 - AI Dungeon exposed backup export but no backup ZIP import control. The separate Story Card import reached Chrome's native file picker, but automated file selection requires the browser extension's local-file permission. The supported adventure-duplication recovery path was therefore used for the verified restore comparison.
 - `npm run check` passed all 62 tests after the live-only duplicate-card failure was reproduced and covered by an automated key-based Story Card API test.
 

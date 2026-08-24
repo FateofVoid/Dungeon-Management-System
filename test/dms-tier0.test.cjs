@@ -45,7 +45,8 @@ test("fresh Tier 0 completes both onboarding chains and reaches Tier 1 without i
   assert.match(summon, /Rank .* Manager/);
   assert.equal(manager.role, "Manager");
   assert.match(manager.name, /^Volcanic Manager 1$/, "the default first Administrator identity is derived from the Dungeon Theme");
-  assert.equal(manager.race, "masked ashbound skeletons");
+  assert.equal(manager.race, "Dungeon-created population");
+  assert.match(manager.appearance, /masked ashbound skeletons/);
   assert.equal(manager.level, 1);
   assert.equal(manager.class.tier, 0);
   assert.ok(DMS.ADMINISTRATOR_RANKS.includes(manager.rank));

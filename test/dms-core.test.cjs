@@ -11,7 +11,7 @@ const DMS = require("../Library.js");
 
 function configured() {
   const dms = DMS.defaultState();
-  DMS.configure(dms, { thronebound: "Mara", race: "Voidkin", name: "The Ashen Court", theme: "Volcanic necromancy", style: "Gothic basalt fortress", workerDescription: "masked ashbound skeletons", soldierDescription: "ember-wreathed revenants", homeworld: "Caelus", secondaryLocation: "The Crossroads" });
+  DMS.configure(dms, { thronebound: "Mara", race: "Voidkin", name: "The Ashen Court", theme: "Volcanic necromancy", style: "Gothic basalt fortress", populationNature: "Ashbound undead", populationAppearance: "Masked skeletons veined with ember light.", homeworld: "Caelus", homeworldDescription: "A storm-wrapped world of floating basalt kingdoms.", homeworldAnchor: "Mara's obsidian estate", growthPreferences: ["Might", "Endurance", "Command", "Logistics", "Insight"], secondaryLocation: "The Crossroads" });
   DMS.defineResource(dms, "construction", ["Graveglass", "Black volcanic crystal shot through with soul-light.", "Quarried from cooling ossuary flows.", "Shapes rooms and fortifications."]);
   DMS.defineResource(dms, "sustenance", ["Cinder Marrow", "Heat-rich spiritual biomass.", "Rendered from fungal char gardens.", "Sustains the dungeon population."]);
   DMS.defineResource(dms, "development", ["Sovereign Ichor", "Concentrated adaptive essence.", "Refined from resonance.", "Develops linked characters."]);
@@ -114,7 +114,7 @@ test("Administrator assignment validates role and Rank modifies facility product
   DMS.assignAdministrator(dms, admin.id, room.id);
   const before = dms.dungeon.resources.construction.amount;
   const report = DMS.resolveCycle(dms);
-  assert.equal(report.dungeonResources.construction, Number((4 * 3 * admin.effectiveness).toFixed(2)));
+  assert.equal(report.dungeonResources.construction, Number((4 * 3 * DMS.dungeonAttributeMultiplier(dms, "Production") * DMS.administratorAssignmentEffectiveness(dms, admin) * 0.9).toFixed(2)), "unhoused Workers retain their modest efficiency penalty while Dungeon Attributes affect authoritative output");
   assert.equal(dms.dungeon.resources.construction.amount, before + report.dungeonResources.construction);
 });
 
@@ -194,7 +194,7 @@ test("Administrator Class evolution grants only its matching Skill category and 
 
 test("rejects duplicate Skills and tracks mastery and Grades", () => {
   const dms = awakenTier1(); DMS.acceptClassPreview(dms, "thronebound", 1); const skill = dms.thronebound.class.skills[0];
-  assert.throws(() => DMS.buySkill(dms, "thronebound", skill.name, "Duplicate", 1), /Duplicate Skill/);
+  assert.throws(() => DMS.buySkill(dms, "thronebound", skill.name, "Duplicate", 1), /Direct player-priced ability purchasing is disabled/);
   rich(dms); assert.throws(() => DMS.trainSkill(dms, "thronebound", skill.name, 100), /Attribute Training Hall/);
   dms.dungeon.tier = 2; DMS.applyDerivedState(dms); build(dms, "attribute-training-hall"); DMS.trainSkill(dms, "thronebound", skill.name, 100); assert.equal(skill.mastery, 100);
   dms.dungeon.tier = 4; DMS.upgradeSkillGrade(dms, "thronebound", skill.name); assert.equal(skill.gradeName, "Intermediate");
@@ -238,6 +238,37 @@ test("Activity context loads matching location and target Lore Cards", () => {
   const context = DMS.contextGuidance(dms);
   assert.match(context, /Current Activity: Exploration/);
   assert.match(context, /luminous frontier/);
+});
+
+test("major-location aliases select distinct Homeworld, Lustria, and Dungeon context", () => {
+  global.storyCards.length = 0;
+  const dms = configured();
+  dms.world.homeworldRegion = "The Vesper Crown";
+  dms.world.homeworldResidence = "The Heartstone Spire";
+  dms.world.homeworldCircumstances = "The caldera is cooling.";
+  DMS.refreshCards(dms);
+
+  DMS.setLocation(dms, dms.world.homeworld);
+  const homeworld = DMS.contextGuidance(dms);
+  assert.equal(dms.activity.location.major, "Homeworld");
+  assert.equal(dms.activity.location.secondary, dms.world.homeworldAnchor);
+  assert.match(homeworld, /away from both Lustria and the Dungeon on Caelus/);
+  assert.match(homeworld, /The Vesper Crown/);
+  assert.match(homeworld, /The Heartstone Spire/);
+  assert.match(homeworld, /caldera is cooling/);
+
+  DMS.setLocation(dms, "Lustria", "Glasswild Reach");
+  const lustria = DMS.contextGuidance(dms);
+  assert.match(lustria, /within Lustria but currently away from the Dungeon/);
+  assert.match(lustria, /Nexus Realm of Lustria/);
+
+  DMS.setLocation(dms, dms.dungeon.name, "Throne Room");
+  const dungeon = DMS.contextGuidance(dms);
+  assert.equal(dms.activity.location.major, "Dungeon");
+  assert.match(dungeon, /active Dungeon in Lustria/);
+  assert.match(dungeon, /DMS — Dungeon Foundation/);
+  assert.match(dungeon, /Nexus Realm of Lustria/);
+  assert.doesNotMatch(dungeon, /Homeworld description:/);
 });
 
 test("Activity turns advance allowed Paces and are retry-safe", () => {

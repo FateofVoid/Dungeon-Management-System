@@ -12,7 +12,7 @@ const DMS = require("../Library.js");
 
 function configured() {
   const dms = DMS.defaultState();
-  DMS.configure(dms, { thronebound: "Mara", race: "Voidkin", name: "The Ashen Court", theme: "Volcanic necromancy", style: "Gothic basalt fortress", workerDescription: "masked ashbound skeletons", soldierDescription: "ember-wreathed revenants", homeworld: "Caelus" });
+  DMS.configure(dms, { thronebound: "Mara", race: "Voidkin", name: "The Ashen Court", theme: "Volcanic necromancy", style: "Gothic basalt fortress", populationNature: "Ashbound undead", populationAppearance: "Masked skeletons veined with ember light.", homeworld: "Caelus", homeworldDescription: "A storm-wrapped world of floating basalt kingdoms.", homeworldAnchor: "Mara's obsidian estate", growthPreferences: ["Might", "Endurance", "Command", "Logistics", "Insight"] });
   DMS.defineResource(dms, "construction", ["Graveglass", "Black volcanic crystal.", "Quarried from ossuary flows.", "Builds facilities."]);
   DMS.defineResource(dms, "sustenance", ["Cinder Marrow", "Heat-rich spiritual biomass.", "Rendered from char gardens.", "Sustains cohorts."]);
   DMS.defineResource(dms, "development", ["Sovereign Ichor", "Concentrated adaptive essence.", "Refined from resonance.", "Develops linked characters."]);
@@ -27,7 +27,7 @@ function systemMode(dms) { DMS.setLocation(dms, "Dungeon", "Throne Room"); DMS.s
 function activateRoom(dms, key, tier) { dms.dungeon.tier = tier; DMS.applyDerivedState(dms); const room = DMS.createRoom(dms, key); finishTasks(dms); while (room.tier < tier) { DMS.upgradeRoom(dms, room.id); finishTasks(dms); } return room; }
 
 test("facility definitions use only lifecycle fields with authoritative consumers", () => {
-  const schema = new Set(["name", "unlockTier", "kind", "function", "job", "baseCost", "uniqueWorker", "jobs", "resource", "baseProduction", "administratorRoles", "upkeepReduction", "soldierJobs", "combatMultiplier", "productivityMultiplier", "scoutPower", "defenseMultiplier", "veinTargets", "extraction", "equipmentTier", "researchRequired", "storageMultiplier", "portalRoutes", "skillDiscount", "masteryGate"]);
+  const schema = new Set(["name", "unlockTier", "kind", "function", "job", "baseCost", "uniqueWorker", "jobs", "resource", "baseProduction", "administratorRoles", "upkeepReduction", "workerHousing", "housingUpkeepDiscount", "housingEfficiencyBonus", "recoveryRate", "administratorSuites", "privateCapacity", "detainmentSlots", "bondGainBonus", "soldierJobs", "combatMultiplier", "productivityMultiplier", "scoutPower", "defenseMultiplier", "veinTargets", "extraction", "equipmentTier", "researchRequired", "storageMultiplier", "portalRoutes", "skillDiscount", "masteryGate"]);
   for (const [key, definition] of Object.entries(DMS.ROOM_DEFINITIONS)) {
     for (const required of ["name", "unlockTier", "kind", "function", "job", "baseCost"]) assert.ok(Object.hasOwn(definition, required), `${key} lacks ${required}`);
     for (const property of Object.keys(definition)) assert.ok(schema.has(property), `${key}.${property} has no registered lifecycle consumer`);
@@ -159,6 +159,37 @@ test("save cards update through AI Dungeon's key-based Story Card API without re
     assert.equal(restored.dungeon.resources.construction.name, dms.dungeon.resources.construction.name);
     assert.deepEqual(restored.generation.managedCardKeys, dms.generation.managedCardKeys);
     assert.deepEqual(DMS.dungeonSignature(restored), DMS.dungeonSignature(dms));
+  } finally {
+    delete global.addStoryCard;
+    delete global.updateStoryCard;
+    delete global.removeStoryCard;
+  }
+});
+
+test("live Story Card lifecycle uses hidden reserves and reveals unlocks by replacement", () => {
+  global.storyCards.length = 0;
+  for (let index = 1; index <= 32; index++) global.storyCards.push({ id: `reserve-${index}`, keys: `DMS_SAVE_RESERVE_${index}`, entry: "Reserved hidden DMS save-card slot.", type: "System — DMS Reserve", showInStoryCards: false, isSpoiler: false });
+  const facilityKey = "DMS_FACILITY_UNLOCK_MATERIAL_WORKS";
+  global.storyCards.push({ id: "locked-material", keys: facilityKey, entry: "Material Works", type: "System — Locked Facilities", showInStoryCards: false, isSpoiler: true });
+  const addedKeys = [];
+  global.addStoryCard = (keys, entry, type) => { addedKeys.push(keys); global.storyCards.push({ id: `added-${addedKeys.length}`, keys, entry, type }); };
+  global.updateStoryCard = (index, keys, entry, type) => Object.assign(global.storyCards[index], { keys, entry, type });
+  global.removeStoryCard = index => { global.storyCards.splice(index, 1); };
+  try {
+    const dms = configured();
+    DMS.refreshCards(dms);
+    assert.equal(global.storyCards.find(card => card.keys === facilityKey)?.showInStoryCards, false, "a locked imported card remains hidden and untouched");
+    assert.equal(addedKeys.filter(key => key.startsWith("DMS_SAVE_")).length, 0, "save chunks claim imported hidden reserves instead of creating visible cards");
+    assert.ok(global.storyCards.some(card => card.keys.startsWith("DMS_SAVE_CORE_")));
+    assert.ok(global.storyCards.filter(card => card.keys.startsWith("DMS_SAVE_") && !card.keys.startsWith("DMS_SAVE_RESERVE_")).every(card => card.showInStoryCards === false));
+
+    dms.dungeon.tier = 1;
+    DMS.refreshCards(dms);
+    const materialCards = global.storyCards.filter(card => card.keys === facilityKey);
+    assert.equal(materialCards.length, 1);
+    assert.equal(materialCards[0].showInStoryCards, true, "the replacement uses AI Dungeon's default visible presentation");
+    assert.equal(materialCards[0].isSpoiler, false);
+    assert.equal(dms.generation.revealedCardKeys.includes(facilityKey), true);
   } finally {
     delete global.addStoryCard;
     delete global.updateStoryCard;

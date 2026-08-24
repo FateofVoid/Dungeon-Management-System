@@ -4,7 +4,7 @@ Tier 0 is ready for a focused AI Dungeon playtest when the complete path below s
 
 ## Player path
 
-1. Start a scenario containing the setup-variable Story Cards and answer the identity, population, Homeworld, resource, Aptitude, and optional Unique Attribute questions before the Opening. Resource answers use `Name | Description | Collection | Use`; Aptitudes use `Rank | Preference 1-5`.
+1. Complete the separate Dungeon Generator scenario from one creative brief, copy its final `DMS_INIT` JSON String, then start Thronebound Awakening and paste it into the sole setup input before the Opening.
 2. Confirm the Opening, Plot Essentials, and conditional setup cards reuse the same answers where the exact `${question}` text appears.
 3. On the first action, verify DMS imports every mandatory answer atomically. `/dms setup`, `/dms resource define`, and the Aptitude commands remain fallback/debug controls and should not be needed for a new scenario.
 4. While in the Throne Room, say “System, show my Dungeon Status” and “System, show my resources.” Read-only System requests do not require entering management mode.
@@ -20,7 +20,7 @@ The Thronebound must remain Classless until a preview is accepted. The Tier 0 Si
 - System Mode cannot be entered outside the Throne Room.
 - The Manager cannot be summoned outside Throne Room System Mode.
 - Tier Up cannot be performed outside Throne Room System Mode.
-- Once the identity is complete, identity, resources, Aptitudes, and Unique Attributes cannot be changed outside Throne Room System Mode.
+- Once the identity is complete, identity, resources, Aptitudes, and Unique Dungeon Attributes cannot be changed outside Throne Room System Mode.
 - A missing or malformed mandatory variable answer must not partially initialize or overwrite an existing Dungeon.
 - Retrying the first action must not import the variables twice or duplicate quest rewards.
 - Travel narration at Tier 0 must not create a persistent Portal Anchor.

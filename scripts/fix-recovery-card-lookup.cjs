@@ -40,8 +40,8 @@ source = source.replace(
   'admin.class.name = clean(saved.className) || (adminClass ? clean(adminClass[1]) : admin.class.name);'
 );
 source = source.replace(
-  'const line = String(card?.entry || "").split("\\n")[0].split(/\\s+[—-]\\s+/), admin = characterBase(clean(line[0]) || id, clean(line.slice(1).join(" — ")) || dms.population.workerDescription, saved.role || "Manager");',
-  'const line = String(card?.entry || "").split("\\n")[0].split(/\\s+[—-]\\s+/), admin = characterBase(clean(saved.name) || clean(line[0]) || id, clean(saved.race) || clean(line.slice(1).join(" — ")) || dms.population.workerDescription, saved.role || "Manager");'
+  'const line = String(card?.entry || "").split("\\n")[0].split(/\\s+[—-]\\s+/), admin = characterBase(clean(line[0]) || id, clean(line.slice(1).join(" — ")) || dms.population.nature, saved.role || "Manager");',
+  'const line = String(card?.entry || "").split("\\n")[0].split(/\\s+[—-]\\s+/), admin = characterBase(clean(saved.name) || clean(line[0]) || id, clean(saved.race) || clean(line.slice(1).join(" — ")) || dms.population.nature, saved.role || "Manager");'
 );
 
 // Replace the administrator card lookup by position so formatting changes in the
