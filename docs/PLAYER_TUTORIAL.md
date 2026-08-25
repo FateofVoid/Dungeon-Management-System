@@ -287,7 +287,9 @@ Return to the Throne Room and ask the Manager for the Dungeon Sector report. The
 
 > System, construct the Perimeter Scout Post.
 
-Complete its construction through Construction Activity. After its cohort becomes active, complete a Cycle so the first survey begins. The survey establishes leads only; it does not decide what the nearby city is like before Tier 2 scouting provides evidence.
+Complete its construction through Construction Activity. After its cohort becomes active, complete a Cycle so the first survey creates the Lustrian Sector neighboring the Dungeon Sector. Continued scouting eventually locates that Sector's primary city. The Manager's initial report establishes the city's generated appearance and Sector link; its unconfirmed political relationships still require contact and evidence.
+
+Lustrian resources are separate from the Dungeon's internally generated resources. An active Lustrian collection room provides a limited number of vein slots. Scouting discovers and automatically links only compatible veins while such a slot is open. A staffed collection room then gathers from each linked vein every Cycle, and veins do not deplete.
 
 ## 14. Prepare the Tier 2 threshold
 

@@ -20,7 +20,7 @@ DMS is expected to track these domains when their mechanics are implemented:
 - Thronebound Levels, Aptitudes, Attributes, Classes, Skills, Traits, mastery, Grades, previews, and advancement requirements;
 - quests, prerequisites, categories, mission types, stable references, chain activation, field completion, Guild reporting, recorded outcomes, follow-ups, and rewards;
 - Activity, location, targets, Pace, Cycle progress, natural-action benefits, and retry identity;
-- Sector access, persistent discoveries, resource veins, ownership, depletion, extraction, Expeditions, logistics, combat resolution, and territory;
+- Sector access, persistent discoveries, non-depleting resource veins, collection-slot assignments, ownership, collection, Expeditions, logistics, combat resolution, and territory;
 - portal routes, Anchors, route limits, availability, throughput, and suppression when those values gate travel;
 - Dungeon Signature, detection, suppression, Survival Doctrine, and major political relationship states when they change access, costs, eligibility, conflict, or another mechanical outcome.
 
@@ -54,7 +54,7 @@ This table distinguishes implemented mechanics from definitions or lore that do 
 | Thronebound progression | Implemented foundation | Level, experience, Aptitudes, Attributes, Classes, previews, Skills, Traits, mastery, ordinary Grades, and costs are tracked. |
 | Quests | Implemented foundation | The Tier 0–3 single-threaded Story spine and Tier 4–10 branch framework coexist with player-neutral mechanical chains, stable references and presentation tokens, controlled trigger groups, authoritative conditions, staged progress, retry-safe transitions, Tier 1 Class Awakening, Tier 1 Bond gates, and manual Guild/Bounty reporting. The immediate Dungeon Sector uses delayed previous-output evidence snapshots; remote Story references exist before presentation. Validated monster outcomes can open Hunt follow-ups only for Hunt/Bounty missions. Quest Rank and full procedural Guild/Bounty generation remain incomplete. |
 | Activity and Cycles | Implemented foundation | Location, mode, targets, Pace, retry safety, timed tasks, production, extraction, upkeep, and natural Construction, Production, Training, Bond, Survey, and Exploration actions are authoritative. Later combat and Expedition outcomes remain incomplete. |
-| Sectors, veins, and discovery | Implemented foundation | Generated Sectors and veins persist; access, targeting, extraction, depletion, securing, and a simple controlled-territory list exist. Ownership and richer access rules remain incomplete. |
+| Sectors, veins, and discovery | Implemented foundation | The first neighboring Sector, later Sectors, cities, and veins persist. Scouting discovers only veins compatible with open slots in active collection rooms, links them automatically, and collects without depletion. Access, securing, and a simple controlled-territory list exist; ownership and richer access rules remain incomplete. |
 | Equipment and Forge | Implemented foundation | Forge options are deterministic; crafting uses reserved graded resources and Cycles; items, assignment, bonuses, Story Cards, and recovery are authoritative. Broader equipment types and upgrade paths remain future work. |
 | Research | Partial | Custom Skill/Trait facility research uses tasks and persistence. A general research tree, project effects, and broader unlock rules do not exist. |
 | Storage | Implemented foundation | Tier 4 enables enforced resource limits; active Grand Vault Tier increases those limits. |

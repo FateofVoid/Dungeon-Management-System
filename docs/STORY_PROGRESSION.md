@@ -75,7 +75,7 @@ After the first intrusion is resolved and the Sector report is reviewed, the Man
 
 ### First Contact VI — The First Survey
 
-Completing a Cycle with the Perimeter Scout cohort active begins the immediate survey. This produces leads, not predetermined settlements, allegiances, threats, or discoveries, and completes First Contact.
+Completing a Cycle with the Perimeter Scout cohort active begins the immediate survey, creates the persistent Lustrian Sector neighboring the Dungeon Sector, and completes First Contact. Continued scouting develops that same Sector rather than inventing an unattached city.
 
 ### Dungeon Sector discovery states
 
@@ -92,7 +92,7 @@ The immediate Dungeon Sector is evidence-built. Remote Sectors are procedurally 
 
 ### Beyond the Perimeter I — The Nearby City
 
-Activation creates a named primary city near the Dungeon before displaying it in the objective. The Manager's preliminary briefing treats Dominion danger, Dominion information, Guild access, and later Veil contacts as possibilities until scouting evidence confirms them.
+After scouting advances beyond the neighboring Sector's first discovery, the system generates its primary city with a durable name, complete appearance, and explicit Sector link. The Manager's initial report presents those facts as canon while treating Dominion danger, Dominion information, Guild access, and later Veil contacts as possibilities until evidence confirms them.
 
 ### Beyond the Perimeter II — City Contact
 

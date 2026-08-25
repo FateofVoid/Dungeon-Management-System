@@ -153,7 +153,7 @@
     "isSpoiler": false,
     "showInStoryCards": true,
     "keys": "Lustrian resource Site, resource vein, harvest Site, extractable vein",
-    "value": "A Lustrian resource Site is a specific vein, grove, deposit, ruin, creature habitat, or magical phenomenon that can yield useful materials. A dungeon must discover and assess a Site before targeting it. Extraction depends on access, ownership, logistics, remaining reserves, danger, and compatible facilities rather than discovery alone.",
+    "value": "A Lustrian resource Site is a specific vein, grove, deposit, ruin, creature habitat, or magical phenomenon that can yield useful materials. Scouts discover only Sites compatible with an active collection facility's open vein slot. Once linked, the Site supplies that facility without depletion; access, ownership, logistics, danger, and facility capability still govern collection.",
     "type": "Global Lore",
     "title": "Lore — Lustrian Resource Sites",
     "description": "Setting-wide Lustria foundation shared by every dungeon; scenario-specific worlds, characters, and named dungeons are excluded.",

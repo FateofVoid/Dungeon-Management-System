@@ -29,7 +29,7 @@ Current development reference: **DMS 0.11.0-dev**. Tiers 0–1 are verified for 
 - Aptitudes from F to SSS, one Aptitude roll for every Attribute on each Level Up, up to five favored Attributes with +1 growth, and quest-based Levels
 - one to three prioritized, theme-named Thronebound Unique Attributes that grow with Thronebound Levels, strengthen broad Dungeon functions and Signature, and provide Administrator affinities
 - location-aware Activity Mode, timed Cycles, construction/production/training/exploration benefits, and timeless System Mode
-- Lustria scouting, persistent resource-vein discovery, extraction and depletion, Combat Power gates, Sector securing, and basic controlled-Sector state
+- Lustria scouting, collection-slot-driven persistent vein discovery, non-depleting automatic collection, Combat Power gates, Sector securing, and basic controlled-Sector state
 - deterministic Forge equipment options, Cycle-based crafting, assignments, and persistent Portal Anchors and routes
 
 ## Starting progression
@@ -42,7 +42,7 @@ At Tier 1, the Dungeon becomes a functioning economy. Material Works, Sustenance
 
 Ask the System to show Facilities before construction. The construction display includes only options admitted by current Tier and Story progression. Every visible option already has a stable Dungeon-manifested name, planned Appearance, Function, Job, and exact cost. A resource shortage or currently reachable research prerequisite keeps the option visible with its requirement; a later-Tier option remains hidden. Work already begun or completed is marked Under Construction or Constructed and cannot start again.
 
-The Tier 1 First Contact chain ends by constructing a Perimeter Scout Post and activating its cohort. The Manager's Sector report is generated from every accumulated snapshot with explicit evidence references and preserved unknowns. Tier 2 uses that scouting foundation to introduce a nearby primary city and later produce a Lustrian society, Dungeon regulation, and Dominion activity briefing.
+The Tier 1 First Contact chain ends by constructing a Perimeter Scout Post and activating its cohort. The Manager's Sector report is generated from every accumulated snapshot with explicit evidence references and preserved unknowns. Scouting automatically establishes the first Lustrian Sector neighboring the Dungeon Sector. Continued scouting generates that Sector's primary city, including its durable appearance, before the Manager's initial city report. Active Lustrian collection rooms expose vein slots; scouts find and automatically link only compatible veins for open slots, and those veins supply their rooms every Cycle without depletion.
 
 Tier 1 also produces three editable Thronebound Class Preview cards. Accepting one grants a themed Class, one Combat Skill, one Management Skill, and one Trait and permanently appends the choice to Class Lineage. Construct the Class Evolution Chamber for later Class Ups; both the Dungeon and the Chamber must reach the target Tier. General Skill and Trait facilities use system-controlled shop prices, validate the target, and reject duplicate purchases before spending anything.
 

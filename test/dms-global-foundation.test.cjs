@@ -54,15 +54,33 @@ test("graded dungeon resources keep lower Grades and leave Energy and Marks ungr
   assert.equal(loaded.dungeon.resources.construction.grades.Intermediate, dms.dungeon.resources.construction.grades.Intermediate);
 });
 
-test("Lustrian site Grade gates targeting and extraction capability", () => {
+test("Lustrian veins enforce Grade gates and collect without depletion", () => {
   const dms = rich(configured(), 2000), extractor = activateRoom(dms, "vein-extractor", 3);
   dms.world.lustria.sectors["sector-test"] = { id: "sector-test", name: "Test Reach", threat: 1, status: "Accessible", veins: ["vein-test"] };
-  dms.world.lustria.veins["vein-test"] = { id: "vein-test", sectorId: "sector-test", resourceKey: "resonance-crystal", name: "Resonance Crystal Site", grade: "Intermediate", richness: 2, remaining: 20, status: "Discovered" };
+  dms.world.lustria.veins["vein-test"] = { id: "vein-test", sectorId: "sector-test", resourceKey: "resonance-crystal", name: "Resonance Crystal Site", grade: "Intermediate", richness: 2, status: "Discovered" };
   assert.throws(() => DMS.targetVein(dms, extractor.id, "vein-test"), /Tier 4 extraction facility/);
   dms.dungeon.tier = 4; DMS.applyDerivedState(dms); DMS.upgradeRoom(dms, extractor.id); finishTasks(dms);
   DMS.targetVein(dms, extractor.id, "vein-test"); DMS.resolveCycle(dms);
-  assert.ok(dms.world.lustria.inventoryGrades["Resonance Crystals"].Intermediate > 0);
-  assert.ok(dms.world.lustria.veins["vein-test"].remaining < 20);
+  const first = dms.world.lustria.inventoryGrades["Resonance Crystals"].Intermediate; DMS.resolveCycle(dms);
+  assert.ok(first > 0);
+  assert.ok(dms.world.lustria.inventoryGrades["Resonance Crystals"].Intermediate > first);
+  assert.equal(dms.world.lustria.veins["vein-test"].renewable, true);
+  assert.equal(Object.hasOwn(dms.world.lustria.veins["vein-test"], "remaining"), false);
+});
+
+test("scouting discovers only enough veins to fill active collection slots and auto-links them", () => {
+  const dms = rich(configured(), 3000), extractor = activateRoom(dms, "vein-extractor", 3); activateRoom(dms, "scout-lodge", 3);
+  const sector = dms.world.lustria.sectors[dms.story.scouting.neighboringSectorId], capacity = DMS.ROOM_DEFINITIONS[extractor.definition].veinTargets * extractor.tier;
+  assert.equal(sector.veins.length, capacity);
+  assert.deepEqual(extractor.targetedVeins, sector.veins);
+  for (const id of sector.veins) {
+    const vein = dms.world.lustria.veins[id];
+    assert.equal(vein.collectionRoomId, extractor.id);
+    assert.equal(vein.renewable, true);
+  }
+  DMS.setLocation(dms, "Lustria", "Survey frontier"); DMS.setActivity(dms, "Survey", [], "Standard");
+  const second = DMS.scoutSector(dms, "Second Test Sector");
+  assert.equal(second.veins.length, 0, "no veins appear when every compatible collection slot is occupied");
 });
 
 test("task reservations deduct, persist, commit, and return exactly on cancellation", () => {
