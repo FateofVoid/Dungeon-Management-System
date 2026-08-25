@@ -2,7 +2,7 @@
 
 This document is the change contract for Dungeon Management System development. Its purpose is to keep a local improvement from silently invalidating another subsystem, an existing save, a Story Card, or a verified player path.
 
-Current reference: **DMS 0.10.0-dev**, with Dungeon Tiers 0–1 verified for entry, the Tier 0–3 Story spine defined, and the Tier 2 deployment gate sealed.
+Current reference: **DMS 0.11.0-dev**, with Dungeon Tiers 0–1 verified for entry, the Tier 0–3 Story spine defined, and the Tier 2 deployment gate sealed.
 
 Story development must preserve the invariants in [Story Progression](STORY_PROGRESSION.md): one active Story Quest, authoritative-event completion, generated references before presentation, delayed editable-output snapshots, non-inventive Manager reports, spoiler-safe Story Map output, and branch reconvergence.
 

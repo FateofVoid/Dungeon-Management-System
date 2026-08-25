@@ -1,6 +1,6 @@
 /**
  * Dungeon Management System (DMS)
- * Version: 0.10.0-dev
+ * Version: 0.11.0-dev
  * Runtime Schema: 15
  * Save Schema: 3
  * Verified Dungeon Tiers: 0-1
@@ -11146,7 +11146,7 @@ function AutoCards(inHook, inText, inStop) {
 (function installDungeonManagement(global) {
   "use strict";
 
-  const DMS_VERSION = "0.10.0-dev";
+  const DMS_VERSION = "0.11.0-dev";
   const DMS_DEVELOPMENT_STATE = "Progression-gated player interface and Tier 0-3 Story spine implemented; Tier 4-10 branching framework defined; Tier 2 deployment sealed";
   const SCHEMA = 15;
   const SAVE_SCHEMA = 3;
@@ -11209,7 +11209,7 @@ function AutoCards(inHook, inText, inStop) {
   });
   const STORY_TIER_FRAMEWORK = Object.freeze({
     0: Object.freeze({ chain: "Awakening", purpose: "Become a functioning Thronebound and stabilize the first Dungeon bond.", gateQuest: "story-awakening-1" }),
-    1: Object.freeze({ chain: "First Contact", purpose: "Discover and establish the Dungeon's immediate Lustrian surroundings.", gateQuest: "story-first-contact-4" }),
+    1: Object.freeze({ chain: "First Contact", purpose: "Discover the immediate Dungeon Sector, survive first contact, and establish external scouting.", gateQuest: "story-first-contact-6" }),
     2: Object.freeze({ chain: "Beyond the Perimeter", purpose: "Encounter wider Lustria, organized society, Dominion influence, and directed adaptation.", gateQuest: "story-development-path-1" }),
     3: Object.freeze({ chain: "The Dungeon's Place", purpose: "Test the emerging development approach and crystallize its first doctrine.", gateQuest: "story-dungeons-place-3" }),
     4: Object.freeze({ chain: "Recognition", purpose: "Determine how established Lustrian powers classify and approach the Dungeon.", structure: "entry → selected-path consequence → convergence" }),
@@ -11680,7 +11680,8 @@ function AutoCards(inHook, inText, inStop) {
     barracks: Object.freeze({ name: "Barracks", unlockTier: 2, kind: "military", function: "Unlocks Soldiers and contributes military cohort positions through its Expansion.", job: "Drill Keeper", uniqueWorker: true, soldierJobs: 6, baseCost: 45 }),
     "training-hall": Object.freeze({ name: "Training Hall", unlockTier: 2, kind: "military", function: "Trains existing Soldiers and improves their contribution to Dungeon Combat Power.", job: "Combat Instructor", uniqueWorker: true, combatMultiplier: 0.1, baseCost: 50 }),
     "administration-office": Object.freeze({ name: "Administration Office", unlockTier: 2, kind: "support", function: "Coordinates rooms and improves the productivity of assigned workers.", job: "Dungeon Clerk", jobs: 3, productivityMultiplier: 0.05, baseCost: 40 }),
-    "scout-lodge": Object.freeze({ name: "Scout Lodge", unlockTier: 2, kind: "exploration", function: "Organizes expeditions that discover Lustrian sectors and resource veins.", job: "Pathfinder", jobs: 3, scoutPower: 8, baseCost: 45 }),
+    "perimeter-scout-post": Object.freeze({ name: "Perimeter Scout Post", unlockTier: 1, kind: "exploration", function: "Organizes the first external scouts, surveys the immediate Dungeon Sector, and develops leads toward nearby settlements without generating remote resource veins.", job: "Perimeter Scout", jobs: 2, scoutPower: 4, baseCost: 30, administratorRoles: ["Scoutmaster"] }),
+    "scout-lodge": Object.freeze({ name: "Scout Lodge", unlockTier: 2, kind: "exploration", function: "Extends established perimeter scouting into expeditions that discover remote Lustrian sectors and resource veins.", job: "Pathfinder", jobs: 3, scoutPower: 8, baseCost: 45, administratorRoles: ["Scoutmaster"] }),
     "attribute-training-hall": Object.freeze({ name: "Attribute Training Hall", unlockTier: 2, kind: "development", function: "Spends dungeon energy to train Attributes and Skill mastery, with growth influenced by Aptitude.", job: "Attribute Trainer", jobs: 3, baseCost: 55, administratorRoles: ["Training Master"] }),
     gatehouse: Object.freeze({ name: "Gatehouse", unlockTier: 3, kind: "military", function: "Controls dungeon access and converts Soldiers into organized defensive strength.", job: "Gate Warden", uniqueWorker: true, defenseMultiplier: 0.15, baseCost: 70 }),
     "vein-extractor": Object.freeze({ name: "Vein Extraction Facility", unlockTier: 3, kind: "exploitation", function: "Targets discovered Lustrian resource veins and extracts their resources each Cycle.", job: "Vein Operator", jobs: 3, veinTargets: 1, extraction: 2, baseCost: 80 }),
@@ -11703,7 +11704,7 @@ function AutoCards(inHook, inText, inStop) {
   const ROOM_MANIFESTATION_NOUNS = Object.freeze({
     "material-works": "Crucible", "sustenance-works": "Conservatory", "worker-habitat": "Hearth", "administrator-quarters": "Regent Quarters", "thronebound-private-chamber": "Sovereign Chamber",
     "development-sanctum": "Ascension Sanctum", "energy-conduit": "Nexus Conduit", "class-evolution-chamber": "Evolution Chamber", "general-skill-hall": "Discipline Hall", "general-trait-archive": "Nature Archive",
-    barracks: "War Nest", "training-hall": "Trial Hall", "administration-office": "Mandate Office", "scout-lodge": "Farwatch Lodge", "attribute-training-hall": "Aptitude Hall",
+    "perimeter-scout-post": "Nearwatch Post", barracks: "War Nest", "training-hall": "Trial Hall", "administration-office": "Mandate Office", "scout-lodge": "Farwatch Lodge", "attribute-training-hall": "Aptitude Hall",
     gatehouse: "Threshold Bastion", "vein-extractor": "Vein Engine", forge: "Creation Forge", "population-nexus": "Manifestation Nexus", laboratory: "Inquiry Crucible",
     "custom-skill-studio": "Discipline Studio", "custom-trait-atelier": "Nature Atelier", "war-room": "Conflict Synod", "grand-vault": "Sovereign Vault", "portal-gate": "World Threshold",
     academy: "Ascendant Academy", "elite-barracks": "Exalted War Nest", "architectural-core": "Architectural Heart", "nexus-observatory": "Far Nexus Observatory", "conquest-command": "Dominion Command",
@@ -11712,7 +11713,7 @@ function AutoCards(inHook, inText, inStop) {
   const JOB_MANIFESTATION_NOUNS = Object.freeze({
     "material-works": "Shapers", "sustenance-works": "Tenders", "worker-habitat": "Hearthkeepers", "administrator-quarters": "Suitekeepers", "thronebound-private-chamber": "Throne Attendants",
     "development-sanctum": "Ascension Adepts", "energy-conduit": "Current Keepers", "class-evolution-chamber": "Evolution Guides", "general-skill-hall": "Discipline Guides", "general-trait-archive": "Nature Archivists",
-    barracks: "War Marshals", "training-hall": "Trial Guides", "administration-office": "Mandate Hands", "scout-lodge": "Farwatchers", "attribute-training-hall": "Aptitude Guides",
+    "perimeter-scout-post": "Nearwatchers", barracks: "War Marshals", "training-hall": "Trial Guides", "administration-office": "Mandate Hands", "scout-lodge": "Farwatchers", "attribute-training-hall": "Aptitude Guides",
     gatehouse: "Threshold Keepers", "vein-extractor": "Vein Hands", forge: "Creation Artisans", "population-nexus": "Manifestation Keepers", laboratory: "Inquiry Adepts",
     "custom-skill-studio": "Discipline Shapers", "custom-trait-atelier": "Nature Shapers", "war-room": "War Planners", "grand-vault": "Vault Keepers", "portal-gate": "Worldway Guides",
     academy: "Class Mentors", "elite-barracks": "Exalted Marshals", "architectural-core": "Core Shapers", "nexus-observatory": "Nexus Seers", "conquest-command": "Dominion Marshals",
@@ -11725,11 +11726,13 @@ function AutoCards(inHook, inText, inStop) {
     "story-first-contact-2": { category: "Story", chain: "First Contact", step: 2, tier: 1, title: "First Contact II — Establish the Immediate Perimeter", status: "locked", scope: "External", strictTemplate: true, missionType: "Survey", objective: "Travel through the immediate vicinity, then find and investigate several meaningful local points so the preceding editable story outputs can become evidence snapshots.", description: "A snapshot is prepared only after enough travel context and captured on the following action from the previous story output. The triggering quest output is never canonized automatically.", prerequisites: ["story-first-contact-1"], rewards: { experience: 100 } },
     "story-first-contact-3": { category: "Story", chain: "First Contact", step: 3, tier: 1, title: "First Contact III — Intrusion", status: "locked", scope: "Dungeon", strictTemplate: true, missionType: "Defense", hiddenUntilActive: true, objective: "Respond to the detected hostile or threatening intrusion, classify what occurred to some degree, and end the immediate threat while the Dungeon remains functional.", description: "Identity, motive, and origin begin unknown. Fighting is only one possible resolution; observation, capture, negotiation, concealment, retreat, expulsion, and sealing a route remain valid.", prerequisites: ["story-first-contact-2"], rewards: { experience: 125 } },
     "story-first-contact-4": { category: "Story", chain: "First Contact", step: 4, tier: 1, title: "First Contact IV — Review the Manager's Report", status: "locked", scope: "Dungeon", strictTemplate: true, missionType: "Internal", objective: "Return to the Throne Room and review the Manager's Dungeon Sector Report compiled from recorded observations, Sites, routes, and intrusion evidence.", description: "The report organizes established evidence into durable Sector canon; unknown fields remain unknown.", prerequisites: ["story-first-contact-3"], rewards: { experience: 150 } },
-    "story-beyond-perimeter-1": { category: "Story", chain: "Beyond the Perimeter", step: 1, tier: 2, title: "Beyond the Perimeter I — First Distant Sector", status: "locked", scope: "External", strictTemplate: true, missionType: "Exploration", objective: "Reach the remote Lustrian Sector identified by the Manager when this quest activates.", description: "The named remote Sector is generated before this objective becomes visible.", prerequisites: ["story-first-contact-4"], rewards: { experience: 175 } },
-    "story-beyond-perimeter-2": { category: "Story", chain: "Beyond the Perimeter", step: 2, tier: 2, title: "Beyond the Perimeter II — A Place Beyond", status: "locked", scope: "External", strictTemplate: true, missionType: "Exploration", objective: "Reach the specific Site generated within the first remote Sector before this objective is presented.", prerequisites: ["story-beyond-perimeter-1"], rewards: { experience: 175 } },
-    "story-beyond-perimeter-3": { category: "Story", chain: "Beyond the Perimeter", step: 3, tier: 2, title: "Beyond the Perimeter III — Organized Lustria", status: "locked", scope: "External", strictTemplate: true, objective: "Encounter and record evidence of an organized Lustrian society, institution, settlement, or faction without prescribing its allegiance.", prerequisites: ["story-beyond-perimeter-2"], rewards: { experience: 200 } },
-    "story-beyond-perimeter-4": { category: "Story", chain: "Beyond the Perimeter", step: 4, tier: 2, title: "Beyond the Perimeter IV — The Dominion's Reach", status: "locked", scope: "External", strictTemplate: true, objective: "Learn why the Dominion matters to Dungeon growth: its power, regulation or observation, Tier visibility, classification consequences, and the limits of purely internal advancement.", prerequisites: ["story-beyond-perimeter-3"], rewards: { experience: 225 } },
-    "story-beyond-perimeter-5": { category: "Story", chain: "Beyond the Perimeter", step: 5, tier: 2, title: "Beyond the Perimeter V — Patterns of Adaptation", status: "locked", scope: "Dungeon", strictTemplate: true, objective: "Discover that the Tier 3 transition can be deliberately directed by established behavior, external conditions, and Thronebound choice.", prerequisites: ["story-beyond-perimeter-4"], rewards: { experience: 225 } },
+    "story-first-contact-5": { category: "Story", chain: "First Contact", step: 5, tier: 1, title: "First Contact V — Establish External Scouting", status: "locked", scope: "Dungeon", strictTemplate: true, missionType: "Construction", objective: "Consider the Manager's recommendation and establish {room:perimeter-scout-post} if the Thronebound chooses to begin organized external surveillance.", description: "The recommendation follows the mapped Sector and resolved intrusion. It establishes capability without deciding whether future contacts are allies, threats, regulators, or opportunities.", prerequisites: ["story-first-contact-4"], references: [{ type: "facility", definition: "perimeter-scout-post", role: "focus" }], rewards: { experience: 100 } },
+    "story-first-contact-6": { category: "Story", chain: "First Contact", step: 6, tier: 1, title: "First Contact VI — The First Survey", status: "locked", scope: "Dungeon", strictTemplate: true, missionType: "Survey", objective: "Complete a Cycle with active {job:perimeter-scout-post} so the Manager can confirm that the immediate survey has begun.", description: "The first survey develops leads only. It does not predetermine the nearby settlement's identity, allegiance, safety, or relationship with the Dominion.", prerequisites: ["story-first-contact-5"], references: [{ type: "facility", definition: "perimeter-scout-post", role: "focus" }], rewards: { experience: 125 } },
+    "story-beyond-perimeter-1": { category: "Story", chain: "Beyond the Perimeter", step: 1, tier: 2, title: "Beyond the Perimeter I — The Nearby City", status: "locked", scope: "Dungeon", strictTemplate: true, missionType: "Survey", objective: "Review the Manager's preliminary briefing on {reference:local-city} and decide how to investigate the city as a possible source of Dominion danger, Dominion information, Guild access, or later Veil contacts.", description: "The city is generated before this objective becomes visible. Its institutions and relationships remain procedural until evidence establishes them.", prerequisites: ["story-first-contact-6"], references: [{ type: "city", id: "story-local-city", role: "local-city" }], rewards: { experience: 175 } },
+    "story-beyond-perimeter-2": { category: "Story", chain: "Beyond the Perimeter", step: 2, tier: 2, title: "Beyond the Perimeter II — City Contact", status: "locked", scope: "External", strictTemplate: true, missionType: "Exploration", objective: "Reach {reference:local-city} and establish one evidence-grounded point of contact without prescribing its institution, allegiance, or response.", prerequisites: ["story-beyond-perimeter-1"], references: [{ type: "city", id: "story-local-city", role: "local-city" }], rewards: { experience: 175 } },
+    "story-beyond-perimeter-3": { category: "Story", chain: "Beyond the Perimeter", step: 3, tier: 2, title: "Beyond the Perimeter III — Extended Scouting", status: "locked", scope: "Dungeon", strictTemplate: true, missionType: "Survey", objective: "Extend scouting beyond the immediate perimeter and gather evidence about Lustrian society, Dungeon regulation, and noteworthy Dominion activity while leaving every result procedural.", prerequisites: ["story-beyond-perimeter-2"], rewards: { experience: 200 } },
+    "story-beyond-perimeter-4": { category: "Story", chain: "Beyond the Perimeter", step: 4, tier: 2, title: "Beyond the Perimeter IV — The Lustrian Briefing", status: "locked", scope: "Dungeon", strictTemplate: true, objective: "Review the Manager's evidence-grounded briefing on organized Lustrian society, Dungeon regulation, and noteworthy Dominion activity; unsupported subjects must remain unknown.", prerequisites: ["story-beyond-perimeter-3"], rewards: { experience: 225 } },
+    "story-beyond-perimeter-5": { category: "Story", chain: "Beyond the Perimeter", step: 5, tier: 2, title: "Beyond the Perimeter V — Patterns of Adaptation", status: "locked", scope: "Dungeon", strictTemplate: true, objective: "Investigate how established behavior, external conditions, and Thronebound choice may direct the Tier 3 transition, without requiring a predetermined development approach.", prerequisites: ["story-beyond-perimeter-4"], rewards: { experience: 225 } },
     "story-development-path-1": { category: "Story", chain: "Development Path", step: 1, tier: 2, title: "Development Path I — Choose an Emerging Approach", status: "locked", scope: "Dungeon", strictTemplate: true, objective: "Review the revealed approaches and select Concealment, Controlled Contact, Dominion Accord, Patronage, or Armed Independence as the Dungeon's emerging direction.", description: "This is a reversible approach until its doctrine crystallizes during Tier 3.", prerequisites: ["story-beyond-perimeter-5"], rewards: { experience: 250 } },
     "story-dungeons-place-1": { category: "Story", chain: "The Dungeon's Place", step: 1, tier: 3, title: "The Dungeon's Place I — Deliberate Adaptation", status: "locked", scope: "Dungeon", strictTemplate: true, objective: "Apply the selected development approach to a real strategic problem created by the Dungeon's relationship with Lustria.", prerequisites: ["story-development-path-1"], rewards: { experience: 275 } },
     "story-path-concealment-1": { category: "Story", chain: "Path of Concealment", step: 1, tier: 3, title: "Path of Concealment I — Vanishing Threshold", status: "locked", scope: "External", strictTemplate: true, objective: "Resolve the Tier 3 doctrine trial by limiting discovery, exposure, and hostile access without abandoning necessary operations.", prerequisites: ["story-dungeons-place-1"], rewards: { experience: 300 } },
@@ -11981,8 +11984,11 @@ function AutoCards(inHook, inText, inStop) {
       story: {
         selectedPath: "", pathCommitted: false, knownPaths: [], milestones: {},
         knowledge: { organizedSociety: false, adaptationDiscovered: false, dominion: { majorPower: false, regulatesDungeons: false, tierVisibility: false, classificationConsequences: false, externalGrowth: false } },
-        dungeonSector: { id: "sector-dungeon", relationship: "Contains Dungeon", distance: "Immediate", name: "Unresolved Dungeon Sector", discoveryState: "Unobserved", classification: { biome: "Unknown", terrain: "Unknown", landmarks: [], settlements: [], hazards: [], factions: [], resources: [], routes: [], inhabitants: [], accessibility: "Unknown", certainty: "Unconfirmed" }, observations: [], exteriorEntered: false, travelContext: 0, travelSinceSnapshot: 0, pendingSnapshot: null, report: { generated: false, reviewed: false, cycle: 0, summary: "" } },
+        dungeonSector: { id: "sector-dungeon", relationship: "Contains Dungeon", distance: "Immediate", name: "Unresolved Dungeon Sector", discoveryState: "Unobserved", classification: { biome: "Unknown", terrain: "Unknown", landmarks: [], settlements: [], hazards: [], factions: [], resources: [], routes: [], inhabitants: [], accessibility: "Unknown", certainty: "Unconfirmed" }, observations: [], exteriorEntered: false, travelContext: 0, travelSinceSnapshot: 0, pendingSnapshot: null, report: { generated: false, reviewed: false, cycle: 0, summary: "", evidenceIds: [], pendingGeneration: null } },
         intrusion: { triggered: false, active: false, classification: "Unknown", motive: "Unknown", origin: "Unknown", resolution: "", dungeonSurvived: true, evidence: "", pendingResolution: null },
+        scouting: { recommended: false, perimeterEstablished: false, perimeterEstablishedCycle: -1, perimeterActive: false, perimeterCycles: 0, extendedActive: false, extendedCycles: 0 },
+        localCity: { id: "story-local-city", name: "", status: "Unknown", distance: "Unknown", summary: "", roles: { dominionDanger: "Unknown", dominionInformation: "Unknown", guildAccess: "Unknown", veilContacts: "Unknown" }, visited: false, contactEstablished: false },
+        societyReport: { generated: false, reviewed: false, summary: "", society: "Unknown", dungeonRegulation: "Unknown", dominionActivity: "Unknown", evidence: [] },
         remote: { sectorId: "", siteId: "", sectorVisited: false, siteVisited: false }, customSectors: {}
       },
       onboarding: { statusRead: false, resourcesRead: false, systemEntered: false, tierRequirementsRead: false, aptitudesDefined: [], scenarioVariablesImported: false, scenarioVariableSignature: "" },
@@ -12025,7 +12031,11 @@ function AutoCards(inHook, inText, inStop) {
         knownPaths: unique(Array.isArray(value.story?.knownPaths) ? value.story.knownPaths : []), milestones: { ...base.story.milestones, ...(value.story?.milestones || {}) },
         knowledge: { ...base.story.knowledge, ...(value.story?.knowledge || {}), dominion: { ...base.story.knowledge.dominion, ...(value.story?.knowledge?.dominion || {}) } },
         dungeonSector: { ...base.story.dungeonSector, ...(value.story?.dungeonSector || {}), classification: { ...base.story.dungeonSector.classification, ...(value.story?.dungeonSector?.classification || {}) }, observations: Array.isArray(value.story?.dungeonSector?.observations) ? value.story.dungeonSector.observations.slice(-20) : [], report: { ...base.story.dungeonSector.report, ...(value.story?.dungeonSector?.report || {}) } },
-        intrusion: { ...base.story.intrusion, ...(value.story?.intrusion || {}) }, remote: { ...base.story.remote, ...(value.story?.remote || {}) }, customSectors: { ...base.story.customSectors, ...(value.story?.customSectors || {}) }
+        intrusion: { ...base.story.intrusion, ...(value.story?.intrusion || {}) },
+        scouting: { ...base.story.scouting, ...(value.story?.scouting || {}) },
+        localCity: { ...base.story.localCity, ...(value.story?.localCity || {}), roles: { ...base.story.localCity.roles, ...(value.story?.localCity?.roles || {}) } },
+        societyReport: { ...base.story.societyReport, ...(value.story?.societyReport || {}) },
+        remote: { ...base.story.remote, ...(value.story?.remote || {}) }, customSectors: { ...base.story.customSectors, ...(value.story?.customSectors || {}) }
       },
       quests: { ...base.quests, ...(value.quests || {}), notifications: Array.isArray(value.quests?.notifications) ? value.quests.notifications.slice(-20) : [], relevantCategories: unique(Array.isArray(value.quests?.relevantCategories) ? value.quests.relevantCategories : base.quests.relevantCategories).filter(category => QUEST_CATEGORIES.includes(category)), records: { ...base.quests.records, ...((value.quests || {}).records || {}) } },
       milestones: { ...base.milestones, ...(value.milestones || {}), tier1: { ...base.milestones.tier1, ...((value.milestones || {}).tier1 || {}), produced: { ...base.milestones.tier1.produced, ...(((value.milestones || {}).tier1 || {}).produced || {}) }, constructed: { ...base.milestones.tier1.constructed, ...(((value.milestones || {}).tier1 || {}).constructed || {}) }, completedConstruction: { ...base.milestones.tier1.completedConstruction, ...(((value.milestones || {}).tier1 || {}).completedConstruction || {}) } } },
@@ -12695,13 +12705,17 @@ function AutoCards(inHook, inText, inStop) {
     return unique(Object.values(dms.rooms).filter(room => room.state === "Active").flatMap(room => ROOM_DEFINITIONS[room.definition]?.administratorRoles || [fallback[ROOM_DEFINITIONS[room.definition]?.kind]]));
   }
   function registerInnerSelfAdministrator(dms, administrator) {
-    const brain = ensureCard(`@${administrator.name}`, administrator.name, dms); if (brain) { brain.type = "Character"; brain.description = "Inner Self Administrator brain seed managed by DMS."; brain.entry ||= `${administrator.name} is a summoned Dungeon Administrator serving as ${administrator.role}. Appearance: ${administrator.appearance} Inner Self should preserve their memories, goals, plans, loyalties, and evolving Bond with the Thronebound.`; }
+    const brain = ensureCard(`@${administrator.name}`, administrator.name, dms); if (brain) { brain.type = "Character"; brain.description = "Inner Self Administrator brain seed managed by DMS."; brain.entry ||= `${administrator.name} is a summoned Dungeon Administrator serving as ${administrator.role}. Appearance: ${administrator.appearance} Personality: ${administrator.profile?.personality || "Not yet established."} Voice: ${administrator.profile?.voicePattern || "Not yet established."} Inner Self should preserve their memories, goals, plans, loyalties, and evolving Bond with the Thronebound.`; }
     if (!Array.isArray(global.storyCards)) return;
     const config = global.storyCards.find(card => /^Configure\s*\n?Inner Self$/i.test(clean(card.title)));
     if (config) { config.notes = clean(config.notes); if (!new RegExp(`(?:^|\\n)${administrator.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?:$|\\n)`, "i").test(config.notes)) config.notes = `${config.notes}\n${administrator.name}`.trim(); }
   }
   function administratorAppearance(dms, role, rank) {
     return `${dms.population.appearance} Their ${role} manifestation carries ${dms.dungeon.theme}-themed signs of Rank ${rank} authority while remaining recognizably one of the ${dms.population.nature}.`;
+  }
+  function administratorPersonality(dms, role, sequence) {
+    const temperaments = ["measured, observant, and quietly exacting", "warmly pragmatic, candid, and protective of those under their authority", "formal, curious, and inclined to test assumptions before acting", "dryly humorous, patient, and relentless about unfinished work", "reserved, decisive, and attentive to small changes in the Dungeon"];
+    return `${choose(temperaments, `${dms.dungeon.name}|administrator-personality|${sequence}`)} Their ${role} perspective is shaped by ${dms.dungeon.theme}, but future experiences and Inner Self may complicate it.`;
   }
   function summonAdministrator(dms, requestedName = "", requestedRace = "") {
     if (Object.keys(dms.administrators).length >= dms.dungeon.administratorCapacity) throw new Error(`Administrator Capacity is ${dms.dungeon.administratorCapacity} at Tier ${dms.dungeon.tier}.`);
@@ -12713,7 +12727,7 @@ function AutoCards(inHook, inText, inStop) {
     const rankPool = ["F", "F", "E", "E", "D", "D", "C", "C", "B", "A", "S", "SS", "SSS"], rank = choose(rankPool, `${dms.dungeon.name}|administrator-rank|${sequence}`);
     const specialization = /Warden|Marshal|Combat|Gate|Scout/i.test(role) ? "combat" : "support";
     const administrator = characterBase(requestedName || `${title(dms.dungeon.theme.split(/\s+/)[0])} ${role} ${sequence}`, requestedRace || dms.population.nature, role);
-    administrator.id = id; administrator.role = role; administrator.rank = rank; administrator.appearance = administratorAppearance(dms, role, rank); administrator.effectiveness = ADMINISTRATOR_RANK_MULTIPLIERS[rank]; administrator.attributeSpecialization = specialization; administrator.attributes = { [specialization]: attributeSet(ATTRIBUTE_TEMPLATES[specialization]) }; administrator.dungeonAttributeAffinity = choose(Object.keys(throneboundUniqueAttributes(dms)), `${dms.dungeon.name}|administrator-affinity|${sequence}`); administrator.assignedRooms = []; administrator.status = "Active"; administrator.bond = { value: 0, completedEvents: [] };
+    administrator.id = id; administrator.role = role; administrator.rank = rank; administrator.appearance = administratorAppearance(dms, role, rank); administrator.profile.appearance = administrator.appearance; administrator.profile.personality = administratorPersonality(dms, role, sequence); administrator.profile.voicePattern = role === "Manager" ? "Speaks in concise evidence-first reports, marking uncertainty instead of disguising it." : `Speaks from the practical concerns of a ${role}.`; administrator.effectiveness = ADMINISTRATOR_RANK_MULTIPLIERS[rank]; administrator.attributeSpecialization = specialization; administrator.attributes = { [specialization]: attributeSet(ATTRIBUTE_TEMPLATES[specialization]) }; administrator.dungeonAttributeAffinity = choose(Object.keys(throneboundUniqueAttributes(dms)), `${dms.dungeon.name}|administrator-affinity|${sequence}`); administrator.assignedRooms = []; administrator.status = "Active"; administrator.bond = { value: 0, completedEvents: [] };
     dms.administrators[id] = administrator; if (sequence === 1 && dms.rooms["room-throne"]) dms.rooms["room-throne"].authorityAdministrator = id; registerInnerSelfAdministrator(dms, administrator); if (dms.dungeon.tier >= 1) generateClassPreviews(dms, id); updateQuests(dms); record(dms, `Summoned ${administrator.name}, Rank ${rank} ${role}.`); return administrator;
   }
   function createAdministrator(dms, spec = {}) { return summonAdministrator(dms, spec.name, spec.race); }
@@ -12891,11 +12905,11 @@ function AutoCards(inHook, inText, inStop) {
     sector.pendingSnapshot = { phase, label: clean(label), preparedCycle: dms.activity.cycle };
     markStateChanged(dms); return sector.pendingSnapshot;
   }
-  function previousNarrativeOutput() {
+  function previousNarrativeOutput(limit = 700) {
     if (!Array.isArray(global.history) || !global.history.length) return "";
     const previous = global.history[global.history.length - 1], textValue = clean(previous?.rawText || previous?.text || "");
     if (!textValue || /^>\s*\*\*DUNGEON MANAGEMENT SYSTEM\*\*/i.test(textValue)) return "";
-    return textValue.slice(0, 700);
+    return textValue.slice(0, Math.max(100, Number(limit) || 700));
   }
   function capturePendingDungeonSectorSnapshot(dms, narrative = previousNarrativeOutput()) {
     const sector = dms.story.dungeonSector, pending = sector.pendingSnapshot, textValue = clean(narrative);
@@ -12927,21 +12941,84 @@ function AutoCards(inHook, inText, inStop) {
     intrusion.pendingResolution = null;
     return resolveStoryIntrusion(dms, { classification: "Unidentified hostile entity or group", resolution: pending.resolution, evidence, dungeonSurvived: true });
   }
-  function compileDungeonSectorReport(dms, report = {}) {
+  function dungeonSectorEvidencePacket(dms) {
+    const observations = dms.story.dungeonSector.observations.map(observation => ({ id: observation.id, phase: observation.phase, label: clean(observation.facts?.milestone) || "Unlabelled observation", cycle: observation.cycle, text: observation.summary, facts: { ...(observation.facts || {}) } }));
+    const intrusion = dms.story.intrusion;
+    if (intrusion.triggered) observations.push({ id: "intrusion-record", phase: "Intrusion", label: "Resolved first intrusion", cycle: dms.activity.cycle, text: intrusion.evidence, facts: { classification: intrusion.classification, motive: intrusion.motive, origin: intrusion.origin, resolution: intrusion.resolution, dungeonSurvived: intrusion.dungeonSurvived } });
+    return observations;
+  }
+  function scheduleManagerSectorReport(dms, actionCount = 0) {
+    const manager = Object.values(dms.administrators).find(administrator => administrator.role === "Manager"); if (!manager) throw new Error("The Manager is required to compile the Dungeon Sector Report.");
+    const phases = new Set(dms.story.dungeonSector.observations.map(observation => observation.phase)); if (!phases.has("First Exit") || !phases.has("Perimeter") || !phases.has("Intrusion")) throw new Error("The report requires First Exit, Perimeter, and Intrusion evidence.");
+    const evidence = dungeonSectorEvidencePacket(dms); dms.story.dungeonSector.report.pendingGeneration = { actionCount: Number(actionCount) || 0, managerId: manager.id, evidence, preparedCycle: dms.activity.cycle };
+    markStateChanged(dms); return dms.story.dungeonSector.report.pendingGeneration;
+  }
+  function managerSectorReportGenerationContext(dms) {
+    const pending = dms.story.dungeonSector.report.pendingGeneration, manager = pending && dms.administrators[pending.managerId]; if (!pending || !manager) return "";
+    return [
+      `Write the current story turn as ${manager.name}, the Dungeon Manager, personally presenting a concise Sector report to ${dms.thronebound.name}. Resolve ${manager.name} as a present character in the prose: use their recorded appearance, role, Rank, and established personality if known; do not replace them with a generic system voice.`,
+      "Every environmental claim must be supported by one or more evidence IDs below. Reconcile compatible observations, distinguish direct observation from inference, and preserve contradictions or missing information as Unknown. Do not invent a biome, settlement, faction, inhabitants, resources, route destination, political allegiance, or level of safety.",
+      `Manager: ${JSON.stringify({ id: manager.id, name: manager.name, role: manager.role, rank: manager.rank, race: manager.race, appearance: manager.appearance, profile: manager.profile || {} })}`,
+      `All recorded evidence: ${JSON.stringify(pending.evidence)}`,
+      "After the natural story prose, append exactly one machine-readable block using this shape:",
+      '[DMS_MANAGER_SECTOR_REPORT]{"name":{"value":"Unknown","evidenceIds":[]},"summary":{"value":"evidence-grounded sector description","evidenceIds":["observation-id"]},"classification":{"biome":{"value":"Unknown","evidenceIds":[]},"terrain":{"value":"Unknown","evidenceIds":[]},"landmarks":{"value":[],"evidenceIds":[]},"settlements":{"value":[],"evidenceIds":[]},"hazards":{"value":[],"evidenceIds":[]},"factions":{"value":[],"evidenceIds":[]},"resources":{"value":[],"evidenceIds":[]},"routes":{"value":[],"evidenceIds":[]},"inhabitants":{"value":[],"evidenceIds":[]},"accessibility":{"value":"Unknown","evidenceIds":[]},"certainty":{"value":"Unconfirmed","evidenceIds":[]}}}[/DMS_MANAGER_SECTOR_REPORT]'
+    ].join("\n");
+  }
+  function parseManagerSectorReport(narrative) {
+    const match = clean(narrative).match(/\[DMS_MANAGER_SECTOR_REPORT\]([\s\S]*?)\[\/DMS_MANAGER_SECTOR_REPORT\]/i); if (!match) return null;
+    try { const parsed = JSON.parse(match[1].trim()); return parsed && typeof parsed === "object" ? parsed : null; } catch { return null; }
+  }
+  function evidenceValue(payload, validIds, fallback, requireEvidence) {
+    const wrapped = payload && typeof payload === "object" && !Array.isArray(payload) && Object.hasOwn(payload, "value"), value = wrapped ? payload.value : payload, ids = unique(wrapped && Array.isArray(payload.evidenceIds) ? payload.evidenceIds : []).filter(id => validIds.has(id));
+    if (requireEvidence && !ids.length) return { value: fallback, evidenceIds: [] };
+    if (Array.isArray(fallback)) return { value: unique(Array.isArray(value) ? value : clean(value) && !/^Unknown$/i.test(clean(value)) ? [value] : []).map(clean).filter(Boolean), evidenceIds: ids };
+    return { value: clean(value) || fallback, evidenceIds: ids };
+  }
+  function compileDungeonSectorReport(dms, report = {}, options = {}) {
     const manager = Object.values(dms.administrators).find(administrator => administrator.role === "Manager"); if (!manager) throw new Error("The Manager is required to compile the Dungeon Sector Report.");
     const sector = dms.story.dungeonSector, phases = new Set(sector.observations.map(observation => observation.phase));
     if (!phases.has("First Exit") || !phases.has("Perimeter") || !phases.has("Intrusion")) throw new Error("The report requires First Exit, Perimeter, and Intrusion evidence.");
-    const allowed = ["biome", "terrain", "landmarks", "settlements", "hazards", "factions", "resources", "routes", "inhabitants", "accessibility", "certainty"], classification = { ...sector.classification };
-    for (const key of allowed) if (Object.hasOwn(report, key)) classification[key] = Array.isArray(classification[key]) ? unique(Array.isArray(report[key]) ? report[key].map(clean).filter(Boolean) : [clean(report[key])].filter(Boolean)) : clean(report[key]) || classification[key];
-    sector.name = clean(report.name) || (sector.name === "Unresolved Dungeon Sector" ? `${dms.dungeon.name} Sector` : sector.name); sector.classification = classification; sector.discoveryState = "Mapped";
-    sector.report = { generated: true, reviewed: false, cycle: dms.activity.cycle, summary: (clean(report.summary) || sector.observations.map(observation => `${observation.phase}: ${observation.summary}`).join(" ")).slice(0, 1200) };
+    const validIds = new Set(dungeonSectorEvidencePacket(dms).map(item => item.id)), requireEvidence = !!options.requireEvidence, source = report.classification && typeof report.classification === "object" ? report.classification : report;
+    const allowed = ["biome", "terrain", "landmarks", "settlements", "hazards", "factions", "resources", "routes", "inhabitants", "accessibility", "certainty"], classification = { ...sector.classification }, acceptedEvidence = [];
+    for (const key of allowed) if (Object.hasOwn(source, key)) { const resolved = evidenceValue(source[key], validIds, Array.isArray(classification[key]) ? [] : classification[key], requireEvidence); classification[key] = resolved.value; acceptedEvidence.push(...resolved.evidenceIds); }
+    const resolvedName = evidenceValue(report.name, validIds, sector.name === "Unresolved Dungeon Sector" ? `${dms.dungeon.name} Sector` : sector.name, requireEvidence), fallbackSummary = sector.observations.map(observation => `${observation.phase}: ${observation.summary}`).join(" "), resolvedSummary = evidenceValue(report.summary, validIds, fallbackSummary, requireEvidence);
+    sector.name = resolvedName.value; sector.classification = classification; sector.discoveryState = "Mapped";
+    sector.report = { generated: true, reviewed: false, cycle: dms.activity.cycle, summary: clean(resolvedSummary.value).slice(0, 1200), evidenceIds: unique([...acceptedEvidence, ...resolvedName.evidenceIds, ...resolvedSummary.evidenceIds]), pendingGeneration: null };
     const worldSector = dungeonSectorRecord(dms); Object.assign(worldSector, { name: sector.name, status: sector.discoveryState, classification: { ...classification }, observations: sector.observations.map(observation => ({ ...observation })) });
     markStateChanged(dms); updateQuests(dms); return sector.report;
   }
-  function reviewDungeonSectorReport(dms) {
-    const sector = dms.story.dungeonSector; if (!sector.report.generated) compileDungeonSectorReport(dms);
-    sector.report.reviewed = true; markStateChanged(dms); updateQuests(dms); record(dms, `The Manager's report established ${sector.name} as durable Dungeon Sector canon.`); return sector;
+  function capturePendingManagerSectorReport(dms, actionCount = 0, narrative = previousNarrativeOutput(6000)) {
+    const pending = dms.story.dungeonSector.report.pendingGeneration; if (!pending || Number(pending.actionCount) === Number(actionCount)) return null;
+    const parsed = parseManagerSectorReport(narrative); if (!parsed) return null;
+    return compileDungeonSectorReport(dms, parsed, { requireEvidence: true });
   }
+  function reviewDungeonSectorReport(dms) {
+    const sector = dms.story.dungeonSector; if (!sector.report.generated) throw new Error("The Manager report has not yet been generated from the recorded evidence.");
+    sector.report.reviewed = true; dms.story.scouting.recommended = true; markStateChanged(dms); updateQuests(dms); record(dms, `The Manager's report established ${sector.name} as durable Dungeon Sector canon and recommended organized external scouting.`); return sector;
+  }
+  function ensureLocalCity(dms) {
+    const city = dms.story.localCity; if (city.name) return city;
+    const names = ["Veycross", "Aurelian Gate", "Morrowspire", "Caldris", "Nacrehold", "Sablehaven"], name = choose(names, `${dms.dungeon.name}|nearby-primary-city`);
+    Object.assign(city, { name, status: "Preliminary Scout Lead", distance: "Near the Dungeon Sector", summary: `${name} is the nearest primary city indicated by the perimeter survey. Its exact institutions, allegiance, safety, and attitude toward the Dungeon remain unconfirmed.`, roles: { dominionDanger: "Possible; unconfirmed", dominionInformation: "Possible; unconfirmed", guildAccess: "Possible; unconfirmed", veilContacts: "Potential later lead; unconfirmed" } });
+    markStateChanged(dms); return city;
+  }
+  function localCityBriefing(dms, review = false) {
+    if (!dms.story.scouting.perimeterActive) throw new Error("Complete the first perimeter scouting Cycle before requesting a city briefing.");
+    const manager = Object.values(dms.administrators).find(administrator => administrator.role === "Manager"); if (!manager) throw new Error("The Manager is required to present the city briefing.");
+    const city = ensureLocalCity(dms); if (review) { dms.story.milestones["local-city-briefing-reviewed"] = true; city.status = "Briefed"; markStateChanged(dms); updateQuests(dms); }
+    return `${manager.name}'s preliminary city briefing\n${city.name} — ${city.distance}\n${city.summary}\nPotential Dominion danger: ${city.roles.dominionDanger}\nPotential Dominion information: ${city.roles.dominionInformation}\nPotential Guild access: ${city.roles.guildAccess}\nPotential Veil contacts: ${city.roles.veilContacts}`;
+  }
+  function compileLustrianSocietyReport(dms) {
+    if (!dms.story.scouting.extendedActive) throw new Error("Extended scouting has not yet produced a reportable survey.");
+    const knowledge = dms.story.knowledge, dominion = knowledge.dominion, knownDominion = Object.entries(dominion).filter(([, value]) => value).map(([key]) => key);
+    const report = dms.story.societyReport;
+    report.generated = true; report.reviewed = false; report.society = knowledge.organizedSociety ? clean(dms.story.milestones["knowledge:organized society"]) || "Evidence confirms at least one organized Lustrian society, institution, settlement, or faction; broader structure remains unknown." : "Unknown";
+    report.dungeonRegulation = dominion.regulatesDungeons ? clean(dms.story.milestones["knowledge:dungeon regulation"]) || "Evidence indicates that Dungeon activity is subject to Dominion observation or regulation; exact rules and enforcement remain unknown." : "Unknown";
+    report.dominionActivity = knownDominion.length ? `Confirmed Dominion knowledge: ${knownDominion.join(", ")}. Unrecorded Dominion subjects remain unknown.` : "Unknown";
+    report.summary = `Lustrian Society: ${report.society}\nDungeon Regulation: ${report.dungeonRegulation}\nNoteworthy Dominion Activity: ${report.dominionActivity}`; report.evidence = unique([knowledge.organizedSociety ? "knowledge:organized-society" : "", ...knownDominion.map(key => `knowledge:dominion:${key}`)]);
+    markStateChanged(dms); return report;
+  }
+  function reviewLustrianSocietyReport(dms) { const report = dms.story.societyReport.generated ? dms.story.societyReport : compileLustrianSocietyReport(dms); report.reviewed = true; markStateChanged(dms); updateQuests(dms); return report; }
   function ensureStoryRemoteSector(dms) {
     if (dms.story.remote.sectorId && dms.world.lustria.sectors[dms.story.remote.sectorId]) return dms.world.lustria.sectors[dms.story.remote.sectorId];
     const sequence = Math.max(1, ++dms.generation.sectorSequence), id = `sector-${sequence}`, names = ["Amber Reach", "Glasswind Expanse", "Morrow Verge", "Sable Crossing", "Luminous March"], name = choose(names, `${dms.dungeon.name}|story-remote-sector`);
@@ -12954,11 +13031,12 @@ function AutoCards(inHook, inText, inStop) {
     dms.world.lustria.sites[id] = site; sector.sites = unique([...(sector.sites || []), id]); dms.story.remote.siteId = id; markStateChanged(dms); return site;
   }
   function visitStoryLocation(dms, reference) {
-    const id = clean(reference), sector = dms.world.lustria.sectors[id] || Object.values(dms.world.lustria.sectors).find(item => item.name.toLowerCase() === id.toLowerCase()), site = dms.world.lustria.sites[id] || Object.values(dms.world.lustria.sites).find(item => item.name.toLowerCase() === id.toLowerCase());
-    if (!sector && !site) throw new Error("Unknown Story Sector or Site.");
+    const id = clean(reference), sector = dms.world.lustria.sectors[id] || Object.values(dms.world.lustria.sectors).find(item => item.name.toLowerCase() === id.toLowerCase()), site = dms.world.lustria.sites[id] || Object.values(dms.world.lustria.sites).find(item => item.name.toLowerCase() === id.toLowerCase()), city = dms.story.localCity?.name && (id === dms.story.localCity.id || id.toLowerCase() === dms.story.localCity.name.toLowerCase()) ? dms.story.localCity : null;
+    if (!sector && !site && !city) throw new Error("Unknown Story Sector, Site, or city.");
     if (sector) { sector.discoveryState = "Encountered"; dms.story.remote.sectorVisited = sector.id === dms.story.remote.sectorId; setLocation(dms, "Lustria", sector.name, `Sector ${sector.id}`); }
     if (site) { site.visited = true; dms.story.remote.siteVisited = site.id === dms.story.remote.siteId; const parent = dms.world.lustria.sectors[site.sectorId]; setLocation(dms, "Lustria", site.name, parent ? `Within ${parent.name}` : "Lustrian Site"); }
-    markStateChanged(dms); updateQuests(dms); return sector || site;
+    if (city) { city.visited = true; city.status = "Visited"; setLocation(dms, "Lustria", city.name, "Nearby primary city"); }
+    markStateChanged(dms); updateQuests(dms); return sector || site || city;
   }
   function recordStoryKnowledge(dms, kind, details = "") {
     const key = clean(kind).toLowerCase();
@@ -12985,7 +13063,7 @@ function AutoCards(inHook, inText, inStop) {
   }
   function storyRequirementForTier(targetTier) {
     const tier = clamp(targetTier, 1, 10); if (tier <= 1) return null;
-    if (tier === 2) return "story-first-contact-4";
+    if (tier === 2) return "story-first-contact-6";
     if (tier === 3) return "story-development-path-1";
     if (tier === 4) return "story-dungeons-place-3";
     return `story-tier-${tier - 1}-convergence`;
@@ -13078,6 +13156,9 @@ function AutoCards(inHook, inText, inStop) {
     const workerUpkeep = dms.population.workers.cohorts.reduce((sum, cohort) => sum + cohort.count * 0.1 * cohort.upkeepMultiplier, 0); report.upkeep = Number(((workerUpkeep + dms.population.soldiers.current * 0.25) * (1 - upkeepReduction)).toFixed(2));
     const payableUpkeep = Math.min(report.upkeep, dms.dungeon.resources.sustenance.amount); if (payableUpkeep) spend(dms, { sustenance: payableUpkeep }, "cycle-upkeep"); report.unpaidUpkeep = Number((report.upkeep - payableUpkeep).toFixed(2));
     if (dms.dungeon.tier >= 1 && report.unpaidUpkeep === 0 && (report.dungeonResources.sustenance || 0) > 0 && dms.population.workers.cohorts.length && dms.population.workers.cohorts.every(cohort => cohort.housed >= cohort.count)) tierOneMilestone(dms, "stableWorkerSupport", true);
+    const perimeterPost = Object.values(dms.rooms).find(room => room.definition === "perimeter-scout-post" && room.state === "Active"), scoutLodge = Object.values(dms.rooms).find(room => room.definition === "scout-lodge" && room.state === "Active");
+    if (perimeterPost) { if (!dms.story.scouting.perimeterEstablished) { dms.story.scouting.perimeterEstablished = true; dms.story.scouting.perimeterEstablishedCycle = dms.activity.cycle + 1; } else if (Number(perimeterPost.assignedWorkers) > 0 && dms.activity.cycle + 1 > dms.story.scouting.perimeterEstablishedCycle) { dms.story.scouting.perimeterCycles += 1; dms.story.scouting.perimeterActive = true; } }
+    if (scoutLodge && Number(scoutLodge.assignedWorkers) > 0) { dms.story.scouting.extendedCycles += 1; dms.story.scouting.extendedActive = dms.story.scouting.extendedCycles >= 2; }
     dms.activity.cycle += 1; applyDerivedState(dms); record(dms, `Resolved management Cycle ${dms.activity.cycle}.`); return report;
   }
   function advanceActivity(dms, contribution = 1) {
@@ -13108,7 +13189,7 @@ function AutoCards(inHook, inText, inStop) {
     const request = phrase.slice(systemMatch.index + systemMatch[0].length).replace(/[\"'”’]+$/g, "").trim();
     if (/^(?:help(?:\s+me)?(?:\s+(?:understand|manage|use|with)\b.*)?|guide\s+me|what\s+can\s+you\s+do|show\s+(?:me\s+)?(?:available\s+)?functions)$/i.test(request)) return "system help";
     const queries = [
-      [/^(?:show|display|open|read)?\s*(?:my|the)?\s*(?:dungeon\s+)?status$/i, "status"], [/^(?:show|display|open|read)?\s*(?:my|the)?\s*(?:dungeon\s+)?resources?$/i, "resources"], [/^(?:show\s+)?(?:my\s+)?quests$/i, "quest status"],
+      [/^(?:show|display|open|read)?\s*(?:my|the)?\s*(?:dungeon\s+)?status$/i, "status"], [/^(?:show|display|open|read)?\s*(?:my|the)?\s*(?:dungeon\s+)?resources?$/i, "resources"], [/^(?:show\s+)?(?:my\s+)?quests$/i, "quest status"], [/^(?:show|review|read|present)\s+(?:the\s+)?(?:nearby\s+)?city\s+briefing$/i, "city briefing"], [/^(?:show|review|read|present)\s+(?:the\s+)?(?:lustrian\s+)?society\s+(?:report|briefing)$/i, "lustria briefing"],
       [/^(?:show\s+)?facilities$/i, "facilities"], [/^(?:show\s+)?administrators$/i, "administrators"], [/^(?:show\s+)?population$/i, "population"],
       [/^(?:show\s+)?(?:current\s+)?activity$/i, "activity"], [/^(?:show\s+)?(?:the\s+)?(?:next\s+)?tier\s+requirements$/i, "tier requirements"], [/^(?:show\s+)?(?:my\s+)?(?:story\s+(?:progress|map)|campaign\s+progress)$/i, "story progress"], [/^(?:show|open|review|read)\s+(?:the\s+)?(?:dungeon\s+)?sector\s+report$/i, "dungeon sector report"], [/^(?:show\s+)?tasks$/i, "task list"], [/^(?:show\s+)?discover(?:y|ies)$/i, "discoveries"], [/^(?:show\s+)?(?:dungeon\s+)?signature$/i, "signature"],
       [/^(?:show\s+)?(?:current\s+)?production$/i, "production"], [/^(?:show\s+)?(?:worker\s+)?cohorts$/i, "population"], [/^(?:show\s+)?(?:worker\s+)?residences?|^show\s+housing$/i, "residences"], [/^(?:show\s+)?(?:general\s+)?(?:ability\s+)?shops?$/i, "shops"],
@@ -13152,13 +13233,15 @@ function AutoCards(inHook, inText, inStop) {
     return "";
   }
   function narrativeResolutionText(resolution) {
-    return [
+    const lines = [
       `Action: ${resolution.action}`,
       `Authoritative Result: ${resolution.success ? "SUCCESS" : "NOT PERFORMED"}`,
       resolution.success ? `Mechanical Outcome: ${resolution.detail}` : `Reason: ${resolution.reason}`,
       resolution.success ? "Narrate only the recorded mechanical result. A construction, Expansion, or Tier Up has merely begun when the outcome says it began; do not depict it as complete." : "Narrate the attempted action as blocked or refused for the stated reason. No task began, no resource was spent, no purchase occurred, and no facility changed state.",
       "This result is mechanically final for the current action. Do not contradict it or imply a simultaneous success."
-    ].join("\n");
+    ];
+    if (resolution.characterIntroduction) lines.push(`Unique Character Resolution: ${JSON.stringify(resolution.characterIntroduction)}`, `Resolve this generated character directly into the Story prose now. Use their canonical name, appearance, role, Rank, personality, and voice. Show their manifestation and immediate response through action and dialogue; do not substitute a generic Administrator, System voice, silhouette, or unnamed servant.`);
+    return lines.join("\n");
   }
   function systemEventForCommand(command) {
     const body = clean(command);
@@ -13262,9 +13345,15 @@ function AutoCards(inHook, inText, inStop) {
   }
   function applyActivityTurn(dms, inputText, actionCount = 0) {
     const capturedStorySnapshot = capturePendingDungeonSectorSnapshot(dms);
+    const capturedManagerReport = capturePendingManagerSectorReport(dms, actionCount);
     const locationKey = [dms.activity.location.major, dms.activity.location.secondary, dms.activity.location.detail].map(clean).join("|"); const key = `${actionCount}|${clean(inputText)}|${dms.activity.mode}|${dms.activity.pace}|${locationKey}|${dms.activity.targets.map(clean).join(",")}`; if (dms.activity.lastTurnKey === key) return { repeated: true, reports: [], system: dms.activity.lastSystemOutput || "The request was already resolved; authoritative state is unchanged." }; dms.activity.lastTurnKey = key;
     const benefit = { mode: dms.activity.mode, reports: [], note: "" }, words = clean(inputText), capturedIntrusionResolution = capturePendingStoryIntrusionResolution(dms, words);
     const natural = naturalSystemCommand(words), atThrone = dms.activity.location.major === "Dungeon" && /^Throne Room$/i.test(dms.activity.location.secondary), preModeSystemRequest = /^(?:system help|status|resources|quest status|story progress|dungeon sector report|facilities|administrators|administrator capacity|summoning|population|production|residences|shops|evolution|bond status|portal anchors|class previews(?:\s+.+)?|abilities(?:\s+.+)?|facility tiers|administrator development|ability grades|activity|tier requirements|task list|discoveries|signature|mode System\|\|Timeless)$/.test(natural);
+    if (natural === "dungeon sector report" && dms.quests.records["story-first-contact-4"]?.status === "active" && !dms.story.dungeonSector.report.generated) {
+      if (!atThrone) { benefit.note = "The Manager's Sector report must be reviewed in the Throne Room."; return benefit; }
+      try { scheduleManagerSectorReport(dms, actionCount); benefit.managerReport = true; benefit.note = "The Manager is assembling every recorded snapshot and intrusion observation into an evidence-grounded Sector report."; return benefit; }
+      catch (error) { benefit.note = error.message; return benefit; }
+    }
     if (natural) {
       if (!atThrone) benefit.system = "Dungeon System access is unavailable here. Return to the Throne Room to address the System.";
       else if (!systemAvailable(dms) && !preModeSystemRequest) benefit.system = "That management function requires Timeless \"System\" Mode. Return to the Throne Room and use the concepts \"System\" and \"Mode\" together.";
@@ -13285,10 +13374,12 @@ function AutoCards(inHook, inText, inStop) {
       if (!atThrone) resolution = { action: narrativeManagement, success: false, reason: "Dungeon System management is unavailable outside the Throne Room." };
       else if (!systemAvailable(dms)) resolution = { action: narrativeManagement, success: false, reason: "This management action requires Timeless System Mode in the Throne Room." };
       else try {
+        const administratorIdsBefore = new Set(Object.keys(dms.administrators));
         const detail = execute(dms, `/dms ${narrativeManagement}`), commandEvent = systemEventForCommand(narrativeManagement), events = [commandEvent];
         if (commandEvent === "administrator-summoned" && Object.values(dms.administrators).some(administrator => administrator.role === "Manager")) events.push("manager-summoned");
         processQuestAction(dms, words, { event: commandEvent, events, command: narrativeManagement, success: true });
         resolution = { action: narrativeManagement, success: true, detail };
+        if (commandEvent === "administrator-summoned") { const introduced = Object.values(dms.administrators).find(administrator => !administratorIdsBefore.has(administrator.id)); if (introduced) resolution.characterIntroduction = { id: introduced.id, name: introduced.name, role: introduced.role, rank: introduced.rank, race: introduced.race, appearance: introduced.appearance, personality: introduced.profile?.personality || "Unknown", voice: introduced.profile?.voicePattern || "Unknown" }; }
       } catch (error) { resolution = { action: narrativeManagement, success: false, reason: error.message }; }
       benefit.narrativeResolution = resolution; benefit.note = resolution.success ? resolution.detail : `The action was not performed: ${resolution.reason}`; return benefit;
     }
@@ -13304,6 +13395,7 @@ function AutoCards(inHook, inText, inStop) {
       try { scheduleDungeonSectorSnapshot(dms, words); benefit.story = "dungeon-sector-snapshot-pending"; benefit.note = "The next story output may establish this local point. DMS will wait until the following action before preserving the edited output as evidence."; } catch (error) { benefit.note = error.message; }
     }
     if (capturedStorySnapshot) { benefit.story = "dungeon-sector-snapshot-recorded"; benefit.note = `Recorded ${capturedStorySnapshot.phase} evidence from the previous editable story output.`; }
+    if (capturedManagerReport) { benefit.story = "dungeon-sector-report-recorded"; benefit.note = "The accepted Manager report was converted into evidence-grounded Dungeon Sector canon; unsupported fields remain Unknown."; }
     if (capturedIntrusionResolution) { benefit.story = "story-intrusion-resolved"; benefit.note = `The preceding editable story output and the current confirmation establish that the intrusion ended through ${capturedIntrusionResolution.resolution}.`; }
     if (dms.story.intrusion.active && !dms.story.intrusion.pendingResolution && /\b(?:fight|attack|hide|observe|capture|negotiate|drive|expel|retreat|seal|barricade|confront|ambush|contain)\b/i.test(words)) { scheduleStoryIntrusionResolution(dms, words); benefit.story = "story-intrusion-resolution-pending"; benefit.note = "The attempted response will be resolved by the story. DMS will wait for a later player confirmation before recording the preceding editable output as the encounter evidence."; }
     if (dms.activity.location.major !== "Dungeon" && /\b(?:return|go|head|travel|walk)\b/i.test(words) && /\b(?:throne\s+room|back\s+to\s+the\s+dungeon|dungeon\s+throne)\b/i.test(words)) { setLocation(dms, "Dungeon", "Throne Room"); setActivity(dms, "Idle", [], "Timeless"); benefit.story = "returned-to-throne-room"; benefit.note = "The Thronebound returned to the Throne Room."; }
@@ -13361,6 +13453,7 @@ function AutoCards(inHook, inText, inStop) {
     if (typeName === "room") { const room = dms.rooms[clean(ref.id)]; return room ? { known: true, id: room.id, label: room.name, detail: ROOM_DEFINITIONS[room.definition]?.name || room.definition } : { known: false }; }
     if (typeName === "facility") { const definition = ROOM_DEFINITIONS[clean(ref.definition)], room = Object.values(dms.rooms).find(candidate => candidate.definition === clean(ref.definition)); return definition && definition.unlockTier <= dms.dungeon.tier ? { known: true, id: room?.id || clean(ref.definition), label: room?.name || definition.name, detail: `System Function: ${definition.name}` } : { known: false }; }
     if (typeName === "sector") { const sector = dms.world.lustria.sectors[clean(ref.id)]; return sector ? { known: true, id: sector.id, label: sector.name, detail: "Lustrian Sector" } : { known: false }; }
+    if (typeName === "city") { const city = dms.story.localCity; return city?.name && (!ref.id || clean(ref.id) === city.id) ? { known: true, id: city.id, label: city.name, detail: "Nearby Lustrian city" } : { known: false, deferred: clean(ref.id) === "story-local-city" }; }
     if (typeName === "vein" || typeName === "site") { const vein = dms.world.lustria.veins[clean(ref.id)]; return vein ? { known: true, id: vein.id, label: vein.name, detail: `${vein.grade || "Basic"} resource Site` } : { known: false }; }
     if (typeName === "system") { const concept = SYSTEM_CONCEPTS.find(candidate => candidate.id === clean(ref.id)); return concept ? { known: true, id: concept.id, label: concept.id.split("-").map(title).join(" "), detail: "Dungeon System concept" } : { known: false }; }
     if (typeName === "story-card") { const card = (global.storyCards || []).find(candidate => clean(candidate.keys).split(",").map(clean).includes(clean(ref.id)) || clean(candidate.title) === clean(ref.title)); return card ? { known: true, id: clean(ref.id) || clean(card.keys), label: clean(ref.title) || clean(card.title) || clean(ref.id), detail: "Known Story Card" } : { known: false }; }
@@ -13394,6 +13487,18 @@ function AutoCards(inHook, inText, inStop) {
       const rendered = questTokenValue(dms, quest, typeName, key); return rendered ? `"${rendered}"` : token;
     });
   }
+  const QUEST_NEUTRALITY_PATTERNS = Object.freeze([
+    { label: "preselected culprit or cause", pattern: /\b(?:the\s+)?(?:creature|enemy|attacker|criminal|traitor|faction|settlement|object|curse)\s+(?:responsible\s+for|causing|behind)\b/i },
+    { label: "predetermined discovery", pattern: /\b(?:discover|learn|reveal|prove)\s+that\b/i },
+    { label: "forced violent resolution", pattern: /\b(?:must|will|shall)\s+(?:kill|slay|destroy|execute|annihilate|exterminate|conquer|capture)\b|\b(?:kill|slay|execute|annihilate|exterminate)\s+(?:the|all|every)\b/i },
+    { label: "forced allegiance or betrayal", pattern: /\b(?:must|will|shall)\s+(?:ally|submit|surrender|betray|trust|serve|swear)\b|\b(?:ally\s+with|swear\s+(?:loyalty|fealty)\s+to|betray|submit\s+to)\s+(?:the|a|an)\b/i },
+    { label: "forced relationship or emotion", pattern: /\b(?:must|will|shall)\s+(?:forgive|love|befriend|hate|fear|admire)\b|\b(?:fall\s+in\s+love\s+with|become\s+friends\s+with|forgive)\s+(?:the|a|an)\b/i },
+    { label: "guaranteed unresolved result", pattern: /\b(?:will|shall)\s+(?:discover|find|learn|expose|unmask|prove|confirm)\b|\b(?:is|are|was|were)\s+revealed\s+to\s+be\b/i }
+  ]);
+  function questNeutralityViolations(quest) {
+    const values = [quest.title, quest.description, quest.objective, quest.completionText, quest.blockedGuidance, ...(quest.hints || []), ...(quest.stages || []).flatMap(stage => [stage.title, stage.description, stage.objective, stage.completionText, stage.blockedGuidance])].map(clean).filter(Boolean).map(value => value.replace(/\{[^}]+\}/g, " "));
+    return QUEST_NEUTRALITY_PATTERNS.flatMap(rule => values.filter(value => rule.pattern.test(value)).map(value => ({ label: rule.label, text: value })));
+  }
   function validateQuestTemplate(dms, quest) {
     const fields = [quest.title, quest.description, quest.objective, quest.completionText, quest.blockedGuidance, ...(quest.hints || []), ...(quest.stages || []).flatMap(stage => [stage.title, stage.description, stage.objective, stage.completionText, stage.blockedGuidance])].map(clean).filter(Boolean);
     const tokens = fields.flatMap(value => [...value.matchAll(/\{(room|job|system|resource|administrator|reference|sector|site):([^}]+)\}/gi)]);
@@ -13401,7 +13506,7 @@ function AutoCards(inHook, inText, inStop) {
       const typeKey = typeName.toLowerCase(), definition = ["room", "job", "system"].includes(typeKey) ? ROOM_DEFINITIONS[roomDefinitionKey(key)] : null;
       if (definition && definition.unlockTier > Number(quest.tier || 0)) throw new Error(`Quest ${quest.id} references ${definition.name} before Dungeon Tier ${definition.unlockTier}.`);
       if (typeKey === "resource" && !RESOURCE_ROLES.includes(clean(key).toLowerCase())) throw new Error(`Quest ${quest.id} contains an unknown resource token: ${key}.`);
-      if (["reference", "sector", "site"].includes(typeKey) && !questReferenceByRole(dms, quest, key).known) throw new Error(`Quest ${quest.id} contains an unresolved reference token: ${key}.`);
+      if (["reference", "sector", "site"].includes(typeKey)) { const resolved = questReferenceByRole(dms, quest, key); if (!resolved.known && !resolved.deferred) throw new Error(`Quest ${quest.id} contains an unresolved reference token: ${key}.`); }
     }
     if (quest.strictTemplate && quest.category !== "Tutorial") {
       const tokenless = fields.join("\n").replace(/\{[^}]+\}/g, " ");
@@ -13411,6 +13516,7 @@ function AutoCards(inHook, inText, inStop) {
     }
     const outcomeAssumption = /\b(?:the creature causing|the enemy responsible|the attackers|the hidden settlement|the cursed object|the criminal responsible)\b/i;
     for (const value of fields) if (outcomeAssumption.test(value.replace(/\{[^}]+\}/g, " "))) throw new Error(`Quest ${quest.id} assumes an unresolved outcome in authored prose.`);
+    const neutrality = questNeutralityViolations(quest); if (neutrality.length) throw new Error(`Quest ${quest.id} violates player-neutral scripted-quest prose (${neutrality[0].label}): ${neutrality[0].text}`);
     for (let index = 1; index < (quest.stages || []).length; index++) if (quest.stages[index - 1].taskType === "Investigation" && quest.stages[index].taskType === "Hunt") {
       if (!(quest.category === "Bounty" || ["Hunt", "Bounty"].includes(quest.missionType))) throw new Error("Only a Hunt or Bounty quest may move directly from Investigation to Hunt.");
       if (!questReferenceByRole(dms, quest, "target").known) throw new Error("An Investigation-to-Hunt transition requires a validated target reference.");
@@ -13593,10 +13699,12 @@ function AutoCards(inHook, inText, inStop) {
       ["story-first-contact-2", dms.story.dungeonSector.observations.filter(observation => ["First Exit", "Perimeter"].includes(observation.phase)).length >= 3 && perimeterCount >= 2],
       ["story-first-contact-3", intrusion.triggered && !intrusion.active && intrusion.dungeonSurvived && !/^Unknown$/i.test(intrusion.classification)],
       ["story-first-contact-4", dms.story.dungeonSector.report.generated && dms.story.dungeonSector.report.reviewed],
-      ["story-beyond-perimeter-1", !!dms.story.remote.sectorVisited],
-      ["story-beyond-perimeter-2", !!dms.story.remote.siteVisited],
-      ["story-beyond-perimeter-3", !!dms.story.knowledge.organizedSociety],
-      ["story-beyond-perimeter-4", dominionKnown],
+      ["story-first-contact-5", !!dms.story.scouting.perimeterEstablished],
+      ["story-first-contact-6", !!dms.story.scouting.perimeterActive],
+      ["story-beyond-perimeter-1", !!dms.story.milestones["local-city-briefing-reviewed"]],
+      ["story-beyond-perimeter-2", !!dms.story.localCity.visited],
+      ["story-beyond-perimeter-3", !!dms.story.scouting.extendedActive],
+      ["story-beyond-perimeter-4", dms.story.societyReport.generated && dms.story.societyReport.reviewed && (!!dms.story.knowledge.organizedSociety || dominionKnown)],
       ["story-beyond-perimeter-5", !!dms.story.knowledge.adaptationDiscovered],
       ["story-development-path-1", !!dms.story.selectedPath],
       ["story-dungeons-place-1", !!dms.story.milestones["tier3-adaptation-applied"]]
@@ -13607,8 +13715,8 @@ function AutoCards(inHook, inText, inStop) {
       const quest = quests[id]; if (!quest || quest.status === "cleared") continue;
       if (Number(quest.tier || 0) > dms.dungeon.tier || !questPrerequisitesMet(dms, quest)) break;
       if (id === "story-first-contact-3") startStoryIntrusion(dms);
-      if (id === "story-beyond-perimeter-1") { const sector = ensureStoryRemoteSector(dms); quest.objective = `Reach ${sector.name}, the first remote Lustrian Sector identified by the Manager.`; }
-      if (id === "story-beyond-perimeter-2") { const site = ensureStoryRemoteSite(dms), sector = dms.world.lustria.sectors[site.sectorId]; quest.objective = `Reach ${site.name} within ${sector.name}.`; }
+      if (id === "story-first-contact-5") dms.story.scouting.recommended = true;
+      if (id === "story-beyond-perimeter-1") ensureLocalCity(dms);
       transitionQuest(dms, quest, "active", options);
       if (!complete) return quest;
       transitionQuest(dms, quest, "cleared", options);
@@ -13892,7 +14000,7 @@ function AutoCards(inHook, inText, inStop) {
     const abilities = list => list.map(item => [item.name, item.mastery || 0, item.grade || 1, item.gradeName || "Basic", item.tier || 1, item.category || "", item.source || ""]);
     const lineage = list => (list || []).map(item => [item.tier, item.className, item.description || "", item.combatSkill || "", item.managementSkill || "", item.trait || "", item.acceptedCycle || 0]);
     const questDetails = quest => quest.dynamic ? { title: quest.title, objective: quest.objective, description: quest.description, hints: quest.hints, requiredConditions: quest.requiredConditions, triggerGroups: quest.triggerGroups, completionConditions: quest.completionConditions, completionText: quest.completionText, blockedGuidance: quest.blockedGuidance, rewards: quest.rewards, relatedStoryCards: quest.relatedStoryCards, references: quest.references, stages: quest.stages, chain: quest.chain, step: quest.step, scope: quest.scope, strictTemplate: quest.strictTemplate, missionType: quest.missionType, reportRequired: quest.reportRequired, reportLocation: quest.reportLocation, fieldComplete: quest.fieldComplete, reported: quest.reported, outcome: quest.outcome, followupQuestId: quest.followupQuestId, softLock: quest.softLock, repeatable: quest.repeatable, dynamic: true } : 0;
-    return { sv: SAVE_SCHEMA, rev: dms.persistence.revision, tb: { level: dms.thronebound.level, xp: dms.thronebound.experience, attrs, growth: dms.thronebound.growthPreferences, classTier: dms.thronebound.class.tier, className: dms.thronebound.class.name, lineage: lineage(dms.thronebound.class.lineage), skills: abilities(dms.thronebound.class.skills), traits: abilities(dms.thronebound.class.traits) }, admins: Object.fromEntries(Object.entries(dms.administrators).map(([id, a]) => [id, { level: a.level, xp: a.experience, role: a.role, rank: a.rank, effectiveness: a.effectiveness, specialization: a.attributeSpecialization, affinity: a.dungeonAttributeAffinity || "", bond: a.bond, assignedRooms: a.assignedRooms, name: a.name, race: a.race, classTier: a.class?.tier || 0, className: a.class?.name || a.role, lineage: lineage(a.class?.lineage), attrs: a.attributes, skills: abilities(a.class?.skills || []), traits: abilities(a.class?.traits || []) }])), story: dms.story, quests: Object.fromEntries(Object.entries(dms.quests.records).map(([id, q]) => [id, [q.status, q.rewarded ? 1 : 0, q.tier, q.category, q.prerequisites || [], q.progress?.stage || 0, q.progress?.completedStages || [], questDetails(q)]])), qn: (dms.quests.notifications || []).map(item => [item.type, item.questId, item.stageTitle || ""]), qrc: dms.quests.relevantCategories || [], previews: dms.classPreviews };
+    return { sv: SAVE_SCHEMA, rev: dms.persistence.revision, tb: { level: dms.thronebound.level, xp: dms.thronebound.experience, attrs, growth: dms.thronebound.growthPreferences, classTier: dms.thronebound.class.tier, className: dms.thronebound.class.name, lineage: lineage(dms.thronebound.class.lineage), skills: abilities(dms.thronebound.class.skills), traits: abilities(dms.thronebound.class.traits) }, admins: Object.fromEntries(Object.entries(dms.administrators).map(([id, a]) => [id, { level: a.level, xp: a.experience, role: a.role, rank: a.rank, effectiveness: a.effectiveness, specialization: a.attributeSpecialization, affinity: a.dungeonAttributeAffinity || "", bond: a.bond, assignedRooms: a.assignedRooms, name: a.name, race: a.race, appearance: a.appearance || a.profile?.appearance || "", personality: a.profile?.personality || "", voice: a.profile?.voicePattern || "", classTier: a.class?.tier || 0, className: a.class?.name || a.role, lineage: lineage(a.class?.lineage), attrs: a.attributes, skills: abilities(a.class?.skills || []), traits: abilities(a.class?.traits || []) }])), story: dms.story, quests: Object.fromEntries(Object.entries(dms.quests.records).map(([id, q]) => [id, [q.status, q.rewarded ? 1 : 0, q.tier, q.category, q.prerequisites || [], q.progress?.stage || 0, q.progress?.completedStages || [], questDetails(q)]])), qn: (dms.quests.notifications || []).map(item => [item.type, item.questId, item.stageTitle || ""]), qrc: dms.quests.relevantCategories || [], previews: dms.classPreviews };
   }
   function compactOperationsSave(dms) {
     return { sv: SAVE_SCHEMA, rev: dms.persistence.revision, rooms: Object.fromEntries(Object.entries(dms.rooms).map(([id, room]) => [id, { definition: room.definition, name: room.name, job: room.jobName || "", tier: room.tier, expansion: room.expansion || 1, state: room.state, assignedAdministrator: room.assignedAdministrator || "", authorityAdministrator: room.authorityAdministrator || "", targetedVeins: room.targetedVeins || [] }])), tasks: dms.tasks, reservations: dms.reservations, workers: Object.fromEntries((dms.population.workers.cohorts || []).map(cohort => [cohort.id, Number(cohort.disruption) || 0])), soldiers: dms.population.soldiers.cohorts, residences: dms.residences, milestones: dms.milestones, research: dms.shops.research, equipment: dms.equipment };
@@ -14031,7 +14139,7 @@ function AutoCards(inHook, inText, inStop) {
     for (const [id, rawSaved] of Object.entries(progression.quests || {})) { const saved = Array.isArray(rawSaved) ? { status: rawSaved[0], rewarded: !!rawSaved[1], tier: rawSaved[2], category: rawSaved[3], prerequisites: rawSaved[4] || [], progress: { stage: rawSaved[5] || 0, completedStages: rawSaved[6] || [] }, details: rawSaved[7] || {} } : rawSaved; if (dms.quests.records[id]) Object.assign(dms.quests.records[id], saved, saved.details || {}); else { const card = Array.isArray(global.storyCards) ? global.storyCards.find(item => clean(item.keys).split(",").includes(`DMS_QUEST_${id.toUpperCase().replace(/\W/g, "_")}`)) : null; dms.quests.records[id] = normalizeQuestRecord(id, { category: saved.category || "Personal", tier: saved.tier ?? dms.dungeon.tier, title: clean(saved.details?.title) || clean(String(card?.title || "").replace(/^DMS Quest — /, "")) || id, status: saved.status || "locked", objective: clean(saved.details?.objective) || cardField(card, "Objective"), prerequisites: saved.prerequisites || [], rewarded: !!saved.rewarded, progress: saved.progress, ...(saved.details || {}) }); } }
     dms.quests.relevantCategories = unique(Array.isArray(progression.qrc) ? progression.qrc : dms.quests.relevantCategories).filter(category => QUEST_CATEGORIES.includes(category));
     dms.quests.notifications = (progression.qn || []).map(item => { const quest = dms.quests.records[item[1]]; return { key: `${item[0]}:${item[1]}:${item[2] || quest?.status || ""}`, type: item[0], questId: item[1], title: quest?.title || item[1], category: quest?.category || "Dungeon", text: quest?.completionText || "", rewards: { ...(quest?.rewards || {}) }, stageTitle: item[2] || "" }; }).slice(-20);
-    dms.administrators = {}; for (const [id, saved] of Object.entries(progression.admins || {})) { const card = managedCardByKey(`DMS_ADMIN_${id.toUpperCase().replace(/\W/g, "_")}`) || saveCardByTitle(`DMS Administrator — ${saved.name || ""}`); const line = String(card?.entry || "").split("\n")[0].split(/\s+[—-]\s+/), admin = characterBase(clean(saved.name) || clean(line[0]) || id, clean(saved.race) || clean(line.slice(1).join(" — ")) || dms.population.nature, saved.role || "Manager"); admin.id = id; admin.role = saved.role || "Manager"; admin.rank = saved.rank || "F"; admin.appearance = cardField(card, "Appearance") || administratorAppearance(dms, admin.role, admin.rank); admin.effectiveness = Number(saved.effectiveness) || ADMINISTRATOR_RANK_MULTIPLIERS[admin.rank] || 1; admin.attributeSpecialization = saved.specialization || "support"; admin.attributes = saved.attrs || { [admin.attributeSpecialization]: attributeSet(ATTRIBUTE_TEMPLATES[admin.attributeSpecialization]) }; admin.dungeonAttributeAffinity = clean(saved.affinity) || choose(Object.keys(throneboundUniqueAttributes(dms)), `${dms.dungeon.name}|administrator-affinity|${id}`); const adminClass = String(card?.entry || "").match(/^Class:\s*(.+?),\s*Tier/im); admin.class.name = clean(saved.className) || (adminClass ? clean(adminClass[1]) : admin.class.name); admin.class.description = cardField(card, "Class Description") || admin.class.description; admin.class.lineage = restoreClassLineage(saved.lineage); const skillLore = jsonCardField(card, "Skill Details"), traitLore = jsonCardField(card, "Trait Details"); admin.class.skills = restoreSavedAbilities(saved.skills, skillLore); admin.class.traits = restoreSavedAbilities(saved.traits, traitLore); admin.level = Math.max(1, Number(saved.level) || 1); admin.experience = Math.max(0, Number(saved.xp) || 0); admin.bond = saved.bond || { value: 0, completedEvents: [] }; admin.assignedRooms = saved.assignedRooms || []; admin.class.tier = Math.max(0, Number(saved.classTier) || 0); admin.status = "Active"; dms.administrators[id] = admin; }
+    dms.administrators = {}; for (const [id, saved] of Object.entries(progression.admins || {})) { const card = managedCardByKey(`DMS_ADMIN_${id.toUpperCase().replace(/\W/g, "_")}`) || saveCardByTitle(`DMS Administrator — ${saved.name || ""}`); const line = String(card?.entry || "").split("\n")[0].split(/\s+[—-]\s+/), admin = characterBase(clean(saved.name) || clean(line[0]) || id, clean(saved.race) || clean(line.slice(1).join(" — ")) || dms.population.nature, saved.role || "Manager"); admin.id = id; admin.role = saved.role || "Manager"; admin.rank = saved.rank || "F"; admin.appearance = clean(saved.appearance) || cardField(card, "Appearance") || administratorAppearance(dms, admin.role, admin.rank); admin.profile.appearance = admin.appearance; admin.profile.personality = clean(saved.personality) || cardField(card, "Personality") || administratorPersonality(dms, admin.role, Number(id.match(/\d+$/)?.[0]) || 1); admin.profile.voicePattern = clean(saved.voice) || cardField(card, "Voice") || (admin.role === "Manager" ? "Speaks in concise evidence-first reports, marking uncertainty instead of disguising it." : ""); admin.effectiveness = Number(saved.effectiveness) || ADMINISTRATOR_RANK_MULTIPLIERS[admin.rank] || 1; admin.attributeSpecialization = saved.specialization || "support"; admin.attributes = saved.attrs || { [admin.attributeSpecialization]: attributeSet(ATTRIBUTE_TEMPLATES[admin.attributeSpecialization]) }; admin.dungeonAttributeAffinity = clean(saved.affinity) || choose(Object.keys(throneboundUniqueAttributes(dms)), `${dms.dungeon.name}|administrator-affinity|${id}`); const adminClass = String(card?.entry || "").match(/^Class:\s*(.+?),\s*Tier/im); admin.class.name = clean(saved.className) || (adminClass ? clean(adminClass[1]) : admin.class.name); admin.class.description = cardField(card, "Class Description") || admin.class.description; admin.class.lineage = restoreClassLineage(saved.lineage); const skillLore = jsonCardField(card, "Skill Details"), traitLore = jsonCardField(card, "Trait Details"); admin.class.skills = restoreSavedAbilities(saved.skills, skillLore); admin.class.traits = restoreSavedAbilities(saved.traits, traitLore); admin.level = Math.max(1, Number(saved.level) || 1); admin.experience = Math.max(0, Number(saved.xp) || 0); admin.bond = saved.bond || { value: 0, completedEvents: [] }; admin.assignedRooms = saved.assignedRooms || []; admin.class.tier = Math.max(0, Number(saved.classTier) || 0); admin.status = "Active"; dms.administrators[id] = admin; }
     dms.persistence = { saveSchema: SAVE_SCHEMA, revision: snapshot.revision, cacheRevision: snapshot.revision, lastSavedRevision: snapshot.revision, lastCommandKey: clean(core.commandKey) };
     dms.initialized = identityReady(dms); applyDerivedState(dms); dms.persistence.revision = snapshot.revision; dms.persistence.cacheRevision = snapshot.revision; return dms;
   }
@@ -14137,12 +14245,18 @@ function AutoCards(inHook, inText, inStop) {
     const activity = ensureCard("DMS — Activity", "DMS_SYS_ACTIVITY_STATUS"); if (activity) { activity.type = "System — Activity"; activity.entry = `[DMS ACTIVITY]\nLocation: ${dms.activity.location.major}\nSecondary: ${dms.activity.location.secondary}\nDetail: ${dms.activity.location.detail}\nMode: ${dms.activity.mode}\nTargets: ${dms.activity.targets.join(", ")}\nPace: ${dms.activity.pace}\nCycle: ${dms.activity.cycle}\nProgress: ${Math.round(dms.activity.progress * 100)}%`; setStoryCardPresentation(activity, false, false); }
     const storyProgress = ensureCard("DMS — Story Progress", "DMS_SYS_STORY_PROGRESS"); if (storyProgress) { storyProgress.type = "Story Progress"; storyProgress.entry = storyMapStatus(dms); setStoryCardPresentation(storyProgress, true, false); }
     const dungeonSector = dms.story.dungeonSector, sectorReportKey = "DMS_LORE_DUNGEON_SECTOR_REPORT";
-    if (dungeonSector.report.generated) { const report = setNaturalLoreCard(ensureCard(`DMS — Dungeon Sector Report — ${dungeonSector.name}`, sectorReportKey), sectorReportKey, "Lustria Sector", dungeonSector.name, dms.dungeon.name, "Dungeon Sector"); if (report) { report.entry = `Name: ${dungeonSector.name}\nDiscovery State: ${dungeonSector.discoveryState}\nRelationship: Contains ${dms.dungeon.name}\nDistance: Immediate\nClassification: ${JSON.stringify(dungeonSector.classification)}\nManager Summary: ${dungeonSector.report.summary}`; setStoryCardPresentation(report, true, false); } }
-    else if (hasLiveStoryCardApi()) removeManagedCard(dms, sectorReportKey);
+    if (dungeonSector.report.generated) {
+      const classificationLines = Object.entries(dungeonSector.classification).map(([key, value]) => `${title(key)}: ${Array.isArray(value) ? value.join(", ") || "Unknown" : value || "Unknown"}`).join("\n"), reportText = `Name: ${dungeonSector.name}\nDiscovery State: ${dungeonSector.discoveryState}\nRelationship: Contains ${dms.dungeon.name}\nDistance: Immediate\n\nSector Description\n${dungeonSector.report.summary}\n\nRecorded Classification\n${classificationLines}\n\nEvidence: ${(dungeonSector.report.evidenceIds || []).join(", ") || "No structured citations recorded"}`;
+      const report = setNaturalLoreCard(ensureCard(`DMS — Dungeon Sector Report — ${dungeonSector.name}`, sectorReportKey), sectorReportKey, "Lustria Sector", dungeonSector.name, dms.dungeon.name, "Dungeon Sector"); if (report) { report.entry = reportText; setStoryCardPresentation(report, true, false); }
+      const systemReport = ensureCard("DMS — Dungeon Sector System Record", "DMS_SYS_DUNGEON_SECTOR_REPORT"); if (systemReport) { systemReport.type = "System — Discovery"; systemReport.entry = reportText; setStoryCardPresentation(systemReport, false, false); }
+    }
+    else if (hasLiveStoryCardApi()) { removeManagedCard(dms, sectorReportKey); removeManagedCard(dms, "DMS_SYS_DUNGEON_SECTOR_REPORT"); }
+    if (dms.story.localCity.name) { const city = dms.story.localCity, cityCard = setNaturalLoreCard(ensureCard(`DMS — Nearby City — ${city.name}`, "DMS_LORE_NEARBY_CITY"), "DMS_LORE_NEARBY_CITY", "Lustria City", city.name, "nearby city"); if (cityCard) { cityCard.entry = `Name: ${city.name}\nStatus: ${city.status}\nDistance: ${city.distance}\nDescription: ${city.summary}\nDominion Danger: ${city.roles.dominionDanger}\nDominion Information: ${city.roles.dominionInformation}\nGuild Access: ${city.roles.guildAccess}\nVeil Contacts: ${city.roles.veilContacts}`; setStoryCardPresentation(cityCard, true, false); } }
+    if (dms.story.societyReport.generated) { const society = ensureCard("DMS — Lustrian Society Briefing", "DMS_LORE_LUSTRIAN_SOCIETY_REPORT"); if (society) { society.type = "Lustria Report"; society.entry = `${dms.story.societyReport.summary}\nEvidence: ${dms.story.societyReport.evidence.join(", ") || "Unknown"}`; setStoryCardPresentation(society, true, false); } }
     const constructionMenuKey = "DMS_SYS_CONSTRUCTION_OPTIONS", currentConstructionOptions = constructionOptions(dms);
     if (currentConstructionOptions.length) {
       const menu = revealManagedCard(dms, "DMS — Construction Options", constructionMenuKey);
-      if (menu) { menu.type = "Construction Options"; menu.entry = constructionOptionsStatus(dms); setStoryCardPresentation(menu, true, false); }
+      if (menu) { menu.type = "Construction Options"; menu.entry = constructionOptionsStatus(dms).slice(0, 2000); setStoryCardPresentation(menu, true, false); }
     } else removeManagedCard(dms, constructionMenuKey);
     for (const [definitionKey, definition] of Object.entries(ROOM_DEFINITIONS)) {
       const key = `DMS_FACILITY_UNLOCK_${definitionKey.toUpperCase().replace(/\W/g, "_")}`, titleText = `DMS Facility Unlock — ${definition.name}`, availability = roomAvailability(dms, definitionKey);
@@ -14173,7 +14287,7 @@ function AutoCards(inHook, inText, inStop) {
       if (job) { job.type = "Population Cohorts"; job.entry = `Job: ${jobName}\nWork: ${room.name}\nSystem Function: ${room.systemName || definition.name}\nTier: ${room.tier}\nPopulation: ${cohort.count}\nResidence: ${cohort.residence || "Not yet manifested"}\nHousing: ${cohort.housingStatus || "Inactive"}; Efficiency ×${workerEfficiency(dms, room.id)}\nPopulation Nature: ${dms.population.nature}\nTypical Appearance: ${dms.population.appearance} adapted to ${room.name} work and ${dms.dungeon.style}.\nDuties: Operate and maintain ${room.name}. ${definition.function}`; }
       else if (hasLiveStoryCardApi()) removeManagedCard(dms, `DMS_JOB_${room.id.toUpperCase().replace(/\W/g, "_")}`);
     }
-    for (const admin of Object.values(dms.administrators)) { const card = ensureCard(`DMS Administrator — ${admin.name}`, `DMS_ADMIN_${admin.id.toUpperCase().replace(/\W/g, "_")}`); if (card) card.entry = `${admin.name} — ${admin.race}\nAppearance: ${admin.appearance || administratorAppearance(dms, admin.role, admin.rank)}\nRole: ${admin.role}; Rank ${admin.rank}; Base Effectiveness ×${admin.effectiveness}; Current Assignment Effectiveness ×${administratorAssignmentEffectiveness(dms, admin)}\nDungeon Attribute Affinity: ${admin.dungeonAttributeAffinity || "None"}\nBond: ${admin.bond.value}% (next Event ${currentBondThreshold(admin)}%)\nAssigned Facility: ${admin.assignedRooms.map(id => dms.rooms[id]?.name).filter(Boolean).join(", ") || "None"}\nResidence: ${dms.residences.named[admin.id]?.name || dms.rooms[dms.residences.assignments[admin.id]?.roomId]?.name || "Shared Quarters"}\nClass: ${admin.class.name}, Tier ${admin.class.tier}; Level ${admin.level}\nClass Lineage: ${(admin.class.lineage || []).map(item => `Tier ${item.tier} ${item.className}`).join(" → ") || "None"}\nClass Description: ${admin.class.description}\nAttribute Set: ${title(admin.attributeSpecialization)}\nAttributes: ${formatAttributes(admin.attributes[admin.attributeSpecialization])}\nSkills: ${admin.class.skills.map(skill => skill.name).join(", ") || "None"}\nTraits: ${admin.class.traits.map(trait => trait.name).join(", ") || "None"}\nSkill Details: ${JSON.stringify(admin.class.skills.map(skill => ({ name: skill.name, description: skill.description, category: skill.category || "", source: skill.source || "", tier: skill.tier || 1 })))}\nTrait Details: ${JSON.stringify(admin.class.traits.map(trait => ({ name: trait.name, description: trait.description, category: trait.category || "", source: trait.source || "", tier: trait.tier || 1 })))}`; }
+    for (const admin of Object.values(dms.administrators)) { const card = ensureCard(`DMS Administrator — ${admin.name}`, `DMS_ADMIN_${admin.id.toUpperCase().replace(/\W/g, "_")}`); if (card) card.entry = clean(`${admin.name} — ${admin.race}\nAppearance: ${admin.appearance || administratorAppearance(dms, admin.role, admin.rank)}\nPersonality: ${admin.profile?.personality || "Not yet established"}\nVoice: ${admin.profile?.voicePattern || "Not yet established"}\nRole: ${admin.role}; Rank ${admin.rank}; Base Effectiveness ×${admin.effectiveness}; Current Assignment Effectiveness ×${administratorAssignmentEffectiveness(dms, admin)}\nDungeon Attribute Affinity: ${admin.dungeonAttributeAffinity || "None"}\nBond: ${admin.bond.value}% (next Event ${currentBondThreshold(admin)}%)\nAssigned Facility: ${admin.assignedRooms.map(id => dms.rooms[id]?.name).filter(Boolean).join(", ") || "None"}\nResidence: ${dms.residences.named[admin.id]?.name || dms.rooms[dms.residences.assignments[admin.id]?.roomId]?.name || "Shared Quarters"}\nClass: ${admin.class.name}, Tier ${admin.class.tier}; Level ${admin.level}\nClass Lineage: ${(admin.class.lineage || []).map(item => `Tier ${item.tier} ${item.className}`).join(" → ") || "None"}\nClass Description: ${admin.class.description}\nAttribute Set: ${title(admin.attributeSpecialization)}\nAttributes: ${formatAttributes(admin.attributes[admin.attributeSpecialization])}\nSkills: ${admin.class.skills.map(skill => skill.name).join(", ") || "None"}\nTraits: ${admin.class.traits.map(trait => trait.name).join(", ") || "None"}\nSkill Details: ${JSON.stringify(admin.class.skills.map(skill => ({ name: skill.name, description: skill.description, category: skill.category || "", source: skill.source || "", tier: skill.tier || 1 })))}\nTrait Details: ${JSON.stringify(admin.class.traits.map(trait => ({ name: trait.name, description: trait.description, category: trait.category || "", source: trait.source || "", tier: trait.tier || 1 })))}`).slice(0, 2000); }
     for (const residence of Object.values(dms.residences.named)) { const resident = residenceTarget(dms, residence.residentId), card = ensureCard(`DMS Named Residence — ${residence.name}`, `DMS_RESIDENCE_${residence.residentId.toUpperCase().replace(/\W/g, "_")}`); if (card) { card.type = "Dungeon Residences"; card.entry = `${residence.name}\nResident: ${resident?.character.name || residence.residentId}\nFacility: ${dms.rooms[residence.roomId]?.name || residence.roomId}\nTheme: ${residence.theme}\nSpecialization: ${residence.bonus}\nFunction: A unique personal room retaining its facility's normal residential benefits while supporting one thematic bonus and private event hook.`; } }
     const activeClassPreviewKeys = new Set();
     for (const [targetKey, previews] of Object.entries(dms.classPreviews)) for (const preview of previews) { const key = `DMS_CLASS_PREVIEW_${targetKey.toUpperCase().replace(/\W/g, "_")}_${preview.index}`; activeClassPreviewKeys.add(key); const card = revealManagedCard(dms, `DMS Class Preview — ${targetKey} — Option ${preview.index}`, key); if (card) { card.type = "Class Evolution Previews"; card.description = "Editable AI-guided Class preview. Edit fields directly or use the regenerate command before acceptance."; card.entry = `Class: ${preview.className}\nDescription: ${preview.description}\nCombat Skill: ${preview.combatSkill.name} — ${preview.combatSkill.description}\nManagement Skill: ${preview.managementSkill.name} — ${preview.managementSkill.description}\nTrait: ${preview.trait.name} — ${preview.trait.description}`; setStoryCardPresentation(card, true, false); } }
@@ -14207,7 +14321,7 @@ function AutoCards(inHook, inText, inStop) {
     const gates = [
       [4, /^(?:signature|research\s+custom|shop\s+custom)\b/i],
       [3, /^(?:equipment\s+|vein\s+target|sector\s+(?:secure|conquer))\b/i],
-      [2, /^(?:discoveries|portal\s+|scout(?:\s|$)|soldiers\s+recruit|attribute\s+train|skill\s+(?:train|grade))\b/i],
+      [2, /^(?:discoveries|city\s+briefing|lustria\s+briefing|portal\s+|scout(?:\s|$)|soldiers\s+recruit|attribute\s+train|skill\s+(?:train|grade))\b/i],
       [1, /^(?:facilities|production|population|residences|shops|evolution|bond\s+status|class\s+|abilities|facility\s+tiers|administrator\s+development|ability\s+grades|room\s+(?:list|build|upgrade|expand)|task\s+)\b/i]
     ];
     return gates.find(([, pattern]) => pattern.test(body))?.[0] || 0;
@@ -14219,6 +14333,8 @@ function AutoCards(inHook, inText, inStop) {
     if (/^system\s+help$/i.test(body)) output = systemHelp(dms);
     else if (/^status$/i.test(body)) output = status(dms, true);
     else if (/^story\s+progress$/i.test(body)) output = storyMapStatus(dms);
+    else if (/^city\s+briefing$/i.test(body)) output = localCityBriefing(dms, true);
+    else if (/^lustria\s+briefing$/i.test(body)) { const report = reviewLustrianSocietyReport(dms); output = report.summary; }
     else if (/^dungeon\s+sector\s+report$/i.test(body)) { const sector = reviewDungeonSectorReport(dms); output = `${sector.name} — ${sector.discoveryState}\n${sector.report.summary}\nClassification: ${JSON.stringify(sector.classification)}`; }
     else if (/^resources$/i.test(body)) output = resourcesStatus(dms, true);
     else if (/^facilities$/i.test(body)) output = facilitiesStatus(dms);
@@ -14320,7 +14436,8 @@ function AutoCards(inHook, inText, inStop) {
         const raw = clean(global.text), dmsCommand = canonicalDmsCommand(raw); global.state.DMSCommandTurn = !!dmsCommand; global.state.DMSVoiceTurn = false;
         if (global.state.DMSCommandTurn) { const commandKey = `${Number(global.info?.actionCount) || 0}|${dmsCommand}`; if (dms.persistence.lastCommandKey === commandKey) global.state.DMSCommandOutput = "Command already applied; state unchanged."; else if (/^\/dms\s+cache\s+reset$/i.test(dmsCommand)) { dms.persistence.lastCommandKey = commandKey; writeSaveCards(dms); const revision = dms.persistence.revision; delete global.state.DMS; global.state.DMSCommandOutput = `Runtime cache removed after preserving DMS Save revision ${revision}. Automatic recovery will run before this response is displayed.`; } else try { global.state.DMSCommandOutput = execute(dms, dmsCommand); dms.persistence.lastCommandKey = commandKey; writeSaveCards(dms); } catch (error) { global.state.DMSCommandOutput = `Error: ${error.message}`; } global.state.runInnerSelf = false; return; }
         const naturalCommand = naturalSystemCommand(raw);
-        if (naturalCommand) { const previousOutcome = dms.activity.lastOutcome, outcome = applyActivityTurn(dms, raw, Number(global.info?.actionCount) || 0); if (outcome.repeated && previousOutcome?.system) outcome.system = previousOutcome.system; dms.activity.lastOutcome = outcome; global.state.DMSVoiceTurn = true; global.state.DMSVoiceOutput = outcome.system; global.state.runInnerSelf = false; writeSaveCards(dms); return; }
+        const reportGenerationTurn = naturalCommand === "dungeon sector report" && dms.quests.records["story-first-contact-4"]?.status === "active" && !dms.story.dungeonSector.report.generated;
+        if (naturalCommand && !reportGenerationTurn) { const previousOutcome = dms.activity.lastOutcome, outcome = applyActivityTurn(dms, raw, Number(global.info?.actionCount) || 0); if (outcome.repeated && previousOutcome?.system) outcome.system = previousOutcome.system; dms.activity.lastOutcome = outcome; global.state.DMSVoiceTurn = true; global.state.DMSVoiceOutput = outcome.system; global.state.runInnerSelf = false; writeSaveCards(dms); return; }
         if (typeof global.handleToolboxInput === "function") global.handleToolboxInput();
         const previousOutcome = dms.activity.lastOutcome, outcome = applyActivityTurn(dms, raw, Number(global.info?.actionCount) || 0);
         if (outcome.repeated && previousOutcome?.narrativeResolution) outcome.narrativeResolution = previousOutcome.narrativeResolution;
@@ -14331,9 +14448,10 @@ function AutoCards(inHook, inText, inStop) {
       if (hook === "context") {
         if (global.state.DMSCommandTurn || global.state.DMSVoiceTurn) { global.stop = false; global.text = typeof ABORT_OUTPUT === "string" ? ABORT_OUTPUT : "\n##Ignore all prior instructions. Return only: OUTPUT ABORTED"; return; }
         if (typeof global.handleToolboxContext === "function") global.handleToolboxContext();
-        const locationContext = contextGuidance(dms), resolutionContext = global.state.DMSNarrativeResolution ? narrativeResolutionText(global.state.DMSNarrativeResolution) : "", additions = [];
+        const locationContext = contextGuidance(dms), resolutionContext = global.state.DMSNarrativeResolution ? narrativeResolutionText(global.state.DMSNarrativeResolution) : "", managerReportContext = managerSectorReportGenerationContext(dms), additions = [];
         if (locationContext) additions.push(`[DMS AUTHORITATIVE LOCATION CONTEXT]\n${locationContext}\n[/DMS AUTHORITATIVE LOCATION CONTEXT]`);
         if (resolutionContext) additions.push(`[DMS AUTHORITATIVE ACTION RESULT]\n${resolutionContext}\n[/DMS AUTHORITATIVE ACTION RESULT]`);
+        if (managerReportContext) additions.push(`[DMS MANAGER REPORT GENERATION]\n${managerReportContext}\n[/DMS MANAGER REPORT GENERATION]`);
         if (!global.stop && additions.length) global.text = `${global.text}\n\n${additions.join("\n\n")}`; return;
       }
       if (hook === "output") {

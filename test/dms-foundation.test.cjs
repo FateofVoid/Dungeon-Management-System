@@ -108,7 +108,7 @@ test("the original scenario export contains the complete global Lustria registry
   const scenarioBundle = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "DMS Original Scenario Story Cards.json"), "utf8"));
   const seededFacilities = Object.values(DMS.ROOM_DEFINITIONS).filter(definition => definition.unlockTier > 0).length;
   const seededQuests = Object.keys(DMS.defaultState().quests.records).length;
-  assert.equal(scenarioBundle.length, exported.length + 1 + 64 + seededFacilities + seededQuests + 6);
+  assert.equal(scenarioBundle.length, exported.length + 1 + 64 + seededFacilities + (seededQuests - 2) + 6);
   assert.equal(scenarioBundle.filter(card => card.keys === "DMS_SETUP_INITIALIZATION_JSON").length, 1);
   assert.equal(scenarioBundle.filter(card => card.type === "Global Lore").length, exported.length);
   assert.equal(scenarioBundle.filter(card => card.keys.startsWith("DMS_SAVE_RESERVE_") && card.showInStoryCards === false && card.isSpoiler === false).length, 64);

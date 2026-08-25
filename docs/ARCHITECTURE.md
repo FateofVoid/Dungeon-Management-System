@@ -62,7 +62,7 @@ Unique, Apex, and Growth are supported as special nonstandard Grades. General Sk
 
 ## Administrators and Bond
 
-Administrators have Name, Race, Level, fixed-role Class path, Rank, assignment effectiveness, either Combat or Support Attributes, Skills, Traits, and Bond. Summoned Rank is random from F, E, D, C, B, A, S, SS, and SSS. Rank modifies facility assignment output.
+Administrators have Name, Race, canonical Appearance, Personality, Voice, Level, fixed-role Class path, Rank, assignment effectiveness, either Combat or Support Attributes, Skills, Traits, and Bond. Summoned Rank is random from F, E, D, C, B, A, S, SS, and SSS. Rank modifies facility assignment output. Generated character details persist in compact saves and cards, and narrative action resolution instructs the model to embody those details in story prose rather than treating the character as a system-only record.
 
 Administrator Class previews evolve their existing path rather than offering three choices. Combat Administrators receive one Combat Skill and one Trait; Support Administrators receive one Support Skill and one Trait. The same editable-preview acceptance and duplicate protection apply.
 
@@ -112,7 +112,7 @@ DMS maintains two continuous context blocks. Plot Essentials lists permanent ide
 
 Global Lustria lore is setting-wide and excludes Eryndral, specific protagonists, and specific dungeons. Scout facilities discover sectors and resource veins. Sector threat is compared against Dungeon Combat Power. Extraction facilities target discovered veins; Expansion supports their job cohort while Tier improves extraction and concurrent operations. Conquest Command unlocks territorial control.
 
-The immediate Dungeon Sector is a special evidence-built Sector. Leaving creates an unresolved record but never captures the quest-triggering output. After enough travel context, investigating a local point prepares a snapshot; the following action captures the previous editable story output. The Manager later organizes those observations without filling unknown fields. Remote Story Sectors and Sites are deterministic records generated before a quest presents their names.
+The immediate Dungeon Sector is a special evidence-built Sector. Leaving creates an unresolved record but never captures the quest-triggering output. After enough travel context, investigating a local point prepares a snapshot; the following action captures the previous editable story output. The Manager-report pipeline supplies all accumulated snapshots and intrusion evidence to one structured generation turn, accepts only claims grounded by cited evidence IDs, preserves unsupported fields as `Unknown`, and publishes separate lore and system cards. First Contact then establishes a Perimeter Scout cohort. Tier 2 generates the nearby primary city before presenting its name, while later extended scouting supports the evidence-grounded Lustrian society, Dungeon regulation, and Dominion activity briefing. Remote Story Sectors and Sites remain available for later exploration.
 
 ## Story Card player presentation
 

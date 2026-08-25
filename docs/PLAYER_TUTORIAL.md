@@ -2,7 +2,7 @@
 
 This guide teaches the current verified DMS play path in the order a new player needs it. The intended interface is ordinary language addressed to the Dungeon System and ordinary story actions performed in an appropriate Activity. Slash commands are included only as recovery and debugging fallbacks in the project README.
 
-Current release status: **DMS 0.10.0-dev**. Tiers 0–1 are playable. You can build a self-sustaining Dungeon, complete First Contact, and prepare the Tier 2 reserve, but entry into Tier 2 remains sealed until its deployment test is verified.
+Current release status: **DMS 0.11.0-dev**. Tiers 0–1 are playable. You can build a self-sustaining Dungeon, complete First Contact, and prepare the Tier 2 reserve, but entry into Tier 2 remains sealed until its deployment test is verified.
 
 Ask the System to show **Story Progress** whenever you need the current campaign step. The map lists completed, current, and known upcoming Story Quests without revealing undiscovered branches.
 
@@ -72,7 +72,7 @@ System Mode is Timeless, so management decisions do not accidentally advance con
 
 > System, summon the Manager.
 
-The first Administrator is always a Level 1 Manager. Their F–SSS Rank is generated independently from Level and changes assignment effectiveness. DMS creates their Administrator card, Bond state, and Inner Self registration automatically.
+The first Administrator is always a Level 1 Manager. Their F–SSS Rank is generated independently from Level and changes assignment effectiveness. DMS creates their canonical appearance, personality, voice, Administrator card, Bond state, and Inner Self registration automatically; the summoning scene is instructed to resolve those generated details into story prose rather than leaving the Manager as a system-only record.
 
 ### Step 5 — Review capacity and Tier requirements
 
@@ -143,7 +143,7 @@ Then begin timed work:
 
 Describe the Thronebound helping to build, shape, repair, or organize the facility. Relevant Construction turns advance the Cycle and may reduce the task through Craft and Logistics. At Standard Pace, three relevant turns normally complete one Cycle.
 
-When the task finishes, Material Works becomes Active and its job-linked Worker cohort appears. The room receives a Facility card; its Workers receive a separate Job Cohort card.
+When the task finishes, Material Works becomes Active and manifests one named **job cohort** for its available jobs. A job cohort is the single tracked group that performs a facility's routine work; its Dungeon-generated name is the cohort's canonical story name. The room receives a Facility card and the cohort receives a separate Job Cohort card. After this introduction, the tutorial refers to that same group as **the cohort** rather than alternating between generic population labels.
 
 ## 6. Establish food and housing
 
@@ -155,7 +155,7 @@ Return to Timeless System Mode before issuing each management decision:
 
 > System, construct Worker Habitat.
 
-Advance their tasks through Construction Activity. Worker numbers come from facility jobs, not a global population cap.
+Advance the facility tasks through Construction Activity. Cohort size comes from the jobs supported by its facility, not a global population cap.
 
 Ask:
 
@@ -163,7 +163,7 @@ Ask:
 
 > System, show housing.
 
-Each Worker cohort has a Work assignment and a Residence. Workers can function without proper housing, but temporary quarters impose a modest efficiency cost. Worker Habitat lowers Sustenance burden, supports recovery from disruption, and can improve properly housed cohorts without introducing individual Worker records or a happiness simulation.
+Each cohort has one Work assignment and one Residence. A cohort can function without proper housing, but temporary quarters impose a modest efficiency cost. Worker Habitat lowers Sustenance burden, supports recovery from disruption, and can improve properly housed cohorts without creating individual population records or a happiness simulation.
 
 ## 7. Complete the production foundation
 
@@ -279,7 +279,17 @@ To develop a relationship:
 
 Then narrate meaningful time together: talk, listen, train, work, dine, rest, or share experiences. Bond rises but stops at every unresolved 5% threshold. At the threshold, perform the active Bond Event through an appropriate personal scene. Some later events may require a suitable gift Tier or accessible location; Bond itself has no hard Dungeon Tier cap.
 
-## 13. Prepare the Tier 2 threshold
+## 13. Complete First Contact and establish scouting
+
+Leave the Dungeon through ordinary story play, travel around its immediate vicinity, and deliberately investigate meaningful local points. Each investigation schedules the preceding editable narrative output to be captured on your following action. Resolve the first intrusion by any approach that genuinely ends the immediate threat; combat is not required.
+
+Return to the Throne Room and ask the Manager for the Dungeon Sector report. The report generation turn receives every accumulated snapshot and must leave unsupported details unknown. Review the resulting Sector description, then follow the Manager's recommendation:
+
+> System, construct the Perimeter Scout Post.
+
+Complete its construction through Construction Activity. After its cohort becomes active, complete a Cycle so the first survey begins. The survey establishes leads only; it does not decide what the nearby city is like before Tier 2 scouting provides evidence.
+
+## 14. Prepare the Tier 2 threshold
 
 Use the economy rather than artificial resource injection:
 
@@ -294,7 +304,7 @@ Use the economy rather than artificial resource injection:
 
 The current development build will report the complete reserve but refuse Tier 2 entry because the verified deployment gate is intentionally sealed. That refusal protects the save from entering partially verified gameplay.
 
-## 14. Useful displays and when to use them
+## 15. Useful displays and when to use them
 
 | Need | Natural request |
 | --- | --- |
@@ -313,7 +323,7 @@ The current development build will report the complete reserve but refuse Tier 2
 | Current Mode, target, and Pace | “System, show current Activity.” |
 | Next progression gate | “System, show Tier requirements.” |
 
-## 15. Refusals are guidance, not lost progress
+## 16. Refusals are guidance, not lost progress
 
 A refused request does not spend resources or partially mutate state. Common reasons are:
 

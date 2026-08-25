@@ -157,7 +157,8 @@ test("Tier 1 persistence restores lineage, previews, residences, Worker disrupti
   DMS.refreshCards(dms);
   const limit = DMS.assertSaveCardCharacterLimits();
   assert.ok(limit.maximum <= DMS.SAVE_CARD_MAX);
-  assert.ok(global.storyCards.every(card => String(card.entry || "").length <= 2000), "Tier 1 generated cards remain within the conservative Story Card boundary");
+  const oversized = global.storyCards.filter(card => String(card.entry || "").length > 2000).map(card => `${card.title}: ${String(card.entry).length}`);
+  assert.deepEqual(oversized, [], `Tier 1 generated cards remain within the conservative Story Card boundary: ${oversized.join(", ")}`);
   const loaded = DMS.loadSaveCards(DMS.defaultState());
   assert.deepEqual(loaded.thronebound.class.lineage, dms.thronebound.class.lineage);
   assert.deepEqual(loaded.classPreviews[second.id], dms.classPreviews[second.id]);

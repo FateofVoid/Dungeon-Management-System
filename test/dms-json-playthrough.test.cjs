@@ -34,7 +34,7 @@ function build(dms, definition) {
 }
 
 test("Queen's Vault remains the frozen Dungeon Generator compatibility fixture", () => {
-  assert.equal(crypto.createHash("sha256").update(sampleJson).digest("hex"), sampleHash);
+  assert.equal(crypto.createHash("sha256").update(sampleJson.replace(/\r\n/g, "\n")).digest("hex"), sampleHash);
   const dms = DMS.defaultState();
   assert.equal(DMS.initializeFromScenarioVariables(dms, placeholders()), true);
   global.state = { memory: { context: `DMS Initialization JSON: ${sampleJson}`, authorsNote: "" } };

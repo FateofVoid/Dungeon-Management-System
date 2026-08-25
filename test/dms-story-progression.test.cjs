@@ -97,24 +97,26 @@ test("First Contact builds local canon from evidence and permits noncombat intru
   assert.equal(dms.quests.records["story-first-contact-4"].status, "cleared");
 });
 
-test("Tier 2 generates named remote references before their Story quests present them", () => {
+test("Tier 2 generates the nearby primary city before its Story quest presents it", () => {
   const dms = atTierOne();
-  for (const id of ["story-first-contact-1", "story-first-contact-2", "story-first-contact-3", "story-first-contact-4"]) dms.quests.records[id].status = "cleared";
+  for (const id of ["story-first-contact-1", "story-first-contact-2", "story-first-contact-3", "story-first-contact-4", "story-first-contact-5", "story-first-contact-6"]) dms.quests.records[id].status = "cleared";
+  dms.story.scouting.perimeterActive = true;
   dms.dungeon.tier = 2; DMS.applyDerivedState(dms); DMS.updateQuests(dms, { notify: false });
-  const sector = dms.world.lustria.sectors[dms.story.remote.sectorId];
-  assert.ok(sector);
+  const city = dms.story.localCity;
+  assert.ok(city.name);
   assert.equal(dms.quests.records["story-beyond-perimeter-1"].status, "active");
-  assert.match(dms.quests.records["story-beyond-perimeter-1"].objective, new RegExp(sector.name));
-  DMS.visitStoryLocation(dms, sector.id);
-  const site = dms.world.lustria.sites[dms.story.remote.siteId];
-  assert.ok(site);
+  const cityQuest = dms.quests.records["story-beyond-perimeter-1"];
+  assert.match(DMS.renderQuestText(dms, cityQuest, cityQuest.objective), new RegExp(city.name));
+  dms.story.milestones["local-city-briefing-reviewed"] = true; DMS.updateQuests(dms, { notify: false });
   assert.equal(dms.quests.records["story-beyond-perimeter-2"].status, "active");
-  assert.match(dms.quests.records["story-beyond-perimeter-2"].objective, new RegExp(site.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  DMS.visitStoryLocation(dms, city.name);
+  assert.equal(city.visited, true);
+  assert.equal(dms.quests.records["story-beyond-perimeter-2"].status, "cleared");
 });
 
 test("Development Path branches reveal only after adaptation and reconverge at Tier 3", () => {
   const dms = atTierOne();
-  for (const id of ["story-first-contact-1", "story-first-contact-2", "story-first-contact-3", "story-first-contact-4", "story-beyond-perimeter-1", "story-beyond-perimeter-2", "story-beyond-perimeter-3", "story-beyond-perimeter-4", "story-beyond-perimeter-5"]) dms.quests.records[id].status = "cleared";
+  for (const id of ["story-first-contact-1", "story-first-contact-2", "story-first-contact-3", "story-first-contact-4", "story-first-contact-5", "story-first-contact-6", "story-beyond-perimeter-1", "story-beyond-perimeter-2", "story-beyond-perimeter-3", "story-beyond-perimeter-4", "story-beyond-perimeter-5"]) dms.quests.records[id].status = "cleared";
   dms.dungeon.tier = 2; dms.story.knowledge.adaptationDiscovered = true; dms.story.knownPaths = Object.keys(DMS.STORY_DEVELOPMENT_PATHS); DMS.updateQuests(dms, { notify: false });
   assert.match(DMS.storyMapStatus(dms), /Known Branches: Concealment, Controlled Contact, Dominion Accord, Patronage, Armed Independence/);
   DMS.selectDevelopmentPath(dms, "Controlled Contact");

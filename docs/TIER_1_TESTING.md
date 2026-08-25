@@ -36,8 +36,10 @@ This test begins from a clean Tier 1 awakening. Do not use slash commands or man
 
 ## Main-chain and recovery gate
 
-1. Continue ordinary production until Administrator Capacity is 3/3 and the Tier 2 reserve is fully funded. The production, population, facility, administration, and Class Awakening chains must converge on **Self-Sustaining Dungeon I**. The Tier 1 Story chain **First Contact I–IV** must also complete, but Tier 2 entry remains sealed until its deployment gate is verified.
-2. Record the displayed Dungeon state, resources, Class lineage, Administrators, residences, Worker disruption, quests, Activity, and Cycle.
-3. Remove only the simulated runtime cache while preserving Story Cards. The next natural System request must recover the same state automatically.
-4. Export and restore the backup with its Story Cards, use the explicit load fallback once, and compare the same fields again.
-5. Confirm every `DMS Save` Story Card remains at or below 1,800 characters. Generated Tier 1 cards should remain compact and independently scoped.
+1. Complete First Contact I–IV through external travel, delayed evidence snapshots, a player-neutral intrusion resolution, and the Manager's generated Sector report. Confirm every accumulated snapshot is supplied to the generation context, unsupported report fields remain `Unknown`, and both the readable lore card and hidden system card retain the resulting Sector canon.
+2. Follow the Manager's recommendation to construct the Perimeter Scout Post, then complete a Cycle with its cohort active. Confirm **First Contact V–VI** clear and scouting becomes active without predetermining the nearby city's identity, allegiance, or safety.
+3. Continue ordinary production until Administrator Capacity is 3/3 and the Tier 2 reserve is fully funded. The production, population, facility, administration, and Class Awakening chains must converge on **Self-Sustaining Dungeon I**, but Tier 2 entry remains sealed until its deployment gate is verified.
+4. Record the displayed Dungeon state, resources, Class lineage, Administrators, residences, cohort disruption, scouting state, Sector report, quests, Activity, and Cycle.
+5. Remove only the simulated runtime cache while preserving Story Cards. The next natural System request must recover the same state automatically.
+6. Export and restore the backup with its Story Cards, use the explicit load fallback once, and compare the same fields again.
+7. Confirm every `DMS Save` Story Card remains at or below 1,800 characters. Generated Tier 1 cards should remain compact and independently scoped.

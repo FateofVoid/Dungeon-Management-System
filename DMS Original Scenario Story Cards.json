@@ -2070,23 +2070,13 @@
     "useForCharacterCreation": false
   },
   {
-    "isSpoiler": false,
-    "showInStoryCards": true,
-    "keys": "DMS_QUEST_TUTORIAL_SYSTEM_STATUS",
-    "value": "System Awakening I\nCategory: Tutorial\nChain: System Awakening, Step 1\nTier: 0\nStatus: Active\nPrerequisites: None\nObjective: Open the \"System Status\" or \"Dungeon Status\" display from the Throne Room.\nRewards: {\"experience\":10}",
-    "type": "Active Quests",
-    "title": "DMS Quest — System Awakening I",
-    "description": "Current immersive DMS quest.",
-    "useForCharacterCreation": false
-  },
-  {
     "isSpoiler": true,
     "showInStoryCards": false,
     "keys": "DMS_QUEST_TUTORIAL_SYSTEM_RESOURCES",
     "value": "System Awakening II\nCategory: Tutorial\nChain: System Awakening, Step 2\nTier: 0\nStatus: Locked\nPrerequisites: tutorial-system-status\nObjective: Open \"Dungeon Resources\" from the Throne Room and review the current stocks.\nRewards: {\"energy\":5}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — System Awakening II",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2096,7 +2086,7 @@
     "value": "System Awakening III\nCategory: Tutorial\nChain: System Awakening, Step 3\nTier: 0\nStatus: Locked\nPrerequisites: tutorial-system-resources\nObjective: Enter \"System\" Mode while within the Throne Room.\nRewards: {\"experience\":10}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — System Awakening III",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2106,7 +2096,7 @@
     "value": "System Awakening IV\nCategory: Tutorial\nChain: System Awakening, Step 4\nTier: 0\nStatus: Locked\nPrerequisites: tutorial-system-mode\nObjective: Use \"Summoning\" to manifest the Dungeon's first \"Manager\" Administrator.\nRewards: {\"development\":5}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — System Awakening IV",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2116,7 +2106,7 @@
     "value": "System Awakening V\nCategory: Tutorial\nChain: System Awakening, Step 5\nTier: 0\nStatus: Locked\nPrerequisites: tutorial-system-manager\nObjective: Open \"Tier Requirements\" and confirm that Administrator Capacity is filled.\nRewards: {\"energy\":5}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — System Awakening V",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2126,7 +2116,7 @@
     "value": "System Awakening VI\nCategory: Tutorial\nChain: System Awakening, Step 6\nTier: 0\nStatus: Locked\nPrerequisites: tutorial-system-tier-requirements\nObjective: Awaken Dungeon Tier 1 after every displayed requirement is satisfied.\nRewards: {\"experience\":50}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — System Awakening VI",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2136,7 +2126,7 @@
     "value": "Lustrian Exploration I\nCategory: Tutorial\nChain: Lustrian Exploration, Step 1\nTier: 2\nStatus: Locked\nPrerequisites: None\nObjective: Travel to Lustria and discover a resource-bearing Sector through Survey or Exploration Activity.\nRewards: {\"experience\":200,\"energy\":40}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Lustrian Exploration I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2146,7 +2136,7 @@
     "value": "Construction Foundation I\nCategory: Dungeon\nChain: Construction Foundation, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: story-awakening-1\nObjective: Activate {room:material-works} and complete a Cycle that produces Basic {resource:construction}.\nRewards: {\"experience\":40}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Construction Foundation I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2156,7 +2146,7 @@
     "value": "Sustenance Foundation I\nCategory: Dungeon\nChain: Sustenance Foundation, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: story-awakening-1\nObjective: Activate {room:sustenance-works} and complete a Cycle that produces Basic {resource:sustenance}.\nRewards: {\"experience\":40}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Sustenance Foundation I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2166,7 +2156,7 @@
     "value": "Development Foundation I\nCategory: Dungeon\nChain: Development Foundation, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: story-awakening-1\nObjective: Activate {room:development-sanctum} and complete a Cycle that produces Basic {resource:development}.\nRewards: {\"experience\":40}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Development Foundation I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2176,7 +2166,7 @@
     "value": "Energy Foundation I\nCategory: Dungeon\nChain: Energy Foundation, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: story-awakening-1\nObjective: Activate {room:energy-conduit} and complete a Cycle that produces ungraded {resource:energy}.\nRewards: {\"experience\":40}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Energy Foundation I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2186,7 +2176,7 @@
     "value": "Population Foundation I\nCategory: Dungeon\nChain: Population Foundation, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: tier1-main-sustenance\nObjective: Maintain the Dungeon's manifested job cohorts through a Cycle with suitable residences and no unpaid {resource:sustenance} upkeep.\nRewards: {\"experience\":50}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Population Foundation I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2196,7 +2186,7 @@
     "value": "Facility Development I\nCategory: Dungeon\nChain: Facility Development, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: story-awakening-1\nObjective: Expand one established Dungeon facility and complete its reserved construction task.\nRewards: {\"experience\":40}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Facility Development I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2206,7 +2196,7 @@
     "value": "Facility Development II\nCategory: Dungeon\nChain: Facility Development, Step 2\nTier: 1\nStatus: Locked\nPrerequisites: tier1-main-expansion\nObjective: Confirm that the Throne Room advanced with the Dungeon and that no facility may exceed Dungeon Tier.\nRewards: {\"experience\":30}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Facility Development II",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2216,7 +2206,7 @@
     "value": "Administrative Structure I\nCategory: Dungeon\nChain: Administrative Structure, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: story-awakening-1\nObjective: Assign a compatible Administrator to an established facility and observe their Rank alter a successful Cycle result.\nRewards: {\"experience\":50}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Administrative Structure I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2226,7 +2216,7 @@
     "value": "Class Awakening III\nCategory: Thronebound\nChain: Class Awakening, Step 3\nTier: 1\nStatus: Locked\nPrerequisites: thronebound-class-previews\nObjective: Accept one reviewed Class branch in Timeless System Mode and establish the first entry in Class Lineage.\nRewards: {\"experience\":60}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Class Awakening III",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2236,7 +2226,7 @@
     "value": "Self-Sustaining Dungeon I\nCategory: Dungeon\nChain: Self-Sustaining Dungeon, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: tier1-main-construction, tier1-main-sustenance, tier1-main-development, tier1-main-energy, tier1-main-workers, tier1-main-expansion, tier1-main-facility-tier, tier1-main-administrator, tier1-main-class\nObjective: Complete the Tier 1 foundation, fill Administrator Capacity 3, and hold the ordinary {resource:construction} and {resource:energy} requirements for Tier 2 without artificial resource injection.\nRewards: {\"experience\":100}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Self-Sustaining Dungeon I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2246,7 +2236,7 @@
     "value": "Construction Operations I\nCategory: Tutorial\nChain: Construction Operations, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-system-tier-up\nObjective: Use the System to construct {room:material-works}, which fulfills the \"Material Works\" function.\nRewards: {\"experience\":15}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Construction Operations I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2256,7 +2246,7 @@
     "value": "Construction Operations II\nCategory: Tutorial\nChain: Construction Operations, Step 2\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-economy-build-material\nObjective: Use Construction Activity until {room:material-works} becomes Active.\nRewards: {\"experience\":15}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Construction Operations II",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2266,7 +2256,7 @@
     "value": "Construction Operations III\nCategory: Tutorial\nChain: Construction Operations, Step 3\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-economy-complete-material\nObjective: Complete a production Cycle, then ask the System to show production at {room:material-works}.\nRewards: {\"experience\":15}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Construction Operations III",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2276,7 +2266,7 @@
     "value": "Sustenance Operations I\nCategory: Tutorial\nChain: Sustenance Operations, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-system-tier-up\nObjective: Construct {room:sustenance-works} and {room:worker-habitat} so manifested job cohorts can be sustained and housed.\nRewards: {\"experience\":20}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Sustenance Operations I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2286,7 +2276,7 @@
     "value": "Population Interface I\nCategory: Tutorial\nChain: Population Interface, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-economy-sustenance\nObjective: Open Population and review the manifested names, Work, and Residence of the Dungeon's job cohorts.\nRewards: {\"experience\":15}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Population Interface I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2296,7 +2286,7 @@
     "value": "Facility Development Interface I\nCategory: Tutorial\nChain: Facility Development Interface, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-system-tier-up\nObjective: Expand one active facility and complete the Expansion through Cycles.\nRewards: {\"experience\":20}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Facility Development Interface I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2306,7 +2296,7 @@
     "value": "Facility Development Interface II\nCategory: Tutorial\nChain: Facility Development Interface, Step 2\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-economy-expand\nObjective: Ask how facility Tier Ups work and review the Throne Room's completed Tier 1 awakening.\nRewards: {\"experience\":15}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Facility Development Interface II",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2316,7 +2306,7 @@
     "value": "Administrator Assignment Interface I\nCategory: Tutorial\nChain: Administrator Assignment Interface, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-system-tier-up\nObjective: Assign a compatible Administrator to a production facility and complete a Cycle to compare the result.\nRewards: {\"experience\":25}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Administrator Assignment Interface I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2326,7 +2316,7 @@
     "value": "Class Interface I\nCategory: Tutorial\nChain: Class Interface, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-system-tier-up\nObjective: Open Class Evolution and compare all three generated branches.\nRewards: {\"experience\":15}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Class Interface I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2336,7 +2326,7 @@
     "value": "Class Interface II\nCategory: Tutorial\nChain: Class Interface, Step 2\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-class-previews\nObjective: Edit an unsuitable preview or ask the System to regenerate the options; accepting unchanged previews also confirms they were suitable.\nRewards: {\"experience\":10}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Class Interface II",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2346,7 +2336,7 @@
     "value": "Class Interface III\nCategory: Tutorial\nChain: Class Interface, Step 3\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-class-adjust, thronebound-class-requirements\nObjective: Accept one reviewed Class option after the Class Awakening requirements are satisfied.\nRewards: {\"experience\":30}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Class Interface III",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2356,7 +2346,7 @@
     "value": "Class Interface IV\nCategory: Tutorial\nChain: Class Interface, Step 4\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-class-accept\nObjective: Ask the System to show the Thronebound's abilities and Class Lineage.\nRewards: {\"experience\":15}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Class Interface IV",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2366,7 +2356,7 @@
     "value": "Ability Acquisition I\nCategory: Tutorial\nChain: Ability Acquisition, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-class-abilities\nObjective: Construct either {room:general-skill-hall} or {room:general-trait-archive}.\nRewards: {\"experience\":20}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Ability Acquisition I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2376,7 +2366,7 @@
     "value": "Ability Acquisition II\nCategory: Tutorial\nChain: Ability Acquisition, Step 2\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-class-shop\nObjective: Review the fixed-price shop and acquire one valid entry for a linked character.\nRewards: {\"experience\":25}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Ability Acquisition II",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2386,7 +2376,7 @@
     "value": "Ability Acquisition III\nCategory: Tutorial\nChain: Ability Acquisition, Step 3\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-class-buy\nObjective: Ask the System how ability mastery and Grades progress.\nRewards: {\"experience\":15}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Ability Acquisition III",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2396,7 +2386,7 @@
     "value": "Administrator and Bond Interface I\nCategory: Tutorial\nChain: Administrator and Bond Interface, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-system-tier-up\nObjective: Activate a useful facility function, then summon the second Administrator from the Throne Room.\nRewards: {\"experience\":20}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Administrator and Bond Interface I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2406,7 +2396,7 @@
     "value": "Administrator and Bond Interface II\nCategory: Tutorial\nChain: Administrator and Bond Interface, Step 2\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-admin-summon\nObjective: Assign the Administrator to a compatible manifested facility.\nRewards: {\"experience\":20}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Administrator and Bond Interface II",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2416,7 +2406,7 @@
     "value": "Administrator and Bond Interface III\nCategory: Tutorial\nChain: Administrator and Bond Interface, Step 3\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-admin-assign\nObjective: Begin Bond Activity with an Administrator and spend a story turn together.\nRewards: {\"experience\":15}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Administrator and Bond Interface III",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2426,7 +2416,7 @@
     "value": "Administrator and Bond Interface IV\nCategory: Tutorial\nChain: Administrator and Bond Interface, Step 4\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-admin-bond\nObjective: Continue meaningful Bond Activity until the Administrator reaches the 5% gate.\nRewards: {\"experience\":20}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Administrator and Bond Interface IV",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2436,7 +2426,7 @@
     "value": "Administrator and Bond Interface V\nCategory: Tutorial\nChain: Administrator and Bond Interface, Step 5\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-admin-threshold\nObjective: Complete the active 5% Bond Event with its referenced Administrator.\nRewards: {\"experience\":25}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Administrator and Bond Interface V",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2446,7 +2436,7 @@
     "value": "Administrator and Bond Interface VI\nCategory: Tutorial\nChain: Administrator and Bond Interface, Step 6\nTier: 1\nStatus: Locked\nPrerequisites: tutorial-admin-event\nObjective: Ask the System to explain Administrator Rank, Level, assignment effectiveness, and Bond-gated Rank Up.\nRewards: {\"experience\":15}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Administrator and Bond Interface VI",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2510,23 +2500,13 @@
     "useForCharacterCreation": false
   },
   {
-    "isSpoiler": false,
-    "showInStoryCards": true,
-    "keys": "DMS_QUEST_STORY_AWAKENING_1",
-    "value": "Awakening I — Become the Dungeon's Master\nCategory: Story\nChain: Awakening, Step 1\nTier: 0\nStatus: Active\nPrerequisites: None\nObjective: Establish practical control of the Dungeon and legitimately awaken it to Tier 1.\nRewards: {\"experience\":100,\"energy\":20}",
-    "type": "Active Quests",
-    "title": "DMS Quest — Awakening I — Become the Dungeon's Master",
-    "description": "Current immersive DMS quest.",
-    "useForCharacterCreation": false
-  },
-  {
     "isSpoiler": true,
     "showInStoryCards": false,
     "keys": "DMS_QUEST_STORY_FIRST_CONTACT_1",
     "value": "First Contact I — Leave the Dungeon\nCategory: Story\nChain: First Contact, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: story-awakening-1\nObjective: Physically leave the Dungeon and begin establishing what lies immediately beyond it without assuming its biome, terrain, inhabitants, or danger.\nRewards: {\"experience\":75}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — First Contact I — Leave the Dungeon",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2536,7 +2516,7 @@
     "value": "First Contact II — Establish the Immediate Perimeter\nCategory: Story\nChain: First Contact, Step 2\nTier: 1\nStatus: Locked\nPrerequisites: story-first-contact-1\nObjective: Travel through the immediate vicinity, then find and investigate several meaningful local points so the preceding editable story outputs can become evidence snapshots.\nRewards: {\"experience\":100}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — First Contact II — Establish the Immediate Perimeter",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2546,7 +2526,7 @@
     "value": "First Contact III — Intrusion\nCategory: Story\nChain: First Contact, Step 3\nTier: 1\nStatus: Locked\nPrerequisites: story-first-contact-2\nObjective: Respond to the detected hostile or threatening intrusion, classify what occurred to some degree, and end the immediate threat while the Dungeon remains functional.\nRewards: {\"experience\":125}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — First Contact III — Intrusion",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2556,57 +2536,57 @@
     "value": "First Contact IV — Review the Manager's Report\nCategory: Story\nChain: First Contact, Step 4\nTier: 1\nStatus: Locked\nPrerequisites: story-first-contact-3\nObjective: Return to the Throne Room and review the Manager's Dungeon Sector Report compiled from recorded observations, Sites, routes, and intrusion evidence.\nRewards: {\"experience\":150}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — First Contact IV — Review the Manager's Report",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
     "isSpoiler": true,
     "showInStoryCards": false,
     "keys": "DMS_QUEST_STORY_BEYOND_PERIMETER_1",
-    "value": "Beyond the Perimeter I — First Distant Sector\nCategory: Story\nChain: Beyond the Perimeter, Step 1\nTier: 2\nStatus: Locked\nPrerequisites: story-first-contact-4\nObjective: Reach the remote Lustrian Sector identified by the Manager when this quest activates.\nRewards: {\"experience\":175}",
+    "value": "Beyond the Perimeter I — The Nearby City\nCategory: Story\nChain: Beyond the Perimeter, Step 1\nTier: 2\nStatus: Locked\nPrerequisites: story-first-contact-6\nObjective: Review the Manager's preliminary briefing on {reference:local-city} and decide how to investigate the city as a possible source of Dominion danger, Dominion information, Guild access, or later Veil contacts.\nRewards: {\"experience\":175}",
     "type": "System — Locked Quests",
-    "title": "DMS Quest — Beyond the Perimeter I — First Distant Sector",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "title": "DMS Quest — Beyond the Perimeter I — The Nearby City",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
     "isSpoiler": true,
     "showInStoryCards": false,
     "keys": "DMS_QUEST_STORY_BEYOND_PERIMETER_2",
-    "value": "Beyond the Perimeter II — A Place Beyond\nCategory: Story\nChain: Beyond the Perimeter, Step 2\nTier: 2\nStatus: Locked\nPrerequisites: story-beyond-perimeter-1\nObjective: Reach the specific Site generated within the first remote Sector before this objective is presented.\nRewards: {\"experience\":175}",
+    "value": "Beyond the Perimeter II — City Contact\nCategory: Story\nChain: Beyond the Perimeter, Step 2\nTier: 2\nStatus: Locked\nPrerequisites: story-beyond-perimeter-1\nObjective: Reach {reference:local-city} and establish one evidence-grounded point of contact without prescribing its institution, allegiance, or response.\nRewards: {\"experience\":175}",
     "type": "System — Locked Quests",
-    "title": "DMS Quest — Beyond the Perimeter II — A Place Beyond",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "title": "DMS Quest — Beyond the Perimeter II — City Contact",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
     "isSpoiler": true,
     "showInStoryCards": false,
     "keys": "DMS_QUEST_STORY_BEYOND_PERIMETER_3",
-    "value": "Beyond the Perimeter III — Organized Lustria\nCategory: Story\nChain: Beyond the Perimeter, Step 3\nTier: 2\nStatus: Locked\nPrerequisites: story-beyond-perimeter-2\nObjective: Encounter and record evidence of an organized Lustrian society, institution, settlement, or faction without prescribing its allegiance.\nRewards: {\"experience\":200}",
+    "value": "Beyond the Perimeter III — Extended Scouting\nCategory: Story\nChain: Beyond the Perimeter, Step 3\nTier: 2\nStatus: Locked\nPrerequisites: story-beyond-perimeter-2\nObjective: Extend scouting beyond the immediate perimeter and gather evidence about Lustrian society, Dungeon regulation, and noteworthy Dominion activity while leaving every result procedural.\nRewards: {\"experience\":200}",
     "type": "System — Locked Quests",
-    "title": "DMS Quest — Beyond the Perimeter III — Organized Lustria",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "title": "DMS Quest — Beyond the Perimeter III — Extended Scouting",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
     "isSpoiler": true,
     "showInStoryCards": false,
     "keys": "DMS_QUEST_STORY_BEYOND_PERIMETER_4",
-    "value": "Beyond the Perimeter IV — The Dominion's Reach\nCategory: Story\nChain: Beyond the Perimeter, Step 4\nTier: 2\nStatus: Locked\nPrerequisites: story-beyond-perimeter-3\nObjective: Learn why the Dominion matters to Dungeon growth: its power, regulation or observation, Tier visibility, classification consequences, and the limits of purely internal advancement.\nRewards: {\"experience\":225}",
+    "value": "Beyond the Perimeter IV — The Lustrian Briefing\nCategory: Story\nChain: Beyond the Perimeter, Step 4\nTier: 2\nStatus: Locked\nPrerequisites: story-beyond-perimeter-3\nObjective: Review the Manager's evidence-grounded briefing on organized Lustrian society, Dungeon regulation, and noteworthy Dominion activity; unsupported subjects must remain unknown.\nRewards: {\"experience\":225}",
     "type": "System — Locked Quests",
-    "title": "DMS Quest — Beyond the Perimeter IV — The Dominion's Reach",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "title": "DMS Quest — Beyond the Perimeter IV — The Lustrian Briefing",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
     "isSpoiler": true,
     "showInStoryCards": false,
     "keys": "DMS_QUEST_STORY_BEYOND_PERIMETER_5",
-    "value": "Beyond the Perimeter V — Patterns of Adaptation\nCategory: Story\nChain: Beyond the Perimeter, Step 5\nTier: 2\nStatus: Locked\nPrerequisites: story-beyond-perimeter-4\nObjective: Discover that the Tier 3 transition can be deliberately directed by established behavior, external conditions, and Thronebound choice.\nRewards: {\"experience\":225}",
+    "value": "Beyond the Perimeter V — Patterns of Adaptation\nCategory: Story\nChain: Beyond the Perimeter, Step 5\nTier: 2\nStatus: Locked\nPrerequisites: story-beyond-perimeter-4\nObjective: Investigate how established behavior, external conditions, and Thronebound choice may direct the Tier 3 transition, without requiring a predetermined development approach.\nRewards: {\"experience\":225}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Beyond the Perimeter V — Patterns of Adaptation",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2616,7 +2596,7 @@
     "value": "Development Path I — Choose an Emerging Approach\nCategory: Story\nChain: Development Path, Step 1\nTier: 2\nStatus: Locked\nPrerequisites: story-beyond-perimeter-5\nObjective: Review the revealed approaches and select Concealment, Controlled Contact, Dominion Accord, Patronage, or Armed Independence as the Dungeon's emerging direction.\nRewards: {\"experience\":250}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Development Path I — Choose an Emerging Approach",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2626,7 +2606,7 @@
     "value": "The Dungeon's Place I — Deliberate Adaptation\nCategory: Story\nChain: The Dungeon's Place, Step 1\nTier: 3\nStatus: Locked\nPrerequisites: story-development-path-1\nObjective: Apply the selected development approach to a real strategic problem created by the Dungeon's relationship with Lustria.\nRewards: {\"experience\":275}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — The Dungeon's Place I — Deliberate Adaptation",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2636,7 +2616,7 @@
     "value": "Path of Concealment I — Vanishing Threshold\nCategory: Story\nChain: Path of Concealment, Step 1\nTier: 3\nStatus: Locked\nPrerequisites: story-dungeons-place-1\nObjective: Resolve the Tier 3 doctrine trial by limiting discovery, exposure, and hostile access without abandoning necessary operations.\nRewards: {\"experience\":300}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Path of Concealment I — Vanishing Threshold",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2646,7 +2626,7 @@
     "value": "Path of Controlled Contact I — Measured Threshold\nCategory: Story\nChain: Path of Controlled Contact, Step 1\nTier: 3\nStatus: Locked\nPrerequisites: story-dungeons-place-1\nObjective: Resolve the Tier 3 doctrine trial by selecting who may approach, what they may learn, and where contact occurs.\nRewards: {\"experience\":300}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Path of Controlled Contact I — Measured Threshold",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2656,7 +2636,7 @@
     "value": "Path of Dominion Accord I — Terms of Recognition\nCategory: Story\nChain: Path of Dominion Accord, Step 1\nTier: 3\nStatus: Locked\nPrerequisites: story-dungeons-place-1\nObjective: Resolve the Tier 3 doctrine trial by pursuing formal recognition while protecting essential Dungeon interests.\nRewards: {\"experience\":300}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Path of Dominion Accord I — Terms of Recognition",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2666,7 +2646,7 @@
     "value": "Path of Patronage I — The Price of Protection\nCategory: Story\nChain: Path of Patronage, Step 1\nTier: 3\nStatus: Locked\nPrerequisites: story-dungeons-place-1\nObjective: Resolve the Tier 3 doctrine trial by negotiating protection or opportunity without surrendering the Dungeon's essential agency.\nRewards: {\"experience\":300}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Path of Patronage I — The Price of Protection",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2676,7 +2656,7 @@
     "value": "Path of Armed Independence I — Sovereign Deterrence\nCategory: Story\nChain: Path of Armed Independence, Step 1\nTier: 3\nStatus: Locked\nPrerequisites: story-dungeons-place-1\nObjective: Resolve the Tier 3 doctrine trial by demonstrating credible autonomy and defensive strength without assuming conquest is required.\nRewards: {\"experience\":300}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Path of Armed Independence I — Sovereign Deterrence",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2686,7 +2666,7 @@
     "value": "The Dungeon's Place III — Doctrine Crystallized\nCategory: Story\nChain: The Dungeon's Place, Step 3\nTier: 3\nStatus: Locked\nPrerequisites: None\nObjective: Review the consequences of the selected path and commit its first doctrine as the basis for later branching Story arcs.\nRewards: {\"experience\":350}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — The Dungeon's Place III — Doctrine Crystallized",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2696,7 +2676,7 @@
     "value": "Class Awakening I\nCategory: Thronebound\nChain: Class Awakening, Step 1\nTier: 1\nStatus: Locked\nPrerequisites: story-awakening-1\nObjective: Satisfy and review every requirement for the Thronebound's first Class Selection.\nRewards: {\"experience\":20}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Class Awakening I",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
     "useForCharacterCreation": false
   },
   {
@@ -2706,7 +2686,37 @@
     "value": "Class Awakening II\nCategory: Thronebound\nChain: Class Awakening, Step 2\nTier: 1\nStatus: Locked\nPrerequisites: thronebound-class-requirements\nObjective: Review all three generated Class branches and their Combat Skill, Management Skill, and Trait before making a permanent choice.\nRewards: {\"experience\":25}",
     "type": "System — Locked Quests",
     "title": "DMS Quest — Class Awakening II",
-    "description": "Hidden until its prerequisites are satisfied.",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
+    "useForCharacterCreation": false
+  },
+  {
+    "isSpoiler": true,
+    "showInStoryCards": false,
+    "keys": "DMS_QUEST_STORY_FIRST_CONTACT_5",
+    "value": "First Contact V — Establish External Scouting\nCategory: Story\nChain: First Contact, Step 5\nTier: 1\nStatus: Locked\nPrerequisites: story-first-contact-4\nObjective: Consider the Manager's recommendation and establish {room:perimeter-scout-post} if the Thronebound chooses to begin organized external surveillance.\nRewards: {\"experience\":100}",
+    "type": "System — Locked Quests",
+    "title": "DMS Quest — First Contact V — Establish External Scouting",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
+    "useForCharacterCreation": false
+  },
+  {
+    "isSpoiler": true,
+    "showInStoryCards": false,
+    "keys": "DMS_QUEST_STORY_FIRST_CONTACT_6",
+    "value": "First Contact VI — The First Survey\nCategory: Story\nChain: First Contact, Step 6\nTier: 1\nStatus: Locked\nPrerequisites: story-first-contact-5\nObjective: Complete a Cycle with active {job:perimeter-scout-post} so the Manager can confirm that the immediate survey has begun.\nRewards: {\"experience\":125}",
+    "type": "System — Locked Quests",
+    "title": "DMS Quest — First Contact VI — The First Survey",
+    "description": "Hidden until its prerequisites and Tier are satisfied.",
+    "useForCharacterCreation": false
+  },
+  {
+    "isSpoiler": true,
+    "showInStoryCards": false,
+    "keys": "DMS_FACILITY_UNLOCK_PERIMETER_SCOUT_POST",
+    "value": "Perimeter Scout Post\nUnlocked at Dungeon Tier 1.\nFunction: Organizes the first external scouts, surveys the immediate Dungeon Sector, and develops leads toward nearby settlements without generating remote resource veins.\nJob Name: Perimeter Scout\nAppearance: Defined only when constructed from the dungeon theme and style.",
+    "type": "System — Locked Facilities",
+    "title": "DMS Facility Unlock — Perimeter Scout Post",
+    "description": "Hidden until the Dungeon reaches this facility's unlock Tier.",
     "useForCharacterCreation": false
   }
 ]

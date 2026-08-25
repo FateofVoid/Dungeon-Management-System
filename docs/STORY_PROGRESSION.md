@@ -60,14 +60,22 @@ Completion requires an inactive intrusion, at least broad classification, and a 
 
 ### First Contact IV — Review the Manager's Report
 
-The Manager collates the captured local snapshots, intrusion evidence, known Sites, and known routes. Unknown information stays unknown. The report may establish:
+The Manager-report pipeline sends every accumulated local snapshot, intrusion record, known Site, and known route to the narrative model as an evidence packet. The model returns a structured Sector report whose claims cite those evidence IDs. Unsupported fields are stored as `Unknown`; the resulting description is written to both a readable lore card and a hidden system card. The report may establish:
 
 - a canonical Dungeon Sector name;
 - evidenced terrain or biome classification;
 - known Sites, routes, hazards, inhabitants, factions, and resources;
 - certainty.
 
-Reviewing the report in the Throne Room advances the Dungeon Sector to `Mapped` and completes First Contact.
+Reviewing the report in the Throne Room advances the Dungeon Sector to `Mapped`.
+
+### First Contact V — Establish External Scouting
+
+After the first intrusion is resolved and the Sector report is reviewed, the Manager urges the Thronebound to construct the Tier 1 Perimeter Scout Post. Constructing it establishes the Dungeon's first external scouting function.
+
+### First Contact VI — The First Survey
+
+Completing a Cycle with the Perimeter Scout cohort active begins the immediate survey. This produces leads, not predetermined settlements, allegiances, threats, or discoveries, and completes First Contact.
 
 ### Dungeon Sector discovery states
 
@@ -78,25 +86,25 @@ Reviewing the report in the Throne Room advances the Dungeon Sector to `Mapped` 
 5. Mapped
 6. Established
 
-The immediate Dungeon Sector is evidence-built. Remote Sectors are procedurally generated before a quest names them. Custom Sectors register places already established by narration.
+The immediate Dungeon Sector is evidence-built. Remote Sectors are procedurally generated only when later exploration needs them. Custom Sectors register places already established by narration.
 
 ## Tier 2 — Beyond the Perimeter
 
-### Beyond the Perimeter I — First Distant Sector
+### Beyond the Perimeter I — The Nearby City
 
-Activation creates the required remote Sector before displaying its actual name in the objective. Completion requires visiting that exact Sector.
+Activation creates a named primary city near the Dungeon before displaying it in the objective. The Manager's preliminary briefing treats Dominion danger, Dominion information, Guild access, and later Veil contacts as possibilities until scouting evidence confirms them.
 
-### Beyond the Perimeter II — A Place Beyond
+### Beyond the Perimeter II — City Contact
 
-Activation creates the required Site inside the remote Sector before displaying either reference. Completion requires visiting that exact Site.
+Completion requires visiting the generated city. Visiting it does not force the city to be friendly, hostile, Dominion-aligned, Guild-controlled, or connected to the Veil.
 
-### Beyond the Perimeter III — Organized Lustria
+### Beyond the Perimeter III — Extended Scouting
 
-The Thronebound encounters evidence of an organized Lustrian society, institution, settlement, or faction. The quest does not prescribe its identity or allegiance.
+The Scout Lodge extends the established perimeter operation. After sufficient active scouting Cycles, it gathers procedural evidence about organized Lustrian society, Dungeon regulation, and noteworthy Dominion activity.
 
-### Beyond the Perimeter IV — The Dominion's Reach
+### Beyond the Perimeter IV — The Lustrian Briefing
 
-The story must establish five facts: the Dominion is a major power; it watches or regulates Dungeons; higher Tiers increase visibility; actions affect classification; and continued growth is not purely internal. The Dominion is not forced into a benevolent or hostile role.
+The Manager presents an evidence-grounded report on Lustrian society, Dungeon regulation, and noteworthy Dominion activity. Any unsupported subject remains `Unknown`; the report does not force the Dominion into a benevolent or hostile role.
 
 ### Beyond the Perimeter V — Patterns of Adaptation
 

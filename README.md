@@ -10,7 +10,7 @@ For play, begin with the [Thronebound player tutorial](docs/PLAYER_TUTORIAL.md).
 
 ## Current system
 
-Current development reference: **DMS 0.10.0-dev**. Tiers 0–1 are verified for player entry. The authoritative Tier 0–3 Story spine and the Tier 4–10 branching framework are defined, while later Tier entry remains inaccessible behind the Tier 2 deployment gate until its complete play, tutorial, persistence, and smoke-test requirements are verified.
+Current development reference: **DMS 0.11.0-dev**. Tiers 0–1 are verified for player entry. The authoritative Tier 0–3 Story spine and the Tier 4–10 branching framework are defined, while later Tier entry remains inaccessible behind the Tier 2 deployment gate until its complete play, tutorial, persistence, and smoke-test requirements are verified.
 
 - Dungeon Tiers 0–10, with new facilities at every Tier
 - Administrator Capacity of `1 + (2 × Dungeon Tier)`; it must be full before each Dungeon Tier Up
@@ -41,6 +41,8 @@ The Dungeon Signature is Nascent and externally undetectable at Tier 0. Early Ga
 At Tier 1, the Dungeon becomes a functioning economy. Material Works, Sustenance Works, the Development Sanctum, and the Energy Conduit produce their matching resources through active job-linked Worker cohorts. Production accounts for facility Tier and Expansion, Worker housing and disruption, Administrator Rank effectiveness, named-residence efficiency, and global facility effects. Worker Habitat provides real residences, lower Sustenance burden, and disruption recovery without adding a global population cap. Administrator Quarters provides expandable private suites; optional Named Residences add a Bond or assignment-efficiency specialization. The Thronebound Private Chamber supports attendants, invited stays, and one controlled detainment assignment.
 
 Ask the System to show Facilities before construction. The construction display includes only options admitted by current Tier and Story progression. Every visible option already has a stable Dungeon-manifested name, planned Appearance, Function, Job, and exact cost. A resource shortage or currently reachable research prerequisite keeps the option visible with its requirement; a later-Tier option remains hidden. Work already begun or completed is marked Under Construction or Constructed and cannot start again.
+
+The Tier 1 First Contact chain ends by constructing a Perimeter Scout Post and activating its cohort. The Manager's Sector report is generated from every accumulated snapshot with explicit evidence references and preserved unknowns. Tier 2 uses that scouting foundation to introduce a nearby primary city and later produce a Lustrian society, Dungeon regulation, and Dominion activity briefing.
 
 Tier 1 also produces three editable Thronebound Class Preview cards. Accepting one grants a themed Class, one Combat Skill, one Management Skill, and one Trait and permanently appends the choice to Class Lineage. Construct the Class Evolution Chamber for later Class Ups; both the Dungeon and the Chamber must reach the target Tier. General Skill and Trait facilities use system-controlled shop prices, validate the target, and reject duplicate purchases before spending anything.
 
