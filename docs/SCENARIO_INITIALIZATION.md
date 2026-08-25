@@ -31,11 +31,13 @@ The final Continue returns the original Scenario Generator's copyable `story_bib
 
 ## 2. Thronebound Awakening
 
-Import root `Library.js`, the three root hooks, and `DMS Scenario Setup Story Cards.json` into the main scenario. It has exactly one character-creation question:
+Import root `Library.js`, the three root hooks, `Opening.txt`, and `DMS Scenario Setup Story Cards.json` into the main scenario. It has exactly one character-creation question:
 
 > Paste the complete DMS Initialization JSON String produced by the Dungeon Generator.
 
-DMS accepts the Dungeon Generator's `story_bible` object directly, canonical `DMS_INIT` version `3`, and complete legacy version `1` or `2` objects. It validates the canonical result before mutation and imports only into pristine Tier 0 state. Invalid or incomplete JSON cannot partially initialize the Dungeon. The canonical object's stable hash is saved, so retries cannot duplicate initialization, rooms, quests, resources, or rewards.
+DMS accepts the Dungeon Generator's `story_bible` object directly, canonical `DMS_INIT` version `3`, and complete legacy version `1` or `2` objects. It validates the canonical result before mutation and imports only into pristine Tier 0 state. Missing Generator prose for a resource description, collection method, use, Gender, Personality, Values, or Voice Pattern receives a deterministic role-correct fallback; mechanically significant names, identities, Aptitudes, and Attribute selections remain strict. Invalid JSON cannot partially initialize the Dungeon. If validation still fails, Plot Essentials displays only a compact initialization error rather than retaining the raw JSON or appending an uninitialized status sheet. The canonical object's stable hash is saved, so retries cannot duplicate initialization, rooms, quests, resources, or rewards.
+
+`Opening.txt` is the canonical player-neutral Thronebound Awakening scene. A gate draws the Thronebound into the dark Throne Room, where the System blooms into view as a static protocol interface rather than a self-aware presence. It reports universal Tier 0 facts, presents the initialization sequence, accepts natural-language interaction, and ends as the room begins to illuminate. Generated names, appearance, Theme, Style, resources, and Homeworld details remain in their proper dynamic context rather than being hard-coded into the Opening.
 
 The pasted JSON is a one-use handoff rather than persistent Plot context. After a successful import, DMS replaces the entire character-creation field with its readable `[DMS PLOT ESSENTIALS]` status sheet. The raw JSON is not retained in Plot Essentials; its authoritative values live in runtime state, focused Lore/System Cards, Author's Note, and save cards according to the context architecture.
 

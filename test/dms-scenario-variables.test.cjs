@@ -42,8 +42,14 @@ function placeholders(value = storyBibleOutput()) { return [{ question: DMS.DMS_
 
 test("the main scenario has one compact JSON handoff input matching the runtime", () => {
   const library = fs.readFileSync(path.join(__dirname, "..", "Library.js"), "utf8");
-  assert.match(library.slice(0, 900), /Version: 0\.7\.1-dev[\s\S]*Runtime Schema: 12[\s\S]*Verified Dungeon Tiers: 0-1/);
-  assert.equal(DMS.DMS_VERSION, "0.7.1-dev");
+  const opening = fs.readFileSync(path.join(__dirname, "..", "Opening.txt"), "utf8");
+  assert.match(library.slice(0, 900), /Version: 0\.8\.0-dev[\s\S]*Runtime Schema: 13[\s\S]*Verified Dungeon Tiers: 0-1/);
+  assert.equal(DMS.DMS_VERSION, "0.8.0-dev");
+  assert.match(opening, /A gate opens where no gate stood before\.[\s\S]*The gate closes\./);
+  assert.match(opening, /\[DUNGEON MANAGEMENT SYSTEM\][\s\S]*\[DUNGEON TIER: 0\][\s\S]*\[INTERFACE ACCEPTS NATURAL-LANGUAGE REQUESTS\]/);
+  assert.match(opening.trim(), /The Throne Room begins to illuminate\.$/);
+  assert.doesNotMatch(opening, /Dungeon consciousness|Welcome, Thronebound|I will answer|awareness (?:gathers|watches|listens)/i);
+  assert.doesNotMatch(opening, /\$\{|Queen's Vault|Mara-Veil|\b(?:he|she|his|her)\b/i);
   const cards = JSON.parse(fs.readFileSync(path.join(__dirname, "..", "DMS Scenario Setup Story Cards.json"), "utf8"));
   const setup = cards.find(card => card.keys === "DMS_SETUP_INITIALIZATION_JSON");
   assert.ok(setup.value.length <= 1000);
@@ -82,6 +88,19 @@ test("Dungeon Generator fetish policy and punctuated dynamic section names survi
   assert.equal(result.dungeon.theme, generatedSections()[1].Theme);
   assert.equal(result.thronebound.name, "Mara-Veil");
   assert.equal(result.thronebound.race, generatedSections()[3].Race);
+});
+
+test("Dungeon Generator narrative resource omissions receive deterministic role-correct fallbacks", () => {
+  const generated = storyBibleOutput();
+  delete generated.story_bible.dungeon_resources.development_description;
+  delete generated.story_bible.dungeon_resources.energy_collection;
+  delete generated.story_bible.dungeon_resources.sustenance_use;
+  delete generated.story_bible.mara.values;
+  const parsed = DMS.parseInitializationJson(generated);
+  assert.equal(parsed.dungeon.resources.development.description, "Sovereign Ichor is the Dungeon's themed development resource, shaped by Volcanic necromancy.");
+  assert.equal(parsed.dungeon.resources.energy.collection, "Pyreflow is produced or gathered through the Dungeon's Energy facilities.");
+  assert.equal(parsed.dungeon.resources.sustenance.use, "Sustains, maintains, and restores the Dungeon's manifested population.");
+  assert.equal(parsed.thronebound.values, "Defined through play.");
 });
 
 test("Dungeon Generator Unique Attributes cannot duplicate standard Attributes", () => {
@@ -194,6 +213,15 @@ test("initialization is retry-safe and malformed JSON cannot partially mutate st
   assert.throws(() => DMS.initializeFromScenarioVariables(malformed, placeholders('{"format":"DMS_INIT"}')), /version must be 1, 2, or 3/i);
   assert.equal(malformed.dungeon.name, "Unnamed Dungeon");
   assert.equal(malformed.persistence.revision, 0);
+});
+
+test("failed initialization replaces the raw handoff with a compact error", () => {
+  const malformed = '{"format":"DMS_INIT"}';
+  const dms = DMS.defaultState();
+  global.state = { placeholders: placeholders(malformed), DMSSetupError: "Scenario variable setup was not imported: Initialization version must be 1, 2, or 3.", memory: { context: `DMS Initialization JSON: ${malformed}`, authorsNote: "" } };
+  assert.equal(DMS.syncScenarioPlot(dms), true);
+  assert.match(global.state.memory.context, /^\[DMS INITIALIZATION ERROR\]/);
+  assert.doesNotMatch(global.state.memory.context, /DMS Initialization JSON|\{"format"|\[DMS PLOT ESSENTIALS\]/);
 });
 
 test("Plot Essentials and compact lore cards expose readable generated state", () => {
