@@ -82,6 +82,7 @@ test("sample Dungeon Generator JSON plays from Tier 0 through the Tier 2 upgrade
   const manager = Object.values(dms.administrators)[0];
   DMS.assignAdministrator(dms, manager.id, material.id);
   DMS.resolveCycle(dms);
+  DMS.classPreviewsStatus(dms, "thronebound", true);
   DMS.acceptClassPreview(dms, "thronebound", 1);
 
   const quarters = build(dms, "administrator-quarters");
@@ -104,7 +105,7 @@ test("sample Dungeon Generator JSON plays from Tier 0 through the Tier 2 upgrade
   while (dms.quests.records["tier1-main-reserve"].status !== "cleared" && guard-- > 0) DMS.resolveCycle(dms);
   assert.ok(guard > 0, "ordinary Tier 1 production must fund the Tier 2 threshold");
   assert.equal(dms.quests.records["tier1-main-reserve"].status, "cleared");
-  assert.equal(dms.quests.records["main-dungeon-tier-1"].status, "cleared");
+  assert.equal(dms.quests.records["tier1-main-reserve"].status, "cleared");
   assert.ok(dms.dungeon.resources.construction.grades.Basic >= DMS.tierRules(2).upgradeCost.construction);
   assert.ok(dms.dungeon.resources.energy.amount >= DMS.tierRules(2).upgradeCost.energy);
   assert.match(DMS.tierRequirementsStatus(dms), /Tier 2 requirements remain sealed/);

@@ -197,22 +197,22 @@ test("live Story Card lifecycle uses hidden reserves and reveals unlocks by repl
   }
 });
 
-test("Main Dungeon progression and independent tutorial chains advance through authoritative play", () => {
+test("Story awakening and independent tutorial chains advance through authoritative play", () => {
   const dms = rich(systemMode(configured()));
   DMS.execute(dms, "/dms status");
   DMS.execute(dms, "/dms resources");
-  assert.equal(dms.quests.records["main-awakening-manager"].status, "active");
+  assert.equal(dms.quests.records["story-awakening-1"].status, "active");
   assert.equal(dms.quests.records["tutorial-system-manager"].status, "active");
   DMS.summonAdministrator(dms, "Veyra", "Ashborn");
-  assert.equal(dms.quests.records["main-awakening-manager"].status, "cleared");
+  assert.equal(dms.quests.records["story-awakening-1"].status, "active", "Story Awakening remains broad and does not duplicate the Manager lesson");
   DMS.execute(dms, "/dms tier requirements");
-  assert.equal(dms.quests.records["main-awakening-requirements"].status, "cleared");
   DMS.upgradeDungeon(dms);
-  assert.equal(dms.quests.records["main-awakening-tier-up"].status, "cleared");
+  assert.equal(dms.quests.records["story-awakening-1"].status, "cleared");
   assert.equal(dms.quests.records["tutorial-system-tier-up"].status, "cleared");
-  assert.equal(dms.quests.records["main-dungeon-tier-1"].status, "active");
-  assert.equal(dms.quests.records["class-selection"].status, "active");
-  assert.equal(dms.quests.records["establish-foundation"].status, "active", "separate tutorial chains may be active together");
+  assert.equal(dms.quests.records["story-first-contact-1"].status, "active");
+  assert.equal(dms.quests.records["thronebound-class-requirements"].status, "active");
+  assert.equal(dms.quests.records["tier1-main-construction"].status, "active", "independent mechanical chains may be active together");
+  assert.equal(dms.quests.records["tier1-main-sustenance"].status, "active");
 });
 
 test("natural System requests delegate queries and common management actions to execute", () => {
@@ -221,7 +221,8 @@ test("natural System requests delegate queries and common management actions to 
   assert.ok(query.system.startsWith(DMS.execute(dms, "/dms resources")));
   DMS.summonAdministrator(dms); DMS.upgradeDungeon(dms);
   const action = DMS.applyActivityTurn(dms, "System: build material-works", 102);
-  assert.match(action.system, /Began construction of Material Works/);
+  const roomName = Object.values(dms.rooms).find(room => room.definition === "material-works").name;
+  assert.match(action.system, new RegExp(`Began construction of ${roomName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
   assert.equal(dms.tasks.filter(task => task.type === "build-room").length, 1);
   const retry = DMS.applyActivityTurn(dms, "System: build material-works", 102);
   assert.equal(retry.repeated, true);

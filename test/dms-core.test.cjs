@@ -142,6 +142,7 @@ test("automatically registers summoned Administrators with Inner Self", () => {
 
 test("Bond stops at every 5 percent Event until its Bond Quest is completed", () => {
   const dms = rich(systemMode(configured())), admin = DMS.summonAdministrator(dms, "Veyra", "Ashborn");
+  dms.dungeon.tier = 1; DMS.applyDerivedState(dms);
   DMS.addAdministratorBond(dms, admin.id, 50);
   assert.equal(admin.bond.value, 5);
   assert.equal(DMS.addAdministratorBond(dms, admin.id, 5).value, 5);
@@ -179,6 +180,7 @@ test("Tier 1 generates three editable Thronebound Class branch cards", () => {
   assert.equal(global.storyCards.filter(card => card.title.startsWith("DMS Class Preview — thronebound")).length, 3);
   const card = global.storyCards.find(item => item.title === "DMS Class Preview — thronebound — Option 1");
   card.entry = card.entry.replace(/^Class:.+$/m, "Class: Ash Imperator");
+  DMS.classPreviewsStatus(dms, "thronebound", true);
   DMS.acceptClassPreview(dms, "thronebound", 1);
   assert.equal(dms.thronebound.class.name, "Ash Imperator");
   assert.equal(dms.thronebound.class.tier, 1);
@@ -187,7 +189,7 @@ test("Tier 1 generates three editable Thronebound Class branch cards", () => {
 });
 
 test("later Thronebound Class Ups require the Evolution Chamber at the target Tier", () => {
-  const dms = awakenTier1(); DMS.acceptClassPreview(dms, "thronebound", 1);
+  const dms = awakenTier1(); DMS.classPreviewsStatus(dms, "thronebound", true); DMS.acceptClassPreview(dms, "thronebound", 1);
   const chamber = build(dms, "class-evolution-chamber");
   dms.dungeon.tier = 2; DMS.applyDerivedState(dms); rich(dms); DMS.generateClassPreviews(dms, "thronebound");
   assert.throws(() => DMS.acceptClassPreview(dms, "thronebound", 1), /Chamber at Tier 2/);
@@ -207,7 +209,7 @@ test("Administrator Class evolution grants only its matching Skill category and 
 });
 
 test("rejects duplicate Skills and tracks mastery and Grades", () => {
-  const dms = awakenTier1(); DMS.acceptClassPreview(dms, "thronebound", 1); const skill = dms.thronebound.class.skills[0];
+  const dms = awakenTier1(); DMS.classPreviewsStatus(dms, "thronebound", true); DMS.acceptClassPreview(dms, "thronebound", 1); const skill = dms.thronebound.class.skills[0];
   assert.throws(() => DMS.buySkill(dms, "thronebound", skill.name, "Duplicate", 1), /Direct player-priced ability purchasing is disabled/);
   rich(dms); assert.throws(() => DMS.trainSkill(dms, "thronebound", skill.name, 100), /Attribute Training Hall/);
   dms.dungeon.tier = 2; DMS.applyDerivedState(dms); build(dms, "attribute-training-hall"); DMS.trainSkill(dms, "thronebound", skill.name, 100); assert.equal(skill.mastery, 100);

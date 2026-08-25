@@ -51,13 +51,17 @@ Each mutation has one authoritative operation. Slash commands call it directly; 
 
 The System can show status, graded resources and Marks, quests, facilities, production, Administrators, Worker cohorts, residences, Class previews and lineage, abilities, fixed-price shops, Activity, tasks, persistent discoveries, the nascent Dungeon Signature, and next-Tier requirements. It supports common management actions including construction and Expansion, assignment, summoning, Class acceptance, shop purchase, residence management, Bond Activity, resource refinement, equipment work, portal routes, and Dungeon advancement. Slash commands remain the precise fallback and debugging interface.
 
+Player-visible availability is progression-derived. Tier and completed Story gates determine whether an option exists in menus, help, and active Story Cards. Once relevant, its manifested identity and evaluation data are generated before display. Resource shortages and reachable research/tree prerequisites remain visible with exact requirements; future-Tier content remains hidden. Construction and shop options distinguish Available, Requires Resources, Research Required, Research In Progress, Under Construction, Constructed, and Purchased, and execution consumes the same availability record. Ordinary prose management attempts receive a turn-scoped authoritative action result so a mechanical refusal cannot be narrated as a simultaneous success.
+
 The Tier 0 Signature is deterministically derived, Nascent, Strength 0, and externally undetectable. Later Signature and Survival Doctrine effects remain gated to the Tier where they first change a mechanical result.
 
 ### Quest architecture
 
-The categories remain Dungeon, Thronebound, Tutorial, Bond, Personal, Guild, and Bounty.
+The categories are Story, Dungeon, Thronebound, Tutorial, Bond, Personal, Guild, and Bounty. Story owns the only mandatory progression chain; the other categories remain mechanically or narratively scoped.
 
-The Tier 0 Main Dungeon chain is **Survive the Awakening**, with separate steps for identity, resources, System Mode, the Manager, Administrator Capacity, awakening requirements, and Tier Up. Tiers 1–10 continue the managed Main Dungeon chain after it. The six-lesson **System Awakening** tutorial independently credits reading Status, reading Resources, entering System Mode, summoning the Manager, reading Tier requirements, and completing Tier Up. Facility Operations, Class Development, and Lustrian Exploration remain separate tutorial chains so several systems can be taught concurrently. Conditions are satisfied through normal authoritative actions rather than manual quest completion.
+The Story campaign is separate from Dungeon development. Tier 0 has one broad **Awakening I** Story Quest, while the six-lesson **System Awakening** tutorial independently teaches Status, Resources, System Mode, the Manager, Tier requirements, and Tier Up. Tier 1 uses **First Contact I–IV**, Tier 2 uses **Beyond the Perimeter I–V** and **Development Path I**, and Tier 3 crystallizes the chosen approach through **The Dungeon's Place**. See [Story Progression](STORY_PROGRESSION.md). Facility Operations, Class Development, and Lustrian Exploration remain parallel tutorial or mechanical chains. Conditions are satisfied through authoritative play rather than manual quest completion.
+
+Quest language uses controlled ALL/ANY/NONE term groups to recognize declared intent, then validates location, Activity, stable entity references, state, and successful operation events. Keywords alone cannot complete important objectives. Stages, rewards, activation/progress/completion notices, and dynamic quest details survive compact recovery and remain retry-safe. See [the Quest System](QUEST_SYSTEM.md).
 
 ## Tier 0 readiness
 
@@ -73,7 +77,9 @@ Tier 1 has an executable acceptance path in `test/dms-tier1.test.cjs`.
 - Administrator Quarters uses expandable private suites. Named Residences add a Bond or assignment-efficiency specialization. The Thronebound Private Chamber supports attendants, invited current stays, and controlled detainment without confusing Work, permanent Residence, and Current Stay.
 - The Thronebound receives three editable Class branches. Acceptance is atomic, records permanent Class lineage, grants the correct Skills and Trait, and rejects duplicate names. Administrators receive their single matching evolution rather than a branch choice.
 - General Skill and Trait facilities create Basic fixed-price shops. Direct player-priced purchasing is disabled; shop purchases validate facility Tier and target and reject duplicates before spending.
-- The **Become Self-Sustaining** Main chain and the independent **Dungeon Economy**, **Class and Abilities**, and **Administrators and Bond** tutorial chains advance through the same operations used by spoken System requests and natural Activity turns.
+- Tier 1 construction options and active shops expose only relevant generated choices, exact requirements, and their authoritative readiness/completion state. Accepted Class previews and unavailable shop cards are removed when no longer relevant.
+- Independent production, population, facility-development, administration, and Class Awakening chains converge on the **Self-Sustaining Dungeon** capstone. Separate Construction, Sustenance, Population, Facility Development, Administrator Assignment, Class, Ability, and Bond tutorial chains advance through the same operations used by spoken System requests and natural Activity turns.
+- Class Awakening I–III establishes the exact first-Class requirements, requires all three previews to be reviewed, and records the accepted branch in permanent Class Lineage.
 - Compact recovery restores Class lineage, pending previews, residences, Worker disruption, Tier 1 milestones, quests, and resources. Save chunks remain within the enforced 1,800-character ceiling.
 - The acceptance test proves a default, non-injected Tier 1 economy can produce the complete Tier 2 Construction and Energy reserve and fill Administrator Capacity. Tier 2 entry remains sealed until its own deployment gate is verified.
 
@@ -88,3 +94,5 @@ Administrators, Class previews, shops, Sectors, veins, and Forge equipment optio
 > A Tier is complete only when all universal mechanics introduced at or below that Tier work, all relevant doctrine options work, the tutorials can teach them through normal play, persistence can restore them, and a player can legitimately reach the next Tier.
 
 An unlock name, room definition, or lore card is not sufficient evidence that a Tier feature is implemented.
+
+Changes that cross subsystem boundaries must also satisfy [the development and compatibility guide](DEVELOPMENT_GUIDE.md). Player-facing completion must keep [the Thronebound player tutorial](PLAYER_TUTORIAL.md) synchronized with the currently verified Tier gate.

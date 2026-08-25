@@ -34,7 +34,7 @@ test("fresh Tier 0 completes both onboarding chains and reaches Tier 1 without i
   const help = DMS.applyActivityTurn(dms, '> You say, "System, help me."', 0);
   const naturalStatus = DMS.applyActivityTurn(dms, '> You say, "System, show my Dungeon Status."', 1);
   const naturalResources = DMS.applyActivityTurn(dms, '> You say "System, show my resources."', 2);
-  assert.match(help.system, /System Awakening — Read Dungeon Status/);
+  assert.match(help.system, /System Awakening — System Awakening I/);
   assert.match(naturalStatus.system, /Dungeon: The Ashen Court/);
   assert.match(naturalResources.system, /Construction — Graveglass/);
   assert.equal(dms.activity.mode, "Idle", "read-only Throne Room System requests do not require entering management mode");
@@ -67,7 +67,7 @@ test("fresh Tier 0 completes both onboarding chains and reaches Tier 1 without i
   assert.equal(dms.thronebound.class.name, "Classless", "Tier Up generates previews but does not select a Class");
   assert.equal(dms.dungeon.resources.construction.grades.Basic, constructionBefore - 50);
   assert.equal(dms.dungeon.resources.energy.amount, energyBefore - 30 + 20, "Tier Up cost and its quest reward are both authoritative");
-  for (const quest of Object.values(dms.quests.records).filter(quest => ["Survive the Awakening", "System Awakening"].includes(quest.chain))) assert.equal(quest.status, "cleared", `${quest.title} should clear through normal play`);
+  for (const quest of Object.values(dms.quests.records).filter(quest => ["Awakening", "System Awakening"].includes(quest.chain))) assert.equal(quest.status, "cleared", `${quest.title} should clear through normal play`);
 });
 
 test("Release A seals Dungeon Tier 2 until its deployment gate is verified", () => {
@@ -76,6 +76,8 @@ test("Release A seals Dungeon Tier 2 until its deployment gate is verified", () 
   DMS.summonAdministrator(dms);
   DMS.upgradeDungeon(dms);
   assert.throws(() => DMS.upgradeDungeon(dms), /verified through Dungeon Tier 1/);
+  DMS.createRoom(dms, "material-works");
+  while (dms.tasks.length) DMS.resolveCycle(dms);
   DMS.summonAdministrator(dms);
   DMS.summonAdministrator(dms);
   assert.equal(DMS.VERIFIED_DUNGEON_TIER, 1);
@@ -125,7 +127,7 @@ test("cold runtime-cache recovery restores the complete authoritative Tier 0 gat
   run(dms, "mode System||Timeless");
   run(dms, "administrator summon");
   const manager = Object.values(dms.administrators)[0];
-  DMS.addAdministratorBond(dms, manager.id, 5);
+  assert.equal(manager.bond.value, 0, "Tier 0 persists the initial Bond state without advancing it");
   run(dms, "tier requirements");
   run(dms, "mode Production||Fast");
   DMS.advanceActivity(dms, 2);

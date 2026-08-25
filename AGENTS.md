@@ -26,4 +26,20 @@ Major political relationships or territory enter DMS state only when a small exp
 - New tracked fields require normalization, compact-save persistence, recovery, status or card exposure when player-facing, and tests for legal and illegal transitions.
 - Do not duplicate lore across broad cards. Tiers, Ranks, Grades, categories, and other independently triggered concepts use compact individual cards.
 
+## Progression presentation contract
+
+- Tier and authoritative Story progression decide whether a feature exists in the player-facing interface. Future or irrelevant options remain hidden and must not be named by help, menus, or active cards.
+- Once a feature belongs to current progression, generate its stable player-facing identity and required lore before displaying it.
+- Resource stock and currently satisfiable research or construction-tree requirements do not hide a current option. Show the option with exact requirements and one authoritative state: Available, Requires Resources, Research Required, Research In Progress, Under Construction, Constructed, or Purchased.
+- Menus, Story Cards, natural requests, and direct operations must consume the same availability calculation. A completed or in-progress action is never presented as a valid new action.
+- When ordinary prose attempts a managed action, expose its authoritative success or refusal to the model. A refused action creates no task, spends nothing, and must not be narrated as simultaneously succeeding.
+
 A Tier is complete only when all universal mechanics introduced at or below that Tier work, all relevant doctrine options work, tutorials teach them through normal play, compact persistence restores them, and a player can legitimately reach the next Tier. A definition or lore card alone does not count as implementation. Use [the detailed Tier development map](docs/DETAILED_TIER_DEVELOPMENT_MAP.md) for the current completion contract.
+
+## Change compatibility
+
+Use [the development and compatibility guide](docs/DEVELOPMENT_GUIDE.md) before changing state, facilities, resources, natural System routing, quests, Activities, generation, initialization, persistence, cards, or a verified Tier gate. A change is incomplete until every connected state, operation, context, persistence, recovery, tutorial, documentation, and test surface remains consistent.
+
+Story changes must also preserve [the Story progression contract](docs/STORY_PROGRESSION.md): one active Story Quest, no duplication of mechanical tutorials, authoritative-event completion, delayed editable-output snapshots for the Dungeon Sector, generated references before quest presentation, Manager reports that preserve unknowns, spoiler-safe maps, and branch reconvergence.
+
+Player-facing functionality must be taught in the order a player needs it through ordinary System speech and story Activities. Keep [the Thronebound player tutorial](docs/PLAYER_TUTORIAL.md) synchronized with the current verified path; slash commands remain fallback and debugging controls.

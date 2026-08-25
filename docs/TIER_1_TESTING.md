@@ -2,6 +2,14 @@
 
 This test begins from a clean Tier 1 awakening. Do not use slash commands or manually edit runtime state. Address requests to the System in dialogue; perform timed work through ordinary story actions.
 
+## Availability and narrative truth
+
+1. Ask the System to show Facilities. Confirm Tier 1 options have generated names, planned lore, exact costs, and readiness states, while Barracks and every later-Tier facility are absent.
+2. Choose a visible option whose resources are insufficient. Confirm it remains listed as **Requires Resources**, and attempting construction creates no room, task, or resource transaction.
+3. Fund and begin that option. Confirm it changes to **Under Construction**, cannot be started twice, and becomes **Constructed** only after its task completes.
+4. State one impossible construction attempt as ordinary prose rather than a System command. Confirm the story describes the authoritative refusal and does not simultaneously begin construction.
+5. Before an ability facility is Active, confirm no shop card or entries appear. After activation, confirm entries show Available or Requires Resources; after purchase, confirm the target's entry is marked Purchased and is not actionable again.
+
 ## Economy and Workers
 
 1. Ask the System to construct Material Works, then begin Construction Activity for it. Help construct it until a Cycle completes and the facility becomes Active.
@@ -28,7 +36,7 @@ This test begins from a clean Tier 1 awakening. Do not use slash commands or man
 
 ## Main-chain and recovery gate
 
-1. Continue ordinary production until Administrator Capacity is 3/3 and the Tier 2 reserve is fully funded. The **Become Self-Sustaining** chain and `Main Dungeon — Complete Tier 1` must clear, but Tier 2 entry must remain sealed.
+1. Continue ordinary production until Administrator Capacity is 3/3 and the Tier 2 reserve is fully funded. The production, population, facility, administration, and Class Awakening chains must converge on **Self-Sustaining Dungeon I**. The Tier 1 Story chain **First Contact I–IV** must also complete, but Tier 2 entry remains sealed until its deployment gate is verified.
 2. Record the displayed Dungeon state, resources, Class lineage, Administrators, residences, Worker disruption, quests, Activity, and Cycle.
 3. Remove only the simulated runtime cache while preserving Story Cards. The next natural System request must recover the same state automatically.
 4. Export and restore the backup with its Story Cards, use the explicit load fallback once, and compare the same fields again.

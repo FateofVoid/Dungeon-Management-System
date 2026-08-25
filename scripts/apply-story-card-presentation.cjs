@@ -4,8 +4,9 @@ const file = process.argv[2];
 const reserveCount = Math.max(0, Number(process.argv[3]) || 0);
 if (!file) throw new Error("Usage: node scripts/apply-story-card-presentation.cjs <story-cards.json> [hidden-save-reserve-count]");
 
-const cards = JSON.parse(fs.readFileSync(file, "utf8"));
+let cards = JSON.parse(fs.readFileSync(file, "utf8"));
 if (!Array.isArray(cards)) throw new Error("Story Card export must be a JSON array.");
+cards = cards.filter(card => !/^DMS_QUEST_(?:MAIN_AWAKENING_|MAIN_DUNGEON_TIER_)/.test(String(card.keys || "")) && !["DMS_QUEST_ESTABLISH_FOUNDATION", "DMS_QUEST_CLASS_SELECTION"].includes(String(card.keys || "")));
 
 const dungeonStatus = cards.find(card => card.keys === "DMS_SYS_DUNGEON_STATUS");
 const dungeonTier = Number(String(dungeonStatus?.value || "").match(/Dungeon:.*?\|\s*Tier\s+(\d+)/i)?.[1]) || 0;
@@ -57,9 +58,9 @@ if (reserveCount) {
   }
   for (const [questId, quest] of Object.entries(dms.quests.records)) {
     const key = `DMS_QUEST_${questId.toUpperCase().replace(/\W/g, "_")}`;
-    if (cards.some(card => card.keys === key)) continue;
     const active = quest.status === "active";
-    cards.push({ isSpoiler: !active, showInStoryCards: active, keys: key, value: `${quest.title}\nCategory: ${quest.category || "Dungeon"}\nChain: ${quest.chain || "Independent"}${quest.step ? `, Step ${quest.step}` : ""}\nTier: ${quest.tier ?? 0}\nStatus: ${active ? "Active" : "Locked"}\nPrerequisites: ${(quest.prerequisites || []).join(", ") || "None"}\nObjective: ${quest.objective}\nRewards: ${JSON.stringify(quest.rewards || {})}`, type: active ? "Active Quests" : "System — Locked Quests", title: `DMS Quest — ${quest.title}`, description: active ? "Current immersive DMS quest." : "Hidden until its prerequisites are satisfied.", useForCharacterCreation: false });
+    const updated = { isSpoiler: !active, showInStoryCards: active, keys: key, value: `${quest.title}\nCategory: ${quest.category || "Dungeon"}\nChain: ${quest.chain || "Independent"}${quest.step ? `, Step ${quest.step}` : ""}\nTier: ${quest.tier ?? 0}\nStatus: ${active ? "Active" : "Locked"}\nPrerequisites: ${(quest.prerequisites || []).join(", ") || "None"}\nObjective: ${quest.objective}\nRewards: ${JSON.stringify(quest.rewards || {})}`, type: active ? "Active Quests" : "System — Locked Quests", title: `DMS Quest — ${quest.title}`, description: active ? "Current immersive DMS quest." : "Hidden until its prerequisites are satisfied.", useForCharacterCreation: false };
+    const existing = cards.find(card => card.keys === key); if (existing) Object.assign(existing, updated); else cards.push(updated);
   }
 }
 

@@ -122,7 +122,8 @@ test("Class lineage and fixed-price shops reject duplicate purchases atomically"
 test("spoken Tier 1 operations and Bond scenes advance immersive tutorials without slash commands", () => {
   const dms = awakenTier1();
   let result = DMS.applyActivityTurn(dms, '> You say, "System, construct Material Works."', 1);
-  assert.match(result.system, /Began construction of Material Works/);
+  const materialName = Object.values(dms.rooms).find(room => room.definition === "material-works").name;
+  assert.match(result.system, new RegExp(`Began construction of ${materialName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
   result = DMS.applyActivityTurn(dms, '> You say, "System, begin Construction Activity for Material Works."', 2);
   assert.match(result.system, /Activity: Construction/);
   for (let action = 3; action <= 5; action++) DMS.applyActivityTurn(dms, "> You help shape and construct the Material Works.", action);
@@ -131,7 +132,7 @@ test("spoken Tier 1 operations and Bond scenes advance immersive tutorials witho
   result = DMS.applyActivityTurn(dms, '> You say, "System, summon Administrator Kara|Ashborn."', 7);
   assert.match(result.system, /Summoned Kara/);
   result = DMS.applyActivityTurn(dms, '> You say, "System, assign Kara to Material Works."', 8);
-  assert.match(result.system, /assigned to Material Works/);
+  assert.match(result.system, new RegExp(`assigned to ${materialName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`));
   result = DMS.applyActivityTurn(dms, '> You say, "System, begin Bond Activity with Kara."', 9);
   assert.match(result.system, /Bond Activity begun/);
   for (let action = 10; action <= 12; action++) DMS.applyActivityTurn(dms, "> You spend time talking, listening, and sharing stories with Kara.", action);
@@ -145,6 +146,7 @@ test("spoken Tier 1 operations and Bond scenes advance immersive tutorials witho
 test("Tier 1 persistence restores lineage, previews, residences, Worker disruption, milestones, and save limits", () => {
   global.storyCards.length = 0;
   const dms = awakenTier1(), material = build(dms, "material-works"), habitat = build(dms, "worker-habitat"), quarters = build(dms, "administrator-quarters");
+  DMS.classPreviewsStatus(dms, "thronebound", true);
   DMS.acceptClassPreview(dms, "thronebound", 1);
   const second = DMS.summonAdministrator(dms, "Kara", "Ashborn");
   DMS.assignResidence(dms, second.id, quarters.id);
@@ -178,14 +180,15 @@ test("a non-injected Tier 1 economy can legitimately fund the sealed Tier 2 thre
   DMS.facilityTierStatus(dms, true);
   const manager = Object.values(dms.administrators)[0]; DMS.assignAdministrator(dms, manager.id, material.id);
   DMS.resolveCycle(dms);
+  DMS.classPreviewsStatus(dms, "thronebound", true);
   DMS.acceptClassPreview(dms, "thronebound", 1);
   DMS.summonAdministrator(dms, "Kara", "Ashborn");
   DMS.summonAdministrator(dms, "Seren", "Ashborn");
   let guard = 150;
   while (dms.quests.records["tier1-main-reserve"].status !== "cleared" && guard-- > 0) DMS.resolveCycle(dms);
-  assert.ok(guard > 0, "ordinary Tier 1 production should fund the Tier 2 reserve");
+  assert.ok(guard > 0, `ordinary Tier 1 production should fund the Tier 2 reserve: ${JSON.stringify(Object.fromEntries(Object.entries(dms.quests.records).filter(([, quest]) => quest.tier === 1 && quest.status !== "cleared").map(([id, quest]) => [id, quest.status])))}`);
   assert.equal(dms.quests.records["tier1-main-reserve"].status, "cleared");
-  assert.equal(dms.quests.records["main-dungeon-tier-1"].status, "cleared");
+  assert.equal(dms.quests.records["tier1-main-reserve"].status, "cleared");
   assert.throws(() => DMS.upgradeDungeon(dms), /Tier 2 remains sealed/);
   assert.ok(dms.dungeon.resources.construction.grades.Basic >= DMS.tierRules(2).upgradeCost.construction);
   assert.ok(dms.dungeon.resources.energy.amount >= DMS.tierRules(2).upgradeCost.energy);

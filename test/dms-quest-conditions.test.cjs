@@ -56,8 +56,8 @@ test("a tutorial completes only after the recognized System operation succeeds i
   const experience = dms.thronebound.experience;
   const accepted = DMS.applyActivityTurn(dms, "I ask the System to show my Status.", 2);
   assert.match(accepted.system, /Dungeon: The Ashen Court/);
-  assert.match(accepted.system, /Quest Complete — Read Dungeon Status/);
-  assert.match(accepted.system, /Next Quest: Read Resource State/);
+  assert.match(accepted.system, /Quest Complete — System Awakening I/);
+  assert.match(accepted.system, /Next Quest: System Awakening II/);
   assert.equal(dms.quests.records["tutorial-system-status"].status, "cleared");
   assert.equal(dms.thronebound.experience, experience + 10);
 
@@ -150,6 +150,7 @@ test("contextual generic quest cards appear only after their category becomes re
   assert.equal(global.storyCards.some(card => card.keys === "DMS_QUEST_GENERIC_BOND" && card.showInStoryCards), false);
   DMS.setActivity(dms, "System", [], "Timeless");
   DMS.summonAdministrator(dms, "Veyra", "Ashborn");
+  dms.dungeon.tier = 1; DMS.applyDerivedState(dms);
   DMS.refreshCards(dms);
   const bond = global.storyCards.find(card => card.keys === "DMS_QUEST_GENERIC_BOND");
   assert.ok(bond?.showInStoryCards);

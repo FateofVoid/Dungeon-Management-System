@@ -43,8 +43,8 @@ function placeholders(value = storyBibleOutput()) { return [{ question: DMS.DMS_
 test("the main scenario has one compact JSON handoff input matching the runtime", () => {
   const library = fs.readFileSync(path.join(__dirname, "..", "Library.js"), "utf8");
   const opening = fs.readFileSync(path.join(__dirname, "..", "Opening.txt"), "utf8");
-  assert.match(library.slice(0, 900), /Version: 0\.8\.0-dev[\s\S]*Runtime Schema: 13[\s\S]*Verified Dungeon Tiers: 0-1/);
-  assert.equal(DMS.DMS_VERSION, "0.8.0-dev");
+  assert.match(library.slice(0, 900), /Version: 0\.10\.0-dev[\s\S]*Runtime Schema: 15[\s\S]*Verified Dungeon Tiers: 0-1/);
+  assert.equal(DMS.DMS_VERSION, "0.10.0-dev");
   assert.match(opening, /A gate opens where no gate stood before\.[\s\S]*The gate closes\./);
   assert.match(opening, /\[DUNGEON MANAGEMENT SYSTEM\][\s\S]*\[DUNGEON TIER: 0\][\s\S]*\[INTERFACE ACCEPTS NATURAL-LANGUAGE REQUESTS\]/);
   assert.match(opening.trim(), /The Throne Room begins to illuminate\.$/);

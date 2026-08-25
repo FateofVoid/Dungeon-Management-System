@@ -6,12 +6,17 @@ The runtime follows the project's established AI Dungeon integration format. Too
 
 DMS tracks exact facts that gate actions or change mechanical results; narration and Story Cards handle social and descriptive texture. The authoritative scope and current implementation gaps are recorded in [the tracking boundary](docs/TRACKING_BOUNDARY.md).
 
+For play, begin with the [Thronebound player tutorial](docs/PLAYER_TUTORIAL.md). For implementation work, use the [development and compatibility guide](docs/DEVELOPMENT_GUIDE.md) before changing a subsystem.
+
 ## Current system
+
+Current development reference: **DMS 0.10.0-dev**. Tiers 0–1 are verified for player entry. The authoritative Tier 0–3 Story spine and the Tier 4–10 branching framework are defined, while later Tier entry remains inaccessible behind the Tier 2 deployment gate until its complete play, tutorial, persistence, and smoke-test requirements are verified.
 
 - Dungeon Tiers 0–10, with new facilities at every Tier
 - Administrator Capacity of `1 + (2 × Dungeon Tier)`; it must be full before each Dungeon Tier Up
 - no global room, Worker, or Soldier capacity
 - one constructible instance of every unlocked facility; Expansion adds its jobs and Tier Up improves its yield or benefit
+- progression-gated menus, help, and Story Cards: future options remain hidden, while current options show generated lore, exact requirements, and Available, blocked, in-progress, Constructed, or Purchased state
 - a separate Facility card and Job Cohort card for every constructed room
 - one themed resource each for Construction, Sustenance, linked-character Development, and Dungeon Energy
 - separate Basic, Intermediate, Advanced, and Mastery stocks for material resources; ungraded Dungeon Energy and Lustrian Marks
@@ -20,7 +25,7 @@ DMS tracks exact facts that gate actions or change mechanical results; narration
 - a Classless Tier 0 Thronebound with three editable Class previews at Tier 1 and three more at every later evolution
 - Administrator Class previews that evolve their fixed path and grant only Combat or Support abilities as appropriate
 - General Skill and Trait shops, researched custom-theme shops, mastery training, and Grade Ups
-- Dungeon, Thronebound, Tutorial, Bond, Personal, Guild, and Bounty quests, including a Tier 0–10 Main Dungeon chain and independent tutorial chains
+- Story, Dungeon, Thronebound, Tutorial, Bond, Personal, Guild, and Bounty quests, including one mandatory Story progression chain, player-neutral internal Dungeon chains, and independent tutorial chains
 - Aptitudes from F to SSS, one Aptitude roll for every Attribute on each Level Up, up to five favored Attributes with +1 growth, and quest-based Levels
 - one to three prioritized, theme-named Thronebound Unique Attributes that grow with Thronebound Levels, strengthen broad Dungeon functions and Signature, and provide Administrator affinities
 - location-aware Activity Mode, timed Cycles, construction/production/training/exploration benefits, and timeless System Mode
@@ -29,15 +34,17 @@ DMS tracks exact facts that gate actions or change mechanical results; narration
 
 ## Starting progression
 
-Tier 0 contains only the Tier 0 Throne Room. The Thronebound is Classless. First run the separate [Dungeon Generator](dungeon-generator/README.md), copy its final `DMS_INIT` JSON String, and paste it into the main scenario's sole character-creation input. On the first lifecycle hook, DMS validates the entire object, atomically imports it, and will not overwrite established state on a retry. Read Status and Resources, enter Timeless System Mode in the Throne Room, summon the first Administrator (always a Level 1 Manager with an independently generated Rank and Dungeon Attribute affinity), read the Tier requirements, and pay the Tier cost to awaken Tier 1. The seven-step **Survive the Awakening** Main Quest and six-lesson **System Awakening** tutorial track those actions automatically.
+Tier 0 contains only the Tier 0 Throne Room. The Thronebound is Classless. First run the separate [Dungeon Generator](dungeon-generator/README.md), copy its final `DMS_INIT` JSON String, and paste it into the main scenario's sole character-creation input. On the first lifecycle hook, DMS validates the entire object, atomically imports it, and will not overwrite established state on a retry. Read Status and Resources, enter Timeless System Mode in the Throne Room, summon the first Administrator (always a Level 1 Manager with an independently generated Rank and Dungeon Attribute affinity), read the Tier requirements, and pay the Tier cost to awaken Tier 1. The single **Awakening I** Story Quest tracks the narrative transition while the six-lesson **System Awakening** tutorial teaches the individual operations.
 
 The Dungeon Signature is Nascent and externally undetectable at Tier 0. Early Gate Authority may support travel narration, but it creates no mechanical Portal Anchor until Tier 2. Read-only System voice requests are available in the Throne Room during awakening; established identity changes, summoning, and Tier Up require Timeless System Mode there.
 
 At Tier 1, the Dungeon becomes a functioning economy. Material Works, Sustenance Works, the Development Sanctum, and the Energy Conduit produce their matching resources through active job-linked Worker cohorts. Production accounts for facility Tier and Expansion, Worker housing and disruption, Administrator Rank effectiveness, named-residence efficiency, and global facility effects. Worker Habitat provides real residences, lower Sustenance burden, and disruption recovery without adding a global population cap. Administrator Quarters provides expandable private suites; optional Named Residences add a Bond or assignment-efficiency specialization. The Thronebound Private Chamber supports attendants, invited stays, and one controlled detainment assignment.
 
+Ask the System to show Facilities before construction. The construction display includes only options admitted by current Tier and Story progression. Every visible option already has a stable Dungeon-manifested name, planned Appearance, Function, Job, and exact cost. A resource shortage or currently reachable research prerequisite keeps the option visible with its requirement; a later-Tier option remains hidden. Work already begun or completed is marked Under Construction or Constructed and cannot start again.
+
 Tier 1 also produces three editable Thronebound Class Preview cards. Accepting one grants a themed Class, one Combat Skill, one Management Skill, and one Trait and permanently appends the choice to Class Lineage. Construct the Class Evolution Chamber for later Class Ups; both the Dungeon and the Chamber must reach the target Tier. General Skill and Trait facilities use system-controlled shop prices, validate the target, and reject duplicate purchases before spending anything.
 
-The ten-step **Become Self-Sustaining** Main chain and the independent **Dungeon Economy**, **Class and Abilities**, and **Administrators and Bond** tutorial chains progress through authoritative play. Spoken requests addressed to the System can review and perform Tier 1 operations, while Construction, Production, Training, and Bond Activities advance through ordinary story actions and Cycles. Tier 2 entry remains deployment-sealed until verified, but a legitimate Tier 1 economy can prepare its full resource reserve.
+Tier 1 uses independent **Construction**, **Sustenance**, **Development**, **Energy**, **Population**, **Facility Development**, **Administrative Structure**, and **Class Awakening** chains, followed by the **Self-Sustaining Dungeon** capstone. Tutorials are separately organized as **Construction Operations**, **Sustenance Operations**, **Population Interface**, **Facility Development Interface**, **Administrator Assignment Interface**, **Class Interface**, **Ability Acquisition**, and **Administrator and Bond Interface**. Spoken requests addressed to the System can review and perform Tier 1 operations, while Construction, Production, Training, and Bond Activities advance through ordinary story actions and Cycles. Tier 2 entry remains deployment-sealed until verified, but a legitimate Tier 1 economy can prepare its full resource reserve.
 
 Facility development has two independent axes:
 
@@ -49,6 +56,19 @@ Worker cohorts are automatically created and assigned from facility jobs. Soldie
 ## Develop from any computer
 
 On GitHub, choose **Code → Codespaces → Create codespace on main**. The included development-container configuration validates the monolithic scripts and runs the test suite, so no local IDE is required.
+
+## Documentation map
+
+- [Player tutorial](docs/PLAYER_TUTORIAL.md): the verified Tier 0–1 play path, written for ordinary System speech and story Activities.
+- [Story progression](docs/STORY_PROGRESSION.md): the authoritative Tier 0–3 campaign spine, delayed evidence snapshots, and Tier 4–10 branch framework.
+- [Development and compatibility guide](docs/DEVELOPMENT_GUIDE.md): invariants, cross-system dependencies, change impact checklist, and validation gates.
+- [Architecture](docs/ARCHITECTURE.md): current domain model and progression map.
+- [Tracking boundary](docs/TRACKING_BOUNDARY.md): what DMS tracks mechanically and what remains narrative.
+- [Detailed Tier development map](docs/DETAILED_TIER_DEVELOPMENT_MAP.md): implemented readiness and the rule for verifying a Tier.
+- [Quest system](docs/QUEST_SYSTEM.md): controlled intent recognition, authoritative completion, stages, references, and notifications.
+- [Context architecture](docs/CONTEXT_ARCHITECTURE.md): Plot, Author's Note, Lore, System Cards, and deterministic injection.
+- [Scenario initialization](docs/SCENARIO_INITIALIZATION.md): Generator JSON handoff and field destinations.
+- [Tier 0 testing](docs/TIER_0_TESTING.md) and [Tier 1 testing](docs/TIER_1_TESTING.md): manual smoke-test paths.
 
 ## Commands
 
@@ -129,10 +149,12 @@ Values separated by `|` are distinct fields. Administrator targets may use an Ad
 /dms sector conquer <sector-id>
 
 /dms quest add personal <Title>|<Objective>|[Reward resource]
-/dms quest complete <quest-id>
+/dms quest report [quest-id]
 /dms quest status
 /dms help
 ```
+
+Direct quest completion is disabled. Objectives resolve through authoritative play; Guild and Bounty field objectives must then be deliberately reported at an appropriate Guild location.
 
 Legacy/manual setup example:
 
